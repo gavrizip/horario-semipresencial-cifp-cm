@@ -43,47 +43,49 @@
     { week: '17', date: '3 Feb', monthIdx: 5, year: 2027, dayNum: 3 },
     { week: '18', date: '10 Feb', monthIdx: 5, year: 2027, dayNum: 10 },
     { week: '19', date: '17 Feb', monthIdx: 5, year: 2027, dayNum: 17 },
-    { week: '20', date: '24 Feb', monthIdx: 5, year: 2027, dayNum: 24 },
-    { week: '21', date: '3 Mar', monthIdx: 6, year: 2027, dayNum: 3 },
-    { week: '22', date: '10 Mar', monthIdx: 6, year: 2027, dayNum: 10 },
-    { week: '23', date: '17 Mar', monthIdx: 6, year: 2027, dayNum: 17 },
-    { week: '24', date: '24 Mar', monthIdx: 6, year: 2027, dayNum: 24 },
-    { week: '25', date: '31 Mar', monthIdx: 6, year: 2027, dayNum: 31 },
-    { week: '26', date: '7 Abr', monthIdx: 7, year: 2027, dayNum: 7 },
-    { week: '27', date: '14 Abr', monthIdx: 7, year: 2027, dayNum: 14 },
-    { week: '28', date: '21 Abr', monthIdx: 7, year: 2027, dayNum: 21 },
-    { week: '29', date: '28 Abr', monthIdx: 7, year: 2027, dayNum: 28 },
-    { week: '30', date: '5 May', monthIdx: 8, year: 2027, dayNum: 5 },
-    { week: '31', date: '12 May', monthIdx: 8, year: 2027, dayNum: 12 },
-    { week: '32', date: '19 May', monthIdx: 8, year: 2027, dayNum: 19 },
-    { week: '33', date: '26 May', monthIdx: 8, year: 2027, dayNum: 26 },
-    { week: '34', date: '2 Jun', monthIdx: 9, year: 2027, dayNum: 2 },
-    { week: '-', date: '9 Jun', monthIdx: 9, year: 2027, dayNum: 9 },
-    { week: '-', date: '16 Jun', monthIdx: 9, year: 2027, dayNum: 16 }
+    { week: 'F', date: '24 Feb', monthIdx: 5, year: 2027, dayNum: 24, holiday: 'No lectivo' },
+    { week: '20', date: '3 Mar', monthIdx: 6, year: 2027, dayNum: 3 },
+    { week: '21', date: '10 Mar', monthIdx: 6, year: 2027, dayNum: 10 },
+    { week: '22', date: '17 Mar', monthIdx: 6, year: 2027, dayNum: 17 },
+    { week: 'F', date: '24 Mar', monthIdx: 6, year: 2027, dayNum: 24, holiday: 'Semana Santa' },
+    { week: '23', date: '31 Mar', monthIdx: 6, year: 2027, dayNum: 31 },
+    { week: '24', date: '7 Abr', monthIdx: 7, year: 2027, dayNum: 7 },
+    { week: '25', date: '14 Abr', monthIdx: 7, year: 2027, dayNum: 14 },
+    { week: '26', date: '21 Abr', monthIdx: 7, year: 2027, dayNum: 21 },
+    { week: '27', date: '28 Abr', monthIdx: 7, year: 2027, dayNum: 28 },
+    { week: '28', date: '5 May', monthIdx: 8, year: 2027, dayNum: 5 },
+    { week: '29', date: '12 May', monthIdx: 8, year: 2027, dayNum: 12 },
+    { week: '30', date: '19 May', monthIdx: 8, year: 2027, dayNum: 19 },
+    { week: '31', date: '26 May', monthIdx: 8, year: 2027, dayNum: 26 },
+    { week: '32', date: '2 Jun', monthIdx: 9, year: 2027, dayNum: 2 },
+    { week: '33', date: '9 Jun', monthIdx: 9, year: 2027, dayNum: 9 },
+    { week: '34', date: '16 Jun', monthIdx: 9, year: 2027, dayNum: 16 }
   ];
 
   const SCHEDULE_A = [
     ['IMW','IMW','IMW','SRD','SRD'], ['IMW','IMW','SRD','SRD','SRD'], ['IMW','IMW','IMW','SRD','SRD'], ['IMW','IMW','SRD','SRD','SRD'],
     ['IMW','IMW','IMW','SRD','SRD'], ['IMW','IMW','SRD','SRD','SRD'], ['IMW','IMW','IMW','SRD','SRD'], ['IMW','IMW','SRD','SRD','SRD'],
     ['EIB','EIB','EIB','SRD','SRD'], ['EIB','EIB','SRD','SRD','SRD'], ['EIB','EIB','SRD','ADE','ADE'], ['EIB','EIB','ADE','ADE','ADE'],
-    ['EIB','EIB','EIB','ADE','ADE'], null, null, null, ['EIB','EIB','ADE','ADE','ADE'], ['ADD','ADD','ADD','SGY','SGY'],
-    ['ADD','ADD','SGY','SGY','SGY'], ['ADD','ADD','ADD','SGY','SGY'], ['ADD','ADD','SGY','SGY','SGY'], ['ADD','ADD','ADD','SGY','SGY'],
-    ['ADD','ADD','SGY','SGY','SGY'], ['IPW','IPW','SGY','SGY','SGY'], ['IPW','IPW','ADD','ADD','ADD'], ['IPW','IPW','ADD','ADD','ADD'],
-    ['IPW','IPW','ADD','ADD','ADD'], ['IPW','IPW','ADD','SGY','SGY'], ['IPW','IPW','SGY','SGY','SGY'], ['IPW','IPW','SOJ','SGY','SGY'],
-    ['SOJ','SOJ',null,null,null], ['SOJ','SOJ',null,null,null], ['CC3','CC3','CC3',null,null], ['CC3','CC3','CC3',null,null],
-    ['CC3','CC3',null,null,null], ['CC3','CC3',null,null,null], ['IMW',null,null,null,null], null, null
+    ['EIB','EIB','EIB','ADE','ADE'], null, null, null,
+    ['EIB','EIB','ADE','ADE','ADE'], ['ADD','ADD','ADD','SGY','SGY'], ['ADD','ADD','SGY','SGY','SGY'], ['ADD','ADD','ADD','SGY','SGY'],
+    ['ADD','ADD','SGY','SGY','SGY'], ['ADD','ADD','ADD','SGY','SGY'], null, ['ADD','ADD','SGY','SGY','SGY'],
+    ['IPW','IPW','SGY','SGY','SGY'], ['IPW','IPW','ADD','ADD','ADD'], null, ['IPW','IPW','ADD','ADD','ADD'],
+    ['IPW','IPW','ADD','ADD','ADD'], ['IPW','IPW','ADD','ADD','SGY'], ['IPW','IPW','SGY','SGY','SGY'], ['IPW','IPW','SGY','SGY','SGY'],
+    ['SOJ','SOJ','SOJ','SGY',null], ['SOJ','SOJ',null,null,null], ['CC3','CC3','CC3',null,null], ['CC3','CC3','CC3',null,null],
+    ['CC3','CC3',null,null,null], ['CC3','CC3',null,null,null], ['IMW',null,null,null,null]
   ];
 
   const SCHEDULE_B = [
     ['SRD','SRD','SRD','IMW','IMW'], ['SRD','SRD','IMW','IMW','IMW'], ['SRD','SRD','SRD','IMW','IMW'], ['SRD','SRD','IMW','IMW','IMW'],
-    ['SRD','SRD','SRD','IMW','IMW'], ['SRD','SRD','IMW','IMW','IMW'], ['SRD','SRD','SRD','IMW','IMW'], ['SRD','SRD','SRD','EIB','EIB'],
-    ['SRD','SRD','EIB','EIB','EIB'], ['SRD','SRD','ADE','EIB','EIB'], ['SRD','ADE','EIB','EIB','EIB'], ['ADE','ADE','ADE','EIB','EIB'],
-    ['ADE','ADE','ADE','EIB','EIB'], null, null, null, ['ADE','ADE','SGY','EIB','EIB'], ['ADE','SGY','SGY','ADD','ADD'],
-    ['SGY','SGY','ADD','ADD','ADD'], ['SGY','SGY','SGY','ADD','ADD'], ['SGY','SGY','ADD','ADD','ADD'], ['SGY','SGY','SGY','ADD','ADD'],
-    ['SGY','SGY','ADD','ADD','ADD'], ['ADD','SGY','ADD','IPW','IPW'], ['SGY','SGY','SGY','IPW','IPW'], ['SGY','SGY','SGY','IPW','IPW'],
-    ['SGY','SGY','SGY','IPW','IPW'], ['ADD','ADD','ADD','IPW','IPW'], ['ADD','ADD','ADD','IPW','IPW'], ['ADD','ADD','ADD','IPW','IPW'],
-    [null,null,'SOJ','SOJ','SOJ'], [null,null,null,'SOJ','SOJ'], [null,null,null,'CC3','CC3'], [null,null,null,'CC3','CC3'],
-    [null,null,'CC3','CC3','CC3'], [null,null,'CC3','CC3','CC3'], null, null, [null,null,'IMW',null,null]
+    ['SRD','SRD','SRD','IMW','IMW'], ['SRD','SRD','IMW','IMW','IMW'], ['SRD','SRD','SRD','IMW','IMW'], ['SRD','SRD','IMW','IMW','IMW'],
+    ['SRD','SRD','SRD','EIB','EIB'], ['SRD','SRD','EIB','EIB','EIB'], ['SRD','ADE','ADE','EIB','EIB'], ['ADE','ADE','EIB','EIB','EIB'],
+    ['ADE','ADE','ADE','EIB','EIB'], null, null, null,
+    ['ADE','ADE','SGY','EIB','EIB'], ['ADE','SGY','SGY','ADD','ADD'], ['SGY','SGY','ADD','ADD','ADD'], ['SGY','SGY','SGY','ADD','ADD'],
+    ['SGY','SGY','ADD','ADD','ADD'], ['SGY','SGY','SGY','ADD','ADD'], null, ['SGY','SGY','ADD','ADD','ADD'],
+    ['ADD','ADD','ADD','IPW','IPW'], ['SGY','SGY','SGY','IPW','IPW'], null, ['SGY','SGY','SGY','IPW','IPW'],
+    ['SGY','SGY','SGY','IPW','IPW'], ['SGY','SGY',null,'IPW','IPW'], ['ADD','ADD','ADD','IPW','IPW'], ['ADD','ADD','ADD','IPW','IPW'],
+    ['ADD','ADD',null,'SOJ','SOJ'], [null,null,'SOJ','SOJ','SOJ'], [null,null,null,'CC3','CC3'], [null,null,null,'CC3','CC3'],
+    [null,null,'CC3','CC3','CC3'], [null,null,'CC3','CC3','CC3'], [null,'IMW',null,null,null]
   ];
 
   const MONTHS_DATA = [
@@ -1087,7 +1089,7 @@
   // --- 5. TRIMESTRE ---
   // Fechas del tramo elegido en "Trimestre"
   function matrixRange() {
-    const bounds = { 1: ['23 Sep', '13 Ene'], 2: ['20 Ene', '14 Abr'], 3: ['21 Abr', '2 Jun'] }[currentMatrixSubTab] || [];
+    const bounds = { 1: ['23 Sep', '13 Ene'], 2: ['20 Ene', '14 Abr'], 3: ['21 Abr', '16 Jun'] }[currentMatrixSubTab] || [];
     let startIdx = CALENDAR_DATES.findIndex(d => d.date === bounds[0]);
     let endIdx = CALENDAR_DATES.findIndex(d => d.date === bounds[1]);
     if (startIdx === -1) startIdx = 0;
