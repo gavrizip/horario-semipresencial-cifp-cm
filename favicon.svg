@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="24 24 60 60">
+  <!-- Mismo dibujo que el icono de la app de Android (android/res/drawable/ic_launcher_fg.xml) -->
+  <rect x="24" y="24" width="60" height="60" rx="14" fill="#1c1512"/>
+  <g fill="none" stroke="#e7a94d" stroke-linecap="round" stroke-linejoin="round">
+    <path stroke-width="3.5" d="M38,40 h32 a5,5 0 0 1 5,5 v24 a5,5 0 0 1 -5,5 h-32 a5,5 0 0 1 -5,-5 v-24 a5,5 0 0 1 5,-5 z"/>
+    <path stroke-width="3.5" d="M44,35 v9 M64,35 v9"/>
+    <path stroke-width="3" stroke-linecap="butt" d="M33,51 h42"/>
+  </g>
+  <path fill="#e7a94d" d="M58,57 h8 v8 h-8 z"/>
+  <path fill="#8a6a45" d="M42,57 h8 v8 h-8 z"/>
+</svg>

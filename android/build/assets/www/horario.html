@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="dark light">
+  <meta name="theme-color" content="#1c1512">
+  <title>Horario 2º ASIR</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <script>
+    // Tema antes del primer pintado: preferencia guardada o la del sistema.
+    (function () {
+      let theme = null;
+      try { theme = localStorage.getItem('horario_theme'); } catch (e) {}
+      if (theme !== 'light' && theme !== 'dark') theme = matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+      document.documentElement.dataset.theme = theme;
+      document.querySelector('meta[name="theme-color"]').content = theme === 'light' ? '#e6d7bd' : '#1c1512';
+      if (window.AndroidApp) {
+        AndroidApp.setTheme(theme);
+        document.documentElement.classList.add('is-app');
+      }
+    })();
+    // La entrada solo se reproduce al abrir la página; si el script falla, todo queda visible.
+    if (!matchMedia('(prefers-reduced-motion: reduce)').matches) document.documentElement.classList.add('is-intro');
+  </script>
+  <link rel="stylesheet" href="css/fonts.css">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<svg class="icon-sprite" aria-hidden="true">
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4.5 7h15M4.5 12h15M4.5 17h15"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+  <symbol id="i-left" viewBox="0 0 24 24"><path d="m14.5 6-6 6 6 6"/></symbol>
+  <symbol id="i-right" viewBox="0 0 24 24"><path d="m9.5 6 6 6-6 6"/></symbol>
+  <symbol id="i-exam" viewBox="0 0 24 24"><path d="M6 3.5h7l5 5V20a.5.5 0 0 1-.5.5h-11A.5.5 0 0 1 6 20Z"/><path d="M12.5 3.5V9h5.5"/><path d="m9 14.5 2 2 4-4.5"/></symbol>
+  <symbol id="i-task" viewBox="0 0 24 24"><rect x="5" y="4.5" width="14" height="16" rx="2"/><path d="M9 3v3h6V3"/><path d="M9 11h6M9 15h4"/></symbol>
+  <symbol id="i-note" viewBox="0 0 24 24"><path d="M5 5.5A1.5 1.5 0 0 1 6.5 4h11A1.5 1.5 0 0 1 19 5.5V14l-5 6H6.5A1.5 1.5 0 0 1 5 18.5Z"/><path d="M19 14h-3.5a1.5 1.5 0 0 0-1.5 1.5V20"/><path d="M8.5 9h7M8.5 12.5h4"/></symbol>
+  <symbol id="i-absence" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="m9 9 6 6M15 9l-6 6"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M4.6 4.6l1.4 1.4M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4 6 18M18 6l1.4-1.4"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5.5"/><path d="M12 7.6v.1" stroke-width="2.4"/></symbol>
+  <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="4" y="5.5" width="16" height="14.5" rx="2"/><path d="M8.5 3.5v4M15.5 3.5v4M4 10.5h16"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z"/></symbol>
+</svg>
+
+<div class="app">
+
+  <!-- BARRA DE PRUEBAS de la clase en curso: simula la hora en el próximo día de clase.
+       Para quitarla, borra este bloque (y su CSS «Barra de pruebas»). -->
+  <div class="sim-bar" role="group" aria-label="Pruebas de la clase en curso">
+    <span class="sim-label">Pruebas</span>
+    <div class="sim-btns">
+      <button type="button" class="sim-btn" onclick="simulateAt('18:00', this)">Antes de clase</button>
+      <button type="button" class="sim-btn" onclick="simulateAt('19:31', this)">En clase</button>
+      <button type="button" class="sim-btn" onclick="simulateAt('20:49:50', this)">Fin de hora → descanso</button>
+      <button type="button" class="sim-btn" onclick="simulateAt('20:55', this)">Descanso</button>
+      <button type="button" class="sim-btn" onclick="simulateAt('22:44:50', this)">Fin del día → fuegos</button>
+      <button type="button" class="sim-btn" onclick="simulateAt('22:50', this)">Día completado</button>
+      <button type="button" class="sim-btn" onclick="simulateAt('23:58:50', this)">23:59 → desaparece</button>
+      <button type="button" class="sim-btn is-active" onclick="simulateAt(null, this)">Hora real</button>
+    </div>
+    <span class="sim-clock mono" id="simClock"></span>
+  </div>
+
+  <header class="topbar intro-1">
+    <nav class="tabs" aria-label="Vistas">
+      <button class="tab is-active" id="tabGrid" onclick="switchTab('grid')">Trimestre</button>
+      <button class="tab" id="tabMonthly" onclick="switchTab('monthly')">Mes</button>
+      <button class="tab" id="tabWeekly" onclick="switchTab('weekly')">Día</button>
+      <button class="tab" id="tabModules" onclick="switchTab('modules')">Módulos</button>
+      <span class="tab-indicator" aria-hidden="true"></span>
+    </nav>
+
+    <button class="icon-btn menu-btn" id="menuBtn" onclick="openMenu()" aria-label="Abrir menú" title="Menú" aria-haspopup="dialog" aria-controls="menuDrawer">
+      <svg class="icon"><use href="#i-menu"/></svg>
+    </button>
+  </header>
+
+  <div class="layout">
+
+    <main class="views">
+
+      <!-- TRIMESTRE -->
+      <section id="viewGrid" class="view is-shown">
+        <div class="grid-toolbar intro-2">
+          <div class="segmented segmented-wide" role="group" aria-label="Tramo del curso" data-active="1">
+            <span class="segmented-thumb" aria-hidden="true"></span>
+            <button class="segmented-btn is-active" id="subTab1" onclick="switchMatrixSubTab(1)">23 sep – 13 ene</button>
+            <button class="segmented-btn" id="subTab2" onclick="switchMatrixSubTab(2)">20 ene – 14 abr</button>
+            <button class="segmented-btn" id="subTab3" onclick="switchMatrixSubTab(3)">21 abr – 2 jun</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table id="matrixTable"></table>
+        </div>
+        <div class="live" id="liveClass" hidden></div>
+      </section>
+
+      <!-- MES -->
+      <section id="viewMonthly" class="view">
+        <div class="month-layout">
+          <div class="month-list intro-2" id="monthList" aria-label="Meses lectivos"></div>
+
+          <div class="month-panel">
+            <div class="month-head intro-2">
+              <h2 id="monthTitleDisplay">Septiembre 2026</h2>
+              <div class="month-nav">
+                <button class="btn btn-ghost" onclick="goToToday()">Hoy</button>
+                <button class="icon-btn" onclick="stepMonth(-1)" aria-label="Mes anterior"><svg class="icon"><use href="#i-left"/></svg></button>
+                <button class="icon-btn" onclick="stepMonth(1)" aria-label="Mes siguiente"><svg class="icon"><use href="#i-right"/></svg></button>
+              </div>
+            </div>
+            <div class="month-grid" id="monthGrid"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- DÍA -->
+      <section id="viewWeekly" class="view">
+        <div class="day-layout">
+          <div class="date-list" id="dateList" aria-label="Miércoles lectivos"></div>
+
+          <div class="day-panel">
+            <div class="day-head">
+              <div>
+                <h2 id="selectedDateTitle">23 de septiembre</h2>
+                <p class="day-sub" id="selectedWeekTitle">Semana 1 de 34</p>
+              </div>
+              <span class="group-tag" id="groupBadge">Grupo A</span>
+            </div>
+            <div class="day-events" id="dayEvents"></div>
+            <ol class="timeline" id="timelineContainer"></ol>
+          </div>
+        </div>
+      </section>
+
+      <!-- MÓDULOS -->
+      <section id="viewModules" class="view">
+        <div class="modules-head">
+          <h2>Módulos y docentes</h2>
+        </div>
+        <div class="modules-list" id="modulesGridList"></div>
+      </section>
+
+    </main>
+
+    <aside class="sidebar intro-3">
+      <section class="panel">
+        <div class="panel-head">
+          <h3>Asistencia</h3>
+        </div>
+        <div id="attendanceBarsContainer" class="attendance"></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h3>Registros</h3>
+        </div>
+        <div class="record-filters" role="group" aria-label="Filtrar registros">
+          <button type="button" class="record-filter" data-type="exam" aria-pressed="false" onclick="setRecordFilter('exam')"><svg class="icon"><use href="#i-exam"/></svg>Exámenes</button>
+          <button type="button" class="record-filter" data-type="task" aria-pressed="false" onclick="setRecordFilter('task')"><svg class="icon"><use href="#i-task"/></svg>Tareas</button>
+          <button type="button" class="record-filter" data-type="note" aria-pressed="false" onclick="setRecordFilter('note')"><svg class="icon"><use href="#i-note"/></svg>Notas</button>
+        </div>
+        <ul class="records" id="sidebarNotesList"></ul>
+      </section>
+    </aside>
+
+  </div>
+</div>
+
+<dialog class="dialog" id="eventModal" aria-labelledby="dialogTitle">
+  <form id="eventForm" method="dialog" onsubmit="saveCustomEvent(event)" novalidate>
+    <div class="dialog-head">
+      <h3 id="dialogTitle">Nuevo registro</h3>
+      <button type="button" class="icon-btn" onclick="closeAddModal()" aria-label="Cerrar"><svg class="icon"><use href="#i-x"/></svg></button>
+    </div>
+
+    <fieldset class="field">
+      <legend class="field-label">Tipo</legend>
+      <div class="type-picker">
+        <label class="type-option" data-type="absence"><input type="radio" name="eventType" value="absence" checked><span>Falta</span></label>
+        <label class="type-option" data-type="exam"><input type="radio" name="eventType" value="exam"><span>Examen</span></label>
+        <label class="type-option" data-type="note"><input type="radio" name="eventType" value="note"><span>Nota</span></label>
+      </div>
+      <p class="field-help" id="typeHelp">Una falta sin módulo cuenta en todas las horas de ese día.</p>
+    </fieldset>
+
+    <div class="field-row">
+      <div class="field">
+        <label class="field-label" for="modalDateSelect">Miércoles</label>
+        <select id="modalDateSelect" onchange="updateModalModuleOptions()"></select>
+      </div>
+      <div class="field">
+        <label class="field-label" for="modalModuleSelect">Módulo</label>
+        <select id="modalModuleSelect"></select>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="field-label" for="modalEventText">Descripción</label>
+      <textarea id="modalEventText" rows="3" placeholder="Ej.: cita médica, parcial del tema 3…" aria-describedby="textError"></textarea>
+      <p class="field-error" id="textError" hidden>Escribe una descripción para guardar el registro.</p>
+    </div>
+
+    <div class="dialog-actions">
+      <button type="button" class="btn btn-ghost" onclick="closeAddModal()">Cancelar</button>
+      <button type="submit" class="btn btn-primary">Guardar</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="drawer" id="menuDrawer" aria-labelledby="menuTitle">
+  <div class="dialog-head">
+    <h3 id="menuTitle">Menú</h3>
+    <button type="button" class="icon-btn" onclick="closeMenu()" aria-label="Cerrar menú"><svg class="icon"><use href="#i-x"/></svg></button>
+  </div>
+
+  <section class="drawer-section">
+    <h4 class="drawer-label" id="groupLabel">Grupo</h4>
+    <div class="segmented" role="group" aria-labelledby="groupLabel" data-active="A">
+      <span class="segmented-thumb" aria-hidden="true"></span>
+      <button class="segmented-btn is-active" id="btnGroupA" onclick="switchGroup('A')" aria-pressed="true">Grupo A</button>
+      <button class="segmented-btn" id="btnGroupB" onclick="switchGroup('B')" aria-pressed="false">Grupo B</button>
+    </div>
+  </section>
+
+  <section class="drawer-section">
+    <h4 class="drawer-label" id="themeLabel">Tema</h4>
+    <div class="segmented" id="themeSwitch" role="group" aria-labelledby="themeLabel" data-active="dark">
+      <span class="segmented-thumb" aria-hidden="true"></span>
+      <button class="segmented-btn" id="btnThemeDark" onclick="setTheme('dark', this)"><svg class="icon"><use href="#i-moon"/></svg>Noche</button>
+      <button class="segmented-btn" id="btnThemeLight" onclick="setTheme('light', this)"><svg class="icon"><use href="#i-sun"/></svg>Día</button>
+    </div>
+    <p class="field-help">Se guarda y se usa cada vez que abras la aplicación.</p>
+  </section>
+
+  <section class="drawer-section">
+    <h4 class="drawer-label"><svg class="icon"><use href="#i-info"/></svg>Cómo se usa</h4>
+    <ul class="help-list">
+      <li><span class="help-ic is-absence"><svg class="icon"><use href="#i-absence"/></svg></span>
+        <span><strong><span class="hint-mouse">Clic</span><span class="hint-touch">Toca</span> en una asignatura</strong> para marcar o quitar la falta de esa hora.</span></li>
+      <li><span class="help-ic is-day"><svg class="icon"><use href="#i-calendar"/></svg></span>
+        <span><strong><span class="hint-mouse">Clic</span><span class="hint-touch">Toca</span> en una fecha</strong> de la cabecera para marcar o quitar la falta del día entero.</span></li>
+      <li><span class="help-ic is-exam"><svg class="icon"><use href="#i-exam"/></svg></span>
+        <span><strong><span class="hint-mouse">Clic derecho</span><span class="hint-touch">Mantén pulsada</span> una asignatura</strong> para añadir un examen, una tarea o una nota. También funciona en las fechas, en los días del mes y en las clases de la vista Día.</span></li>
+      <li><span class="help-ic is-dot"><span class="help-dot"></span></span>
+        <span>El <strong>punto amarillo</strong> indica que esa hora tiene registros. <span class="hint-mouse">Pasa el ratón por encima</span><span class="hint-touch">Mantenla pulsada</span> para verlos.</span></li>
+    </ul>
+  </section>
+</dialog>
+<div class="ctx-menu" id="ctxMenu" role="menu" hidden></div>
+<div class="chip-tip" id="chipTip" role="tooltip" hidden></div>
+
+<dialog class="dialog" id="slotDialog" aria-labelledby="slotDialogTitle">
+  <form id="slotForm" method="dialog" onsubmit="saveSlotRecord(event)" novalidate>
+    <div class="dialog-head">
+      <div class="slot-dialog-title">
+        <span class="slot-dialog-kind" id="slotDialogKind" aria-hidden="true"></span>
+        <div>
+          <h3 id="slotDialogTitle">Examen</h3>
+          <p class="slot-dialog-meta" id="slotDialogMeta"></p>
+        </div>
+      </div>
+      <button type="button" class="icon-btn" onclick="closeSlotDialog()" aria-label="Cerrar"><svg class="icon"><use href="#i-x"/></svg></button>
+    </div>
+
+    <!-- EXAMEN -->
+    <div class="kind-fields" data-kind="exam">
+      <div class="field">
+        <label class="field-label" for="examTopics">Temas que entran</label>
+        <textarea id="examTopics" rows="3" placeholder="Ej.: temas 1 a 3, prácticas de VLAN y subredes"></textarea>
+        <p class="field-error" data-error="examTopics" hidden>Indica qué temas entran en el examen.</p>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label class="field-label" for="examWeight">Peso en la nota final</label>
+          <div class="input-suffix"><input type="number" id="examWeight" min="0" max="100" step="1" inputmode="decimal" placeholder="30"><span>%</span></div>
+          <p class="field-error" data-error="examWeight" hidden>Entre 0 y 100.</p>
+        </div>
+        <div class="field">
+          <label class="field-label" for="examGrade">Nota obtenida</label>
+          <div class="input-suffix"><input type="number" id="examGrade" min="0" max="10" step="0.01" inputmode="decimal" placeholder="—"><span>/ 10</span></div>
+          <p class="field-help">Déjala vacía hasta que la sepas.</p>
+          <p class="field-error" data-error="examGrade" hidden>Entre 0 y 10.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAREA -->
+    <div class="kind-fields" data-kind="task">
+      <div class="field">
+        <label class="field-label" for="taskTitle">Título</label>
+        <input type="text" id="taskTitle" placeholder="Ej.: Práctica 2 · servidor DNS" autocomplete="off">
+        <p class="field-error" data-error="taskTitle" hidden>Ponle un título a la tarea.</p>
+      </div>
+      <div class="field">
+        <label class="field-label" for="taskDesc" data-class="Qué hay que entregar" data-personal="Detalles">Qué hay que entregar</label>
+        <textarea id="taskDesc" rows="3" placeholder="Enunciado, formato, dónde se sube…"></textarea>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label class="field-label" for="taskWeight">Peso en la nota final</label>
+          <div class="input-suffix"><input type="number" id="taskWeight" min="0" max="100" step="1" inputmode="decimal" placeholder="10"><span>%</span></div>
+          <p class="field-error" data-error="taskWeight" hidden>Entre 0 y 100.</p>
+        </div>
+        <div class="field">
+          <label class="field-label" for="taskGrade">Nota obtenida</label>
+          <div class="input-suffix"><input type="number" id="taskGrade" min="0" max="10" step="0.01" inputmode="decimal" placeholder="—"><span>/ 10</span></div>
+          <p class="field-error" data-error="taskGrade" hidden>Entre 0 y 10.</p>
+        </div>
+      </div>
+      <fieldset class="field">
+        <legend class="field-label">Estado</legend>
+        <div class="type-picker two">
+          <label class="type-option" data-type="pending"><input type="radio" name="taskStatus" value="pending" checked><span>Pendiente</span></label>
+          <label class="type-option" data-type="done"><input type="radio" name="taskStatus" value="done"><span data-class="Entregada" data-personal="Hecha">Entregada</span></label>
+        </div>
+      </fieldset>
+    </div>
+
+    <!-- AVISO (solo examen y tarea, solo en la app de Android) -->
+    <fieldset class="field notify-fields">
+      <legend class="field-label">¿Notificar?</legend>
+      <div class="type-picker two">
+        <label class="type-option" data-type="yes"><input type="radio" name="notify" value="yes" checked><span>Sí</span></label>
+        <label class="type-option" data-type="no"><input type="radio" name="notify" value="no"><span>No</span></label>
+      </div>
+      <div class="notify-days" role="group" aria-labelledby="notifyDaysLabel">
+        <p class="field-help" id="notifyDaysLabel">Avisar estos días antes (puedes marcar varios):</p>
+        <div class="day-chips">
+          <label class="day-chip"><input type="checkbox" name="notifyDays" value="1"><span>1</span></label>
+          <label class="day-chip"><input type="checkbox" name="notifyDays" value="2"><span>2</span></label>
+          <label class="day-chip"><input type="checkbox" name="notifyDays" value="3" checked><span>3</span></label>
+          <label class="day-chip"><input type="checkbox" name="notifyDays" value="5"><span>5</span></label>
+          <label class="day-chip"><input type="checkbox" name="notifyDays" value="7"><span>7</span></label>
+          <label class="day-chip"><input type="checkbox" name="notifyDays" value="14"><span>14</span></label>
+        </div>
+        <p class="field-error" data-error="notifyDays" hidden>Marca al menos un día, o elige «No».</p>
+      </div>
+    </fieldset>
+
+    <!-- NOTA -->
+    <div class="kind-fields" data-kind="note">
+      <div class="field">
+        <label class="field-label" for="noteText">Nota</label>
+        <textarea id="noteText" rows="4" placeholder="Lo que quieras recordar de esta hora"></textarea>
+        <p class="field-error" data-error="noteText" hidden>Escribe la nota para guardarla.</p>
+      </div>
+    </div>
+
+    <div class="dialog-actions">
+      <button type="button" class="btn btn-danger" id="slotDelete" onclick="deleteSlotRecord()" hidden>Eliminar</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn btn-ghost" onclick="closeSlotDialog()">Cancelar</button>
+      <button type="submit" class="btn btn-primary">Guardar</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite">
+  <span id="toastText"></span>
+  <button type="button" class="toast-undo" id="toastUndo">Deshacer</button>
+</div>
+
+<script src="js/script.js"></script>
+</body>
+</html>

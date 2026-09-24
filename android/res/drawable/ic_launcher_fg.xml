@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Calendario ámbar: 108dp con la zona segura de 66dp centrada -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <!-- Cuerpo -->
+    <path android:strokeColor="#e7a94d" android:strokeWidth="3.5" android:fillColor="#00000000"
+        android:strokeLineJoin="round"
+        android:pathData="M38,40 h32 a5,5 0 0 1 5,5 v24 a5,5 0 0 1 -5,5 h-32 a5,5 0 0 1 -5,-5 v-24 a5,5 0 0 1 5,-5 z" />
+    <!-- Anillas -->
+    <path android:strokeColor="#e7a94d" android:strokeWidth="3.5" android:strokeLineCap="round"
+        android:pathData="M44,35 v9 M64,35 v9" />
+    <!-- Línea de cabecera -->
+    <path android:strokeColor="#e7a94d" android:strokeWidth="3" android:pathData="M33,51 h42" />
+    <!-- Días: uno resaltado -->
+    <path android:fillColor="#e7a94d" android:pathData="M58,57 h8 v8 h-8 z" />
+    <path android:fillColor="#8a6a45" android:pathData="M42,57 h8 v8 h-8 z" />
+</vector>
