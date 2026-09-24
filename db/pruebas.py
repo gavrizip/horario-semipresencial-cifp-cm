@@ -72,19 +72,20 @@ ok('sin claves ajenas rotas', bd.execute('PRAGMA foreign_key_check').fetchall() 
 horas = dict(((g, m), h) for g, m, h in bd.execute(
     """SELECT g.nombre, m.codigo, h.horas FROM v_horas_modulo h
        JOIN grupo g ON g.id = h.grupo_id JOIN modulo m ON m.id = h.modulo_id"""))
-# Mismas horas que muestra la app («Módulos» y Asistencia)
-esperadas = {('A', 'SOJ'): 5, ('A', 'IMW'): 21, ('A', 'SRD'): 26, ('B', 'IMW'): 18, ('B', 'ADE'): 11}
-ok('horas por módulo iguales que en la app', all(horas.get(k) == v for k, v in esperadas.items()),
-   str({k: horas.get(k) for k in esperadas}))
-conjuntas = uno(bd, 'SELECT count(*) FROM (SELECT sesion_id FROM sesion_grupo GROUP BY sesion_id HAVING count(*) > 1)')[0]
-ok('4 clases conjuntas A+B', conjuntas == 4, str(conjuntas))
+# Horas presenciales del PDF oficial del curso (2ASIR-SEMI-1), iguales en los dos grupos
+pdf = {'ADD': 26, 'ADE': 10, 'CC3': 10, 'EIB': 14, 'IMW': 21, 'IPW': 14, 'SGY': 26, 'SOJ': 5, 'SRD': 26}
+esperadas = {(g, m): h for g in 'AB' for m, h in pdf.items()}
+ok('horas por módulo iguales que en el PDF', horas == esperadas,
+   str({k: (horas.get(k), v) for k, v in esperadas.items() if horas.get(k) != v}))
+por_confirmar = uno(bd, "SELECT count(*) FROM sesion s JOIN modulo m ON m.id = s.modulo_id WHERE s.aula_id IS NULL AND m.codigo NOT IN ('IPW', 'TUO')")[0]
+ok('3 clases con el aula por confirmar (Aula 235 ocupada por el otro grupo)', por_confirmar == 3, str(por_confirmar))
 
 print('— Asistencia (mismo cálculo que la app)')
 ok('SOJ al 100 % sin faltas', asistencia(bd, 'v_asistencia', ALUMNO_A, 'SOJ') == (5, 0, 100, 1, 'ok'),
    str(asistencia(bd, 'v_asistencia', ALUMNO_A, 'SOJ')))
-soj = sesion(bd, 'A', '2027-04-14', 'SOJ')
+soj = sesion(bd, 'A', '2027-05-05', 'SOJ')
 bd.execute('INSERT INTO falta (sesion_id, alumno_id, registrada_por) VALUES (?, ?, ?)', (soj, ALUMNO_A, JEFATURA))
-ok('falta en la única SOJ del 2.º trimestre: 80 % del curso, sin margen',
+ok('una falta en SOJ (5 h en el curso): 80 %, sin margen',
    asistencia(bd, 'v_asistencia', ALUMNO_A, 'SOJ') == (5, 1, 80, 0, 'aviso'),
    str(asistencia(bd, 'v_asistencia', ALUMNO_A, 'SOJ')))
 imw = sesion(bd, 'A', '2026-09-23', 'IMW')
@@ -98,13 +99,13 @@ dif = bd.execute('SELECT sesion_id, diferencia FROM v_faltas_discrepancias WHERE
 ok('discrepancias personal / oficial', dif == sorted([(imw, 'solo en el registro personal'), (soj, 'solo en el registro oficial')]), str(dif))
 periodo = uno(bd, """SELECT v.periodo, v.injustificadas FROM v_faltas_periodo v JOIN modulo m ON m.id = v.modulo_id
                      WHERE v.alumno_id = ? AND m.codigo = 'SOJ'""", (ALUMNO_A,))
-ok('la falta del 14 abr cae en el 2.º trimestre', periodo == ('2.º trimestre', 1), str(periodo))
+ok('la falta del 5 may cae en el 3.er trimestre', periodo == ('3.er trimestre', 1), str(periodo))
 
 print('— Justificaciones')
 bd.execute("""INSERT INTO solicitud_justificacion (id, alumno_id, desde, hasta, motivo)
-              VALUES (1, ?, '2027-04-14', '2027-04-14', 'Cita médica')""", (ALUMNO_A,))
+              VALUES (1, ?, '2027-05-05', '2027-05-05', 'Cita médica')""", (ALUMNO_A,))
 bd.execute("""UPDATE solicitud_justificacion SET estado = 'aprobada', resuelta_por = ?,
-              resuelta_en = '2027-04-15T10:00:00Z' WHERE id = 1""", (JEFATURA,))
+              resuelta_en = '2027-05-06T10:00:00Z' WHERE id = 1""", (JEFATURA,))
 ok('aprobar la solicitud justifica la falta',
    uno(bd, 'SELECT tipo FROM falta WHERE sesion_id = ? AND alumno_id = ?', (soj, ALUMNO_A))[0] == 'justificada')
 ok('con «cuenta_justificadas» sigue contando', asistencia(bd, 'v_asistencia', ALUMNO_A, 'SOJ')[2] == 80)
@@ -146,9 +147,14 @@ rechaza('falta de un alumno que no es del grupo', bd,
         'INSERT INTO falta (sesion_id, alumno_id) VALUES (?, ?)', (soj, ALUMNO_B), contiene='matriculado')
 rechaza('dos faltas en la misma sesión', bd,
         'INSERT INTO falta (sesion_id, alumno_id) VALUES (?, ?)', (soj, ALUMNO_A), contiene='UNIQUE')
-conjunta = uno(bd, 'SELECT sesion_id FROM sesion_grupo GROUP BY sesion_id HAVING count(*) > 1 LIMIT 1')[0]
-bd.execute('INSERT INTO falta (sesion_id, alumno_id) VALUES (?, ?)', (conjunta, ALUMNO_B))
-ok('falta de B en una clase conjunta A+B', True)
+# Clase conjunta A+B: el 16 jun ninguno de los dos grupos tiene la 3.ª hora
+bd.execute("""INSERT INTO sesion (id, fecha, franja_id, modulo_id, profesor_id)
+              VALUES (9998, '2027-06-16', 3, (SELECT id FROM modulo WHERE codigo = 'CC3'),
+                      (SELECT profesor_id FROM imparticion i JOIN modulo m ON m.id = i.modulo_id WHERE m.codigo = 'CC3' LIMIT 1))""")
+bd.executemany('INSERT INTO sesion_grupo (sesion_id, grupo_id) VALUES (9998, ?)', [(1,), (2,)])
+ok('clase conjunta A+B', uno(bd, 'SELECT count(*) FROM sesion_grupo WHERE sesion_id = 9998')[0] == 2)
+bd.execute('INSERT INTO falta (sesion_id, alumno_id) VALUES (9998, ?)', (ALUMNO_B,))
+ok('falta de B en la clase conjunta A+B', True)
 
 print('— Registros personales y avisos')
 rechaza('registro de una hora con otra fecha', bd,

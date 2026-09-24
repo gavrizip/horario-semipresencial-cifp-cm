@@ -8,7 +8,7 @@ Base de datos para gestionar usuarios, clases y asistencia de **todo el centro**
 | `db/views.sql` | Horario, horas por módulo, asistencia oficial y personal, faltas por trimestre, discrepancias |
 | `db/seed_2asir.sql` | Datos de 2.º ASIR (grupos A y B). **Generado**, no se edita a mano |
 | `db/generar_seed.js` | Genera el seed a partir de `js/script.js`: `node db/generar_seed.js` |
-| `db/pruebas.py` | 30 pruebas sobre una copia en memoria: `python3 db/pruebas.py` |
+| `db/pruebas.py` | 31 pruebas sobre una copia en memoria: `python3 db/pruebas.py` |
 
 Crear la base de datos (con el cliente `sqlite3` o desde cualquier lenguaje):
 
@@ -25,7 +25,7 @@ sqlite3 cifp.db < db/seed_2asir.sql
   - `falta_personal` es el seguimiento del **alumno** (lo que hace hoy la app). Nunca cuenta como oficial.
   - `v_faltas_discrepancias` muestra en qué se diferencian.
 - **Horario por sesiones reales.** En 2.º ASIR el horario cambia de un miércoles a otro, así que cada clase es una fila de `sesion`. Para los grupos con horario semanal fijo existe `plantilla_horaria`, de la que la API puede generar las sesiones.
-- **Clases conjuntas.** Una sesión puede darse a varios grupos a la vez (`sesion_grupo`). En los datos actuales hay 4 clases de A y B juntos.
+- **Clases conjuntas.** Una sesión puede darse a varios grupos a la vez (`sesion_grupo`), para agrupamientos o desdobles. En el horario actual de 2.º ASIR A y B no comparten ninguna clase.
 - **Asistencia sobre el curso completo.** Se calcula igual que la app (`renderAttendanceBars()`): el trimestre solo sirve para filtrar.
   - Umbral y si cuentan las justificadas: tabla `configuracion`.
   - Faltas permitidas = parte entera de horas × 20 %.
@@ -173,9 +173,10 @@ Consultas tipo, con `:yo` como id del usuario autenticado:
 
 ## Incidencias detectadas en los datos actuales
 
-El generador encontró **2 choques de aula**. La app guarda un aula por módulo, no por clase, y en estas dos horas A y B tienen módulos distintos en el Aula 235 a la vez:
-- 25 nov, 20:00: SRD (A) y ADE (B).
+El generador encontró **3 choques de aula**. El horario oficial (`2ASIR-SEMI-1.pdf`) asigna un aula por módulo, no por clase, y en estas tres horas A y B tienen módulos distintos en el Aula 235 a la vez:
+- 2 dic, 20:00: SRD (A) y ADE (B).
 - 13 ene, 20:00: ADE (A) y SGY (B).
+- 5 may, 21:05: SGY (A) y SOJ (B).
 
 En el seed, la clase del grupo B queda **sin aula (por confirmar)**. Cuando se sepa el aula real, basta con un `UPDATE` de `sesion.aula_id`.
 

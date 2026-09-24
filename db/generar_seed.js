@@ -31,7 +31,7 @@ const warn = [];
 
 // ---------- Centro, curso y periodos ----------
 // Los trimestres son los tramos de la pestaña «Trimestre» de la app, extendidos para que
-// cada día del curso caiga en uno (23 sep–13 ene, 20 ene–14 abr, 21 abr–2 jun)
+// cada día del curso caiga en uno (23 sep–13 ene, 20 ene–14 abr, 21 abr–16 jun)
 out.push(insert('configuracion', ['id', 'nombre_centro', 'umbral_asistencia', 'cuenta_justificadas'],
   [[1, 'Centro Integrado de Formación Profesional', 80, 1]]));
 out.push(insert('curso_academico', ['id', 'nombre', 'inicio', 'fin'], [[1, '2026-27', '2026-09-01', '2027-06-30']]));
