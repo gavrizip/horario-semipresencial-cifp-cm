@@ -233,8 +233,8 @@
     <div class="segmented" id="themeSwitch" role="group" aria-labelledby="themeLabel" data-active="dark">
       <span class="segmented-thumb" aria-hidden="true"></span>
       <button class="segmented-btn" id="btnThemeDark" onclick="setTheme('dark', this)"><svg class="icon"><use href="#i-moon"/></svg>Noche</button>
-      <button class="segmented-btn" id="btnThemeLight" onclick="setTheme('light', this)"><svg class="icon"><use href="#i-sun"/></svg>Día</button>
-      <button class="segmented-btn" id="btnThemeRosa" onclick="setTheme('rosa', this)"><svg class="icon"><use href="#i-heart"/></svg>Rosa</button>
+      <!-- Mantenerlo pulsado 3 s activa el tema rosa (escondido); en rosa muestra un corazón -->
+      <button class="segmented-btn" id="btnThemeLight" onclick="setTheme('light', this)"><svg class="icon icon-sun"><use href="#i-sun"/></svg><svg class="icon icon-heart"><use href="#i-heart"/></svg>Día</button>
     </div>
     <p class="field-help">Se guarda y se usa cada vez que abras la aplicación.</p>
   </section>
@@ -249,7 +249,7 @@
       <li><span class="help-ic is-exam"><svg class="icon"><use href="#i-exam"/></svg></span>
         <span><strong><span class="hint-mouse">Clic derecho</span><span class="hint-touch">Mantén pulsada</span> una asignatura</strong> para añadir un examen, una tarea o una nota. También funciona en las fechas, en los días del mes y en las clases de la vista Día.</span></li>
       <li><span class="help-ic is-dot"><span class="help-dot"></span></span>
-        <span>El <strong>punto amarillo</strong> indica que esa hora tiene registros. <span class="hint-mouse">Pasa el ratón por encima</span><span class="hint-touch">Mantenla pulsada</span> para verlos.</span></li>
+        <span>El <strong><span class="hint-dot">punto amarillo</span><span class="hint-bow">lacito rosa</span></strong> indica que esa hora tiene registros. <span class="hint-mouse">Pasa el ratón por encima</span><span class="hint-touch">Mantenla pulsada</span> para verlos.</span></li>
     </ul>
   </section>
 </dialog>
