@@ -1489,14 +1489,15 @@ tr.break-row td:first-child { background: var(--inset); padding-left: 8px; paddi
 :root[data-theme="rosa"] .hint-bow { display: inline; }
 :root[data-theme="rosa"] .help-ic.is-dot { --c: #ff1b82; }
 :root[data-theme="rosa"] :is(.chip-dot, .day-dot, .help-dot) {
-  width: 15px; height: 10px;
+  width: 22px; height: 15px;
   border-radius: 0; box-shadow: none;
   background: #ff1b82;
   -webkit-mask: var(--bow) center / contain no-repeat;
   mask: var(--bow) center / contain no-repeat;
   --bow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 16'%3E%3Cpath d='M12 7.5C9 2.5 3.2.6 1.6 3.4.3 6 2.5 10 12 8.3zM12 7.5c3-5 8.8-6.9 10.4-4.1 1.3 2.6-.9 6.6-10.4 4.9zM10.6 9 7.4 15.4l2.7-.8L12 10zM13.4 9l3.2 6.4-2.7-.8L12 10z'/%3E%3Ccircle cx='12' cy='8' r='2.3'/%3E%3C/svg%3E");
 }
-:root[data-theme="rosa"] .chip-dot { margin: -1px -3px 0 0; transform-origin: 50% 60%; animation: bow-sway 2.8s ease-in-out infinite; }
+:root[data-theme="rosa"] .chip-dot { margin: -5px -8px 0 0; transform-origin: 50% 60%; animation: bow-sway 2.8s ease-in-out infinite; }
+:root[data-theme="rosa"] .day-dot { top: -1px; right: -24px; }
 :root[data-theme="rosa"] .chip-dot::after { display: none; }
 :root[data-theme="rosa"] :is(.chip-dot, .day-dot).is-done { background: var(--done); animation: none; }
 @keyframes bow-sway { 0%, 100% { transform: rotate(-9deg); } 50% { transform: rotate(9deg); } }
