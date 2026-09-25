@@ -160,6 +160,9 @@
 }
 
 :root {
+  /* Lacito del tema rosa (máscara): marcas de registros y entrada al modo */
+  --bow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 16'%3E%3Cpath d='M12 7.5C9 2.5 3.2.6 1.6 3.4.3 6 2.5 10 12 8.3zM12 7.5c3-5 8.8-6.9 10.4-4.1 1.3 2.6-.9 6.6-10.4 4.9zM10.6 9 7.4 15.4l2.7-.8L12 10zM13.4 9l3.2 6.4-2.7-.8L12 10z'/%3E%3Ccircle cx='12' cy='8' r='2.3'/%3E%3C/svg%3E");
+
   /* Tipografía */
   --font: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
@@ -1494,13 +1497,62 @@ tr.break-row td:first-child { background: var(--inset); padding-left: 8px; paddi
   background: #ff1b82;
   -webkit-mask: var(--bow) center / contain no-repeat;
   mask: var(--bow) center / contain no-repeat;
-  --bow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 16'%3E%3Cpath d='M12 7.5C9 2.5 3.2.6 1.6 3.4.3 6 2.5 10 12 8.3zM12 7.5c3-5 8.8-6.9 10.4-4.1 1.3 2.6-.9 6.6-10.4 4.9zM10.6 9 7.4 15.4l2.7-.8L12 10zM13.4 9l3.2 6.4-2.7-.8L12 10z'/%3E%3Ccircle cx='12' cy='8' r='2.3'/%3E%3C/svg%3E");
 }
 :root[data-theme="rosa"] .chip-dot { margin: -5px -8px 0 0; transform-origin: 50% 60%; animation: bow-sway 2.8s ease-in-out infinite; }
 :root[data-theme="rosa"] .day-dot { top: -1px; right: -24px; }
 :root[data-theme="rosa"] .chip-dot::after { display: none; }
 :root[data-theme="rosa"] :is(.chip-dot, .day-dot).is-done { background: var(--done); animation: none; }
 @keyframes bow-sway { 0%, 100% { transform: rotate(-9deg); } 50% { transform: rotate(9deg); } }
+
+/* ---------- Entrada al tema rosa (rosaIntro) ----------
+   1) velo ciruela con lluvia de estrellitas amarillas en tres profundidades (canvas),
+   2) aparece el lacito y «Modo rosa» letra a letra, 3) el velo se disuelve alejándose
+   y la app aparece por capas: cuanto más «cerca», más recorrido (parallax) */
+.rosa-intro { position: fixed; inset: 0; z-index: 95; display: grid; place-items: center; }
+.rosa-intro.is-revealing { pointer-events: none; }
+.rosa-intro-bg {
+  position: absolute; inset: 0;
+  background: radial-gradient(120% 90% at 50% 45%, #5c0c36 0%, #2e0619 55%, #1a0410 100%);
+  animation: rosa-veil-in 450ms ease-out both;
+}
+.rosa-intro.is-revealing .rosa-intro-bg { animation: rosa-veil-out 950ms cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+.rosa-intro canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.rosa-intro-badge { position: relative; display: grid; justify-items: center; gap: 4px; opacity: 0; text-align: center; }
+.rosa-intro-bow { width: 72px; height: 48px; background: #ff1b82; -webkit-mask: var(--bow) center / contain no-repeat; mask: var(--bow) center / contain no-repeat; }
+.rosa-intro-title { font-size: clamp(2rem, 9vw, 3.25rem); font-weight: 800; letter-spacing: -0.03em; line-height: 1; color: #ff96c5; }
+.rosa-intro-title span { display: inline-block; white-space: pre; }
+.rosa-intro-sub { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.32em; text-transform: uppercase; color: #ffe066; }
+.rosa-intro.is-badge .rosa-intro-badge { opacity: 1; }
+.rosa-intro.is-badge .rosa-intro-bow { animation: rosa-bow-in 900ms cubic-bezier(0.34, 1.56, 0.64, 1) both, bow-sway 1.6s ease-in-out 900ms infinite; }
+.rosa-intro.is-badge .rosa-intro-title span { animation: rosa-letter 650ms cubic-bezier(0.34, 1.56, 0.64, 1) both; animation-delay: calc(180ms + var(--i) * 55ms); }
+.rosa-intro.is-badge .rosa-intro-sub { animation: rosa-fade-up 600ms ease-out 700ms both; }
+.rosa-intro.is-revealing .rosa-intro-badge { animation: rosa-badge-out 700ms cubic-bezier(0.4, 0, 1, 1) forwards; }
+@keyframes rosa-veil-in { from { opacity: 0; } }
+@keyframes rosa-veil-out { to { opacity: 0; transform: scale(1.15); } }
+@keyframes rosa-bow-in { from { transform: scale(0) rotate(-30deg); } 60% { transform: scale(1.2) rotate(8deg); } }
+@keyframes rosa-letter { from { opacity: 0; transform: translateY(26px) scale(0.4) rotate(-12deg); } 60% { opacity: 1; transform: translateY(-6px) scale(1.12) rotate(4deg); } }
+@keyframes rosa-fade-up { from { opacity: 0; transform: translateY(8px); } }
+@keyframes rosa-badge-out { to { opacity: 0; transform: translateY(-40px) scale(1.15); } }
+
+/* La app aparece por capas, con rebotes */
+.rosa-reveal .topbar { animation: rosa-drop 700ms cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+.rosa-reveal .view.is-shown { animation: rosa-rise 900ms cubic-bezier(0.34, 1.3, 0.64, 1) 80ms both; }
+.rosa-reveal .table-wrap th { animation: rosa-drop 620ms cubic-bezier(0.34, 1.56, 0.64, 1) both; animation-delay: calc(160ms + var(--w, 0) * 28ms); }
+.rosa-reveal :is(.table-wrap td .chip, .month-day, .date-item, .module-row) {
+  animation: rosa-pop 680ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  animation-delay: calc(260ms + var(--w, 0) * 30ms);
+}
+.rosa-reveal .panel { animation: rosa-rise-near 1050ms cubic-bezier(0.34, 1.3, 0.64, 1) 260ms both; }
+.rosa-reveal .panel + .panel { animation-delay: 400ms; }
+.rosa-reveal .chip-dot { animation: rosa-bow-drop 700ms cubic-bezier(0.34, 1.56, 0.64, 1) 1000ms both, bow-sway 2.8s ease-in-out 1.7s infinite; }
+@keyframes rosa-drop { from { opacity: 0; transform: translateY(-28px) scale(0.96); } 60% { opacity: 1; transform: translateY(4px); } }
+@keyframes rosa-rise { from { opacity: 0; transform: translateY(24px) scale(0.98); } }
+@keyframes rosa-rise-near { from { opacity: 0; transform: translateY(80px) rotate(-1.5deg); } 70% { opacity: 1; transform: translateY(-6px) rotate(0.4deg); } }
+@keyframes rosa-pop { from { opacity: 0; transform: scale(0) rotate(-14deg); } 55% { opacity: 1; transform: scale(1.18) rotate(5deg); } 80% { transform: scale(0.95) rotate(-2deg); } }
+@keyframes rosa-bow-drop { from { opacity: 0; transform: translateY(-18px) scale(0.3) rotate(-40deg); } }
+
+/* Corazoncitos que suben durante la aparición */
+.rosa-heart { position: fixed; z-index: 96; width: var(--s); height: var(--s); fill: currentColor; stroke: none; pointer-events: none; }
 
 /* La nota respira: onda lenta y translúcida */
 .chip-dot::after {
