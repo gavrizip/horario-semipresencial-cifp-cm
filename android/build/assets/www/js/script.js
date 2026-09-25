@@ -2017,14 +2017,18 @@
   }
 
   // --- TEMA ---
+  // Color de fondo de cada tema (barra del navegador, círculo del cambio y barras de Android)
+  const THEME_BG = { dark: '#1c1512', light: '#e6d7bd', rosa: '#ffc0dc' };
+
   function currentTheme() {
-    return document.documentElement.dataset.theme === 'light' ? 'light' : 'dark';
+    const t = document.documentElement.dataset.theme;
+    return THEME_BG[t] ? t : 'dark';
   }
 
   function syncThemeToggle() {
     const theme = currentTheme();
     document.getElementById('themeSwitch').dataset.active = theme;
-    [['dark', 'btnThemeDark'], ['light', 'btnThemeLight']].forEach(([t, id]) => {
+    [['dark', 'btnThemeDark'], ['light', 'btnThemeLight'], ['rosa', 'btnThemeRosa']].forEach(([t, id]) => {
       const b = document.getElementById(id);
       b.classList.toggle('is-active', t === theme);
       b.setAttribute('aria-pressed', t === theme);
@@ -2033,7 +2037,7 @@
 
   function applyTheme(theme) {
     document.documentElement.dataset.theme = theme;
-    document.querySelector('meta[name="theme-color"]').content = theme === 'light' ? '#e6d7bd' : '#1c1512';
+    document.querySelector('meta[name="theme-color"]').content = THEME_BG[theme];
     try { localStorage.setItem('horario_theme', theme); } catch {}
     // En la app de Android, las barras del sistema siguen al tema
     if (window.AndroidApp) AndroidApp.setTheme(theme);
@@ -2082,7 +2086,7 @@
     const root = document.documentElement;
     const d = document.createElement('div');
     d.className = 'theme-wipe';
-    d.style.cssText = `left:${x - r}px;top:${y - r}px;width:${2 * r}px;height:${2 * r}px;background:${next === 'light' ? '#e6d7bd' : '#1c1512'}`;
+    d.style.cssText = `left:${x - r}px;top:${y - r}px;width:${2 * r}px;height:${2 * r}px;background:${THEME_BG[next]}`;
     // Con el menú abierto (capa superior), el círculo va dentro para quedar por encima
     const menu = document.getElementById('menuDrawer');
     (menu.open ? menu : document.body).append(d);

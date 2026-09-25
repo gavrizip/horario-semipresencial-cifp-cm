@@ -112,9 +112,11 @@ public class MainActivity extends Activity {
         requestPermissions(new String[]{"android.permission.POST_NOTIFICATIONS"}, 1);
     }
 
-    private void applyBars(boolean light) {
+    /** Barras del sistema del color de fondo del tema; iconos oscuros en los temas claros (día y rosa). */
+    private void applyBars(String theme) {
+        boolean light = !"dark".equals(theme);
         Window w = getWindow();
-        int color = Color.parseColor(light ? "#e6d7bd" : "#1c1512");
+        int color = Color.parseColor("light".equals(theme) ? "#e6d7bd" : "rosa".equals(theme) ? "#ffc0dc" : "#1c1512");
         w.setStatusBarColor(color);
         w.setNavigationBarColor(color);
         web.setBackgroundColor(color);
@@ -172,8 +174,7 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface
         public void setTheme(String theme) {
-            final boolean light = "light".equals(theme);
-            runOnUiThread(() -> applyBars(light));
+            runOnUiThread(() -> applyBars(theme));
         }
     }
 }

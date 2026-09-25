@@ -12,9 +12,10 @@
     (function () {
       let theme = null;
       try { theme = localStorage.getItem('horario_theme'); } catch (e) {}
-      if (theme !== 'light' && theme !== 'dark') theme = matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+      const bg = { dark: '#1c1512', light: '#e6d7bd', rosa: '#ffc0dc' };   // = THEME_BG de script.js
+      if (!bg[theme]) theme = matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
       document.documentElement.dataset.theme = theme;
-      document.querySelector('meta[name="theme-color"]').content = theme === 'light' ? '#e6d7bd' : '#1c1512';
+      document.querySelector('meta[name="theme-color"]').content = bg[theme];
       if (window.AndroidApp) {
         AndroidApp.setTheme(theme);
         document.documentElement.classList.add('is-app');
@@ -42,6 +43,7 @@
   <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5.5"/><path d="M12 7.6v.1" stroke-width="2.4"/></symbol>
   <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="4" y="5.5" width="16" height="14.5" rx="2"/><path d="M8.5 3.5v4M15.5 3.5v4M4 10.5h16"/></symbol>
   <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+  <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.1a4.3 4.3 0 0 1 7.5 2.7C19.5 15.4 12 20 12 20Z"/></symbol>
   <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z"/></symbol>
 </svg>
 
@@ -232,6 +234,7 @@
       <span class="segmented-thumb" aria-hidden="true"></span>
       <button class="segmented-btn" id="btnThemeDark" onclick="setTheme('dark', this)"><svg class="icon"><use href="#i-moon"/></svg>Noche</button>
       <button class="segmented-btn" id="btnThemeLight" onclick="setTheme('light', this)"><svg class="icon"><use href="#i-sun"/></svg>Día</button>
+      <button class="segmented-btn" id="btnThemeRosa" onclick="setTheme('rosa', this)"><svg class="icon"><use href="#i-heart"/></svg>Rosa</button>
     </div>
     <p class="field-help">Se guarda y se usa cada vez que abras la aplicación.</p>
   </section>

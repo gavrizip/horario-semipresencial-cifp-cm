@@ -61,8 +61,9 @@
   --select-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23c2b1a5' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m7 10 5 5 5-5'/%3E%3C/svg%3E");
 }
 
-/* Tema día: papel cálido, tinta marrón */
-:root[data-theme="light"] {
+/* Tema día: papel cálido, tinta marrón. El tema rosa es claro también: hereda de aquí
+   todo lo de legibilidad y solo cambia la paleta (bloque siguiente) */
+:root:is([data-theme="light"], [data-theme="rosa"]) {
   color-scheme: light;
 
   /* Fondo beige; las superficies conservan su papel claro */
@@ -109,6 +110,38 @@
   --shadow-dialog: 0 16px 32px -12px rgb(80 50 30 / 0.28);
   --backdrop: rgb(50 32 18 / 0.38);
   --select-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%234a392e' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m7 10 5 5 5-5'/%3E%3C/svg%3E");
+}
+
+/* Tema rosa: paleta #f70071 · #ff1b82 · #ff5aa4 · #ff96c5 · #ffc0dc.
+   Fondo en el rosa más claro, superficies aclaradas hacia blanco y tinta ciruela */
+:root[data-theme="rosa"] {
+  --bg: #ffc0dc;
+  --surface: #fff0f6;
+  --surface-2: #ffe0ee;
+  --surface-3: #fff8fb;
+  --inset: #ffeaf3;
+  --panel: #ffe6f1;
+  --bar-track: #ffc0dc;
+  --table-bg: #ffe6f1;
+  --table-head: #ff96c5;
+  --table-holiday: #ffd3e7;
+  --line: #ff96c5;
+  --line-strong: #ff5aa4;
+
+  --text: #3d0120;
+  --text-2: #62133a;
+  --text-3: #7e2a52;
+
+  --accent: #f70071;
+  --accent-strong: #ff1b82;
+  --accent-text: #a8004d;
+  --accent-ink: #2a000f;
+  --accent-soft: color-mix(in oklch, var(--accent) 16%, transparent);
+
+  --shadow-thumb: 0 1px 2px rgb(120 0 60 / 0.18), 0 0 0 1px rgb(120 0 60 / 0.06);
+  --shadow-dialog: 0 16px 32px -12px rgb(120 0 60 / 0.3);
+  --backdrop: rgb(90 0 45 / 0.36);
+  --select-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2362133a' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m7 10 5 5 5-5'/%3E%3C/svg%3E");
 }
 
 :root {
@@ -292,6 +325,8 @@ h3 { font-size: 0.9375rem; font-weight: 600; letter-spacing: -0.01em; }
   isolation: isolate;
 }
 .segmented[data-active="B"], .segmented[data-active="2"], .segmented[data-active="light"] { --index: 1; }
+.segmented[data-active="rosa"] { --index: 2; }
+#themeSwitch { --count: 3; }
 .segmented[data-active="3"] { --index: 2; }
 .segmented-wide { --count: 3; width: fit-content; max-width: 100%; margin-bottom: 16px; }
 
@@ -383,11 +418,11 @@ h3 { font-size: 0.9375rem; font-weight: 600; letter-spacing: -0.01em; }
 .chip-lg { height: 27px; padding: 0 9px; font-size: 0.8125rem; }
 /* Modo día: amarillo, lima y naranja vivos no se leen como texto sobre fondo claro;
    fondo más intenso y letra oscura del mismo tono (la barra sigue con el color vivo) */
-:root[data-theme="light"] { --color-eib: oklch(0.72 0.18 50); }
-:root[data-theme="light"] .chip[style*="--color-imw"] { --m-ink: oklch(0.46 0.11 80); --m-tint: 55%; }
-:root[data-theme="light"] .chip[style*="--color-ade"] { --m-ink: oklch(0.45 0.13 130); --m-tint: 50%; }
-:root[data-theme="light"] .chip[style*="--color-eib"] { --m-ink: oklch(0.50 0.15 45); --m-tint: 40%; }
-:root[data-theme="light"] .chip[style*="--color-soj"] { --m-ink: oklch(0.50 0.13 28); --m-tint: 45%; }
+:root:is([data-theme="light"], [data-theme="rosa"]) { --color-eib: oklch(0.72 0.18 50); }
+:root:is([data-theme="light"], [data-theme="rosa"]) .chip[style*="--color-imw"] { --m-ink: oklch(0.46 0.11 80); --m-tint: 55%; }
+:root:is([data-theme="light"], [data-theme="rosa"]) .chip[style*="--color-ade"] { --m-ink: oklch(0.45 0.13 130); --m-tint: 50%; }
+:root:is([data-theme="light"], [data-theme="rosa"]) .chip[style*="--color-eib"] { --m-ink: oklch(0.50 0.15 45); --m-tint: 40%; }
+:root:is([data-theme="light"], [data-theme="rosa"]) .chip[style*="--color-soj"] { --m-ink: oklch(0.50 0.13 28); --m-tint: 45%; }
 
 .is-dimmed { opacity: 0.22; }
 
