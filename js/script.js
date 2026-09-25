@@ -300,7 +300,7 @@
         stopHold();
         haptic('strong');
         swallowNextClick();   // el click al soltar pondría el modo día
-        setTheme('rosa', dayBtn);
+        rosaIntro();
       }, 3000);
     });
     ['pointerup', 'pointerleave', 'pointercancel'].forEach(t => dayBtn.addEventListener(t, stopHold));
@@ -1308,6 +1308,117 @@
     saveData();
     pendingPop = null;
     if (!allMarked) rosaSparkles(dateIdx, '*');
+  }
+
+  // Entrada al tema rosa escondido: velo con lluvia de estrellitas amarillas en tres
+  // profundidades (parallax: las cercanas son más grandes, rápidas y se desplazan más con
+  // el ratón), aparece «Modo rosa» y la app entra por capas con rebotes (clase .rosa-reveal)
+  let rosaIntroOn = false;
+  function rosaIntro() {
+    const root = document.documentElement;
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) { closeMenu(); applyTheme('rosa'); return; }
+    if (rosaIntroOn) return;
+    rosaIntroOn = true;
+    closeMenu();
+
+    const veil = document.createElement('div');
+    veil.className = 'rosa-intro';
+    veil.setAttribute('aria-hidden', 'true');
+    const title = [...'Modo rosa'].map((c, i) => `<span style="--i:${i}">${c}</span>`).join('');
+    veil.innerHTML = `<div class="rosa-intro-bg"></div><canvas></canvas>
+      <div class="rosa-intro-badge"><span class="rosa-intro-bow"></span>
+      <strong class="rosa-intro-title">${title}</strong><span class="rosa-intro-sub">desbloqueado</span></div>`;
+    document.body.append(veil);
+
+    // Lluvia de estrellitas finas (4 puntas) en canvas
+    const canvas = veil.querySelector('canvas');
+    const ctx = canvas.getContext('2d');
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const w = innerWidth, h = innerHeight;
+    canvas.width = w * dpr; canvas.height = h * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const yellows = ['#ffe066', '#ffd23f', '#fff3b0', '#ffc93c'];
+    const stars = Array.from({ length: w < 600 ? 90 : 160 }, () => {
+      const z = 0.25 + Math.random() * 0.75;                // profundidad: 1 = cerca
+      return { x: Math.random() * w, y: -Math.random() * h * 1.1, z,
+               s: 2 + z * 7, v: 1 + z * 5.5, tw: Math.random() * 6.28,
+               c: yellows[Math.floor(Math.random() * yellows.length)] };
+    });
+    let mx = 0, my = 0;                                     // desplazamiento por el ratón
+    const onMove = e => { mx = (e.clientX / w - 0.5) * 60; my = (e.clientY / h - 0.5) * 30; };
+    window.addEventListener('pointermove', onMove);
+    let fade = 1, last = performance.now(), running = true;
+    const t0 = last;
+    const frame = now => {
+      if (!running) return;
+      const dt = Math.min((now - last) / 16.67, 3);
+      last = now;
+      const sway = Math.sin((now - t0) / 900) * 24;          // la «cámara» se balancea
+      ctx.clearRect(0, 0, w, h);
+      for (const p of stars) {
+        p.y += p.v * dt;
+        if (p.y > h + 12) { p.y = -12; p.x = Math.random() * w; }
+        const x = p.x + (sway + mx) * p.z, y = p.y + my * p.z;
+        const sx = p.s * 0.45, sy = p.s;
+        ctx.globalAlpha = fade * (0.35 + 0.65 * p.z) * (0.7 + 0.3 * Math.sin((now - t0) / 140 + p.tw));
+        ctx.fillStyle = p.c;
+        ctx.beginPath();
+        ctx.moveTo(x, y - sy);
+        ctx.quadraticCurveTo(x, y, x + sx, y);
+        ctx.quadraticCurveTo(x, y, x, y + sy);
+        ctx.quadraticCurveTo(x, y, x - sx, y);
+        ctx.quadraticCurveTo(x, y, x, y - sy);
+        ctx.fill();
+      }
+      requestAnimationFrame(frame);
+    };
+    requestAnimationFrame(frame);
+
+    // Tras la intriga, el tema cambia detrás del velo y se desvela
+    setTimeout(() => {
+      root.classList.add('theme-instant');
+      applyTheme('rosa');
+      requestAnimationFrame(() => requestAnimationFrame(() => root.classList.remove('theme-instant')));
+    }, 1300);
+    setTimeout(() => { veil.classList.add('is-badge'); haptic('press'); }, 1450);
+    setTimeout(() => {
+      veil.classList.add('is-revealing');
+      root.classList.add('rosa-reveal');
+      floatHearts();
+      // Las estrellitas se apagan mientras aparece la app
+      const f0 = performance.now();
+      const dim = now => { fade = Math.max(0, 1 - (now - f0) / 1400); if (fade > 0) requestAnimationFrame(dim); };
+      requestAnimationFrame(dim);
+    }, 2700);
+    setTimeout(() => {
+      running = false;
+      window.removeEventListener('pointermove', onMove);
+      veil.remove();
+    }, 4300);
+    setTimeout(() => { root.classList.remove('rosa-reveal'); rosaIntroOn = false; }, 4700);
+  }
+
+  // Corazoncitos que suben balanceándose desde abajo durante la aparición
+  function floatHearts() {
+    const n = innerWidth < 600 ? 10 : 16;
+    for (let i = 0; i < n; i++) {
+      const s = 10 + Math.random() * 14;
+      const x = Math.random() * innerWidth;
+      const heart = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      heart.setAttribute('class', 'rosa-heart');
+      heart.setAttribute('viewBox', '0 0 24 24');
+      heart.innerHTML = '<use href="#i-heart"/>';
+      heart.style.cssText = `left:${x}px;top:${innerHeight}px;--s:${s}px;color:${SPARKLE_COLORS[i % SPARKLE_COLORS.length]}`;
+      document.body.append(heart);
+      const rise = innerHeight * (0.5 + Math.random() * 0.45);
+      const drift = (Math.random() - 0.5) * 80;
+      heart.animate([
+        { transform: 'translate(0, 0) rotate(-10deg)', opacity: 0 },
+        { transform: `translate(${drift * 0.5}px, ${-rise * 0.4}px) rotate(10deg)`, opacity: 1, offset: 0.3 },
+        { transform: `translate(${drift}px, ${-rise}px) rotate(-8deg)`, opacity: 0 }
+      ], { duration: 1800 + Math.random() * 900, delay: Math.random() * 500, easing: 'cubic-bezier(0.33, 0, 0.3, 1)', fill: 'backwards' })
+        .finished.then(() => heart.remove());
+    }
   }
 
   // Tema rosa: al marcar una falta, de la etiqueta salen destellos (estrellitas de 4 puntas)
