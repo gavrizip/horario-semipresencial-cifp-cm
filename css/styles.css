@@ -325,8 +325,19 @@ h3 { font-size: 0.9375rem; font-weight: 600; letter-spacing: -0.01em; }
   isolation: isolate;
 }
 .segmented[data-active="B"], .segmented[data-active="2"], .segmented[data-active="light"] { --index: 1; }
-.segmented[data-active="rosa"] { --index: 2; }
-#themeSwitch { --count: 3; }
+/* Rosa es una variante escondida de «Día»: el selector se queda en ese botón */
+.segmented[data-active="rosa"] { --index: 1; }
+#btnThemeLight { position: relative; overflow: hidden; }
+#btnThemeLight .icon-heart, :root[data-theme="rosa"] #btnThemeLight .icon-sun { display: none; }
+:root[data-theme="rosa"] #btnThemeLight .icon-heart { display: block; color: #f70071; }
+/* Al mantenerlo pulsado, tras un momento, se va llenando de rosa hasta los 3 s */
+#btnThemeLight.is-holding::before {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; z-index: -1;
+  background: color-mix(in oklch, #ff1b82 35%, transparent);
+  transform-origin: left center;
+  animation: rosa-hold 2.4s linear 0.6s both;
+}
+@keyframes rosa-hold { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 .segmented[data-active="3"] { --index: 2; }
 .segmented-wide { --count: 3; width: fit-content; max-width: 100%; margin-bottom: 16px; }
 
@@ -892,6 +903,16 @@ button.th-inner.is-menu-open { color: var(--accent-text); }
 }
 @media (hover: hover) {
   td .slot-chip.is-absent:hover { background: color-mix(in oklch, var(--absence) 82%, transparent); }
+}
+
+/* Tema rosa: la falta no hace la onda roja; salen destellos (sparkleAt) */
+:root[data-theme="rosa"] .slot-chip.is-pop-on::after { animation: none; }
+.sparkle {
+  position: fixed; z-index: 90;
+  width: var(--s); height: var(--s);
+  background: var(--c);
+  clip-path: polygon(50% 0, 61% 39%, 100% 50%, 61% 61%, 50% 100%, 39% 61%, 0 50%, 39% 39%);
+  pointer-events: none;
 }
 
 /* Respuesta al clic: rebote + onda que se expande desde la etiqueta */
@@ -1461,6 +1482,24 @@ tr.break-row td:first-child { background: var(--inset); padding-left: 8px; paddi
 }
 .month-day .day-dot { box-shadow: 0 0 0 1.5px var(--surface); }
 .day-dot.is-done { background: var(--done); }
+
+/* Tema rosa: el punto es un lacito rosa que se balancea (verde si todo está completado) */
+.hint-bow { display: none; }
+:root[data-theme="rosa"] .hint-dot { display: none; }
+:root[data-theme="rosa"] .hint-bow { display: inline; }
+:root[data-theme="rosa"] .help-ic.is-dot { --c: #ff1b82; }
+:root[data-theme="rosa"] :is(.chip-dot, .day-dot, .help-dot) {
+  width: 15px; height: 10px;
+  border-radius: 0; box-shadow: none;
+  background: #ff1b82;
+  -webkit-mask: var(--bow) center / contain no-repeat;
+  mask: var(--bow) center / contain no-repeat;
+  --bow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 16'%3E%3Cpath d='M12 7.5C9 2.5 3.2.6 1.6 3.4.3 6 2.5 10 12 8.3zM12 7.5c3-5 8.8-6.9 10.4-4.1 1.3 2.6-.9 6.6-10.4 4.9zM10.6 9 7.4 15.4l2.7-.8L12 10zM13.4 9l3.2 6.4-2.7-.8L12 10z'/%3E%3Ccircle cx='12' cy='8' r='2.3'/%3E%3C/svg%3E");
+}
+:root[data-theme="rosa"] .chip-dot { margin: -1px -3px 0 0; transform-origin: 50% 60%; animation: bow-sway 2.8s ease-in-out infinite; }
+:root[data-theme="rosa"] .chip-dot::after { display: none; }
+:root[data-theme="rosa"] :is(.chip-dot, .day-dot).is-done { background: var(--done); animation: none; }
+@keyframes bow-sway { 0%, 100% { transform: rotate(-9deg); } 50% { transform: rotate(9deg); } }
 
 /* La nota respira: onda lenta y translúcida */
 .chip-dot::after {

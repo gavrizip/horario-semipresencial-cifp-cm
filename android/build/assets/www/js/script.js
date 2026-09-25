@@ -290,6 +290,21 @@
     menu.addEventListener('cancel', e => { e.preventDefault(); closeMenu(); });
 
     startLive();
+    // Tema rosa escondido: se activa manteniendo pulsado «Día» 3 segundos
+    const dayBtn = document.getElementById('btnThemeLight');
+    let rosaTimer = null;
+    const stopHold = () => { clearTimeout(rosaTimer); dayBtn.classList.remove('is-holding'); };
+    dayBtn.addEventListener('pointerdown', () => {
+      dayBtn.classList.add('is-holding');
+      rosaTimer = setTimeout(() => {
+        stopHold();
+        haptic('strong');
+        swallowNextClick();   // el click al soltar pondría el modo día
+        setTheme('rosa', dayBtn);
+      }, 3000);
+    });
+    ['pointerup', 'pointerleave', 'pointercancel'].forEach(t => dayBtn.addEventListener(t, stopHold));
+
     applyNativeActions();
     syncReminders();
 
@@ -1249,6 +1264,7 @@
       lastAddedKey = `${dateIdx}:${userEvents[dateIdx].length - 1}`;
       pendingPop = { dateIdx, key, kind: 'on' };
       saveData();
+      rosaSparkles(dateIdx, key);
     }
     pendingPop = null;
 
@@ -1291,6 +1307,36 @@
     pendingPop = { dateIdx, key: '*', head: dateIdx, kind: allMarked ? 'off' : 'on' };
     saveData();
     pendingPop = null;
+    if (!allMarked) rosaSparkles(dateIdx, '*');
+  }
+
+  // Tema rosa: al marcar una falta, de la etiqueta salen destellos (estrellitas de 4 puntas)
+  const SPARKLE_COLORS = ['#f70071', '#ff1b82', '#ff5aa4', '#ffffff'];
+  function rosaSparkles(dateIdx, key) {
+    if (currentTheme() !== 'rosa' || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const sel = key === '*' ? `.slot-chip[data-date="${dateIdx}"]` : `.slot-chip[data-date="${dateIdx}"][data-slot="${key}"]`;
+    document.querySelectorAll(sel).forEach(chipEl => {
+      const r = chipEl.getBoundingClientRect();
+      if (!r.width) return;   // tabla oculta (falta puesta desde otra vista)
+      const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+      for (let i = 0; i < 8; i++) {
+        const size = 9 + Math.random() * 8;
+        const a = (i / 8) * Math.PI * 2 + Math.random() * 0.5;
+        const d = 20 + Math.random() * 18;
+        const s = document.createElement('span');
+        s.className = 'sparkle';
+        s.style.cssText = `left:${cx - size / 2}px;top:${cy - size / 2}px;--s:${size}px;--c:${SPARKLE_COLORS[i % SPARKLE_COLORS.length]}`;
+        document.body.append(s);
+        const dx = Math.cos(a) * d, dy = Math.sin(a) * d;
+        // Sale disparada (primer tramo) y luego se apaga despacio girando (segundo tramo)
+        s.animate([
+          { transform: 'translate(0, 0) scale(0) rotate(0deg)', opacity: 1, easing: 'cubic-bezier(0.16, 1, 0.3, 1)' },
+          { transform: `translate(${dx}px, ${dy}px) scale(1) rotate(90deg)`, opacity: 1, offset: 0.45, easing: 'ease-in' },
+          { transform: `translate(${dx * 1.3}px, ${dy * 1.3}px) scale(0.3) rotate(180deg)`, opacity: 0 }
+        ], { duration: 900 + Math.random() * 300 })
+          .finished.then(() => s.remove());
+      }
+    });
   }
 
   // Respuesta háptica al tocar: 'tap' muy suave (falta de una hora), 'press' al abrir el
@@ -2028,10 +2074,12 @@
   function syncThemeToggle() {
     const theme = currentTheme();
     document.getElementById('themeSwitch').dataset.active = theme;
-    [['dark', 'btnThemeDark'], ['light', 'btnThemeLight'], ['rosa', 'btnThemeRosa']].forEach(([t, id]) => {
+    // Rosa se muestra como «Día» (es su variante escondida)
+    const shown = theme === 'rosa' ? 'light' : theme;
+    [['dark', 'btnThemeDark'], ['light', 'btnThemeLight']].forEach(([t, id]) => {
       const b = document.getElementById(id);
-      b.classList.toggle('is-active', t === theme);
-      b.setAttribute('aria-pressed', t === theme);
+      b.classList.toggle('is-active', t === shown);
+      b.setAttribute('aria-pressed', t === shown);
     });
   }
 
@@ -2296,8 +2344,10 @@
     window.addEventListener('resize', fit);
 
     const css = getComputedStyle(document.documentElement);
-    const palette = ['--accent', '--done', '--exam', '--absence', '--note', '--task']
-      .map(v => css.getPropertyValue(v).trim()).filter(Boolean);
+    // En el tema rosa estallan en forma de corazón y cada chispa es un corazoncito
+    const hearts = currentTheme() === 'rosa';
+    const palette = hearts ? ['#f70071', '#ff1b82', '#ff5aa4', '#d1005e', '#ffffff']
+      : ['--accent', '--done', '--exam', '--absence', '--note', '--task'].map(v => css.getPropertyValue(v).trim()).filter(Boolean);
     const pick = arr => arr[Math.floor(Math.random() * arr.length)];
     const small = w < 600;
 
@@ -2320,10 +2370,19 @@
       const second = pick(palette);
       for (let i = 0; i < n; i++) {
         const a = (i / n) * Math.PI * 2 + Math.random() * 0.2;
-        const v = 2.2 + Math.random() * 3.2;
+        let vx, vy;
+        if (hearts) {
+          // Curva del corazón: x = 16 sen³t, y = −(13 cos t − 5 cos 2t − 2 cos 3t − cos 4t)
+          const k = (0.24 + Math.random() * 0.05) * (small ? 0.8 : 1);
+          vx = 16 * Math.sin(a) ** 3 * k;
+          vy = -(13 * Math.cos(a) - 5 * Math.cos(2 * a) - 2 * Math.cos(3 * a) - Math.cos(4 * a)) * k;
+        } else {
+          const v = 2.2 + Math.random() * 3.2;
+          vx = Math.cos(a) * v; vy = Math.sin(a) * v;
+        }
         sparks.push({
           x, y, px: x, py: y,
-          vx: Math.cos(a) * v, vy: Math.sin(a) * v,
+          vx, vy,
           life: 1, decay: 0.012 + Math.random() * 0.012,
           color: Math.random() < 0.25 ? second : color,
           size: 1.4 + Math.random() * 1.2
@@ -2365,9 +2424,19 @@
         p.life -= p.decay * dt;
         if (p.life <= 0) { sparks.splice(i, 1); continue; }
         ctx.globalAlpha = Math.min(1, p.life * 1.4);
-        ctx.strokeStyle = p.color;
-        ctx.lineWidth = p.size;
-        ctx.beginPath(); ctx.moveTo(p.px, p.py); ctx.lineTo(p.x, p.y); ctx.stroke();
+        if (hearts) {
+          const s = p.size * 2.2;
+          ctx.fillStyle = p.color;
+          ctx.beginPath();
+          ctx.moveTo(p.x, p.y + s * 0.7);
+          ctx.bezierCurveTo(p.x - s * 1.2, p.y - s * 0.1, p.x - s * 0.6, p.y - s, p.x, p.y - s * 0.35);
+          ctx.bezierCurveTo(p.x + s * 0.6, p.y - s, p.x + s * 1.2, p.y - s * 0.1, p.x, p.y + s * 0.7);
+          ctx.fill();
+        } else {
+          ctx.strokeStyle = p.color;
+          ctx.lineWidth = p.size;
+          ctx.beginPath(); ctx.moveTo(p.px, p.py); ctx.lineTo(p.x, p.y); ctx.stroke();
+        }
       }
 
       if (sparks.length || rockets.some(r => !r.done)) requestAnimationFrame(frame);
