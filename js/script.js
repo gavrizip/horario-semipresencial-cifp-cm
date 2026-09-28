@@ -619,6 +619,7 @@
     selectedMonthIndex = idx;
     renderMonthSidebar();
     renderMonthView();
+    renderAttendanceBars();
     replay(grid, 'is-swapping');
     const active = document.querySelector('.month-item.is-active');
     if (active) active.scrollIntoView({ block: 'nearest', inline: 'nearest' });
@@ -754,11 +755,15 @@
       if (daySched && dateIdx >= startIdx && dateIdx <= endIdx) daySched.forEach(m => { if (m) inRange.add(m); });
     });
 
-    // En la vista Día solo salen los módulos de ese día
+    // En la vista Día solo salen los módulos de ese día, y en Mes los que tienen clase ese mes
     const dayOnly = currentTab === 'weekly';
+    const monthOnly = currentTab === 'monthly';
     let shown = Object.keys(MODULES).filter(m => inRange.has(m));
     if (dayOnly) {
       shown = [...new Set((schedule[selectedDateIndex] || []).filter(m => m && MODULES[m]))];
+    } else if (monthOnly) {
+      shown = Object.keys(MODULES).filter(m =>
+        schedule.some((day, i) => day && CALENDAR_DATES[i].monthIdx === selectedMonthIndex && day.includes(m)));
     }
 
     const totalHoursPerModule = {};
@@ -838,6 +843,8 @@
     if (!html && dayOnly) {
       const holiday = CALENDAR_DATES[selectedDateIndex].holiday;
       html = `<p class="att-empty">${holiday ? `Festivo · ${holiday}` : 'No hay clases este día'}. Elige otra fecha para ver la asistencia de sus asignaturas.</p>`;
+    } else if (!html && monthOnly) {
+      html = '<p class="att-empty">No hay clases este mes. Elige otro mes para ver la asistencia de sus asignaturas.</p>';
     }
     container.innerHTML = html;
     requestAnimationFrame(() => requestAnimationFrame(() => {
