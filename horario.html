@@ -401,9 +401,12 @@
     <button type="button" class="icon-btn" onclick="closeDialog('moodleDialog')" aria-label="Cerrar"><svg class="icon"><use href="#i-x"/></svg></button>
   </div>
   <ul class="moodle-list" id="moodleList"></ul>
+  <p class="field-error" id="moodleResolveError" hidden>Elige una asignatura (o «Ninguna asignatura») para cada curso.</p>
   <div class="dialog-actions">
+    <button type="button" class="btn btn-ghost moodle-list-only" onclick="renderCourseResolver(moodleData.courses, true)">Cambiar asignaturas</button>
     <span class="spacer"></span>
-    <button type="button" class="btn btn-ghost" onclick="closeDialog('moodleDialog')">Cerrar</button>
+    <button type="button" class="btn btn-ghost moodle-list-only" onclick="closeDialog('moodleDialog')">Cerrar</button>
+    <button type="button" class="btn btn-primary moodle-resolve-only" onclick="saveCourseResolver()">Continuar</button>
   </div>
 </dialog>
 

@@ -1752,6 +1752,19 @@ tr.break-row td:first-child { background: var(--inset); padding-left: 8px; paddi
 .moodle-due { margin-top: 3px; font-family: var(--mono); font-size: 0.75rem; color: var(--text-3); }
 .moodle-due.is-late { color: var(--risk); }
 .moodle-add { flex: none; white-space: nowrap; }
+/* La misma ventana sirve para preguntar las asignaturas y para la lista de pendientes */
+#moodleDialog[data-mode="resolve"] .moodle-list-only, #moodleDialog:not([data-mode="resolve"]) .moodle-resolve-only { display: none; }
+.moodle-map {
+  width: min(190px, 46vw); height: 38px; padding: 0 30px 0 10px;
+  background: var(--inset) var(--select-arrow) no-repeat right 10px center;
+  border: 1px solid var(--line-strong); border-radius: var(--r);
+  font-size: 0.8125rem; appearance: none; outline: none;
+  transition: border-color var(--t) var(--ease-out);
+}
+.moodle-map:focus { border-color: var(--accent); }
+.moodle-map[aria-invalid="true"] { border-color: var(--absence); }
+.moodle-map option { background: var(--surface-2); color: var(--text); }
+#moodleResolveError { margin-top: 10px; }
 .moodle-add.is-added { color: var(--done); border-color: color-mix(in oklch, var(--done) 40%, transparent); opacity: 1; }
 .moodle-add .icon { width: 16px; height: 16px; }
 .is-app #slotDialog[data-kind="exam"] .notify-fields,

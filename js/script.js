@@ -319,7 +319,11 @@
           try { a.state = await moodleCall('mod_assign_get_submission_status', { assignid: a.id }); } catch { a.state = null; }
         }));
       }
-      renderMoodleList(site, courses, assigns);
+      // Solo importan los cursos con tareas de este curso escolar: por los demás no se pregunta
+      moodleData = { site, courses: courses.filter(c => assigns.some(a => a.courseid === c.id)), assigns };
+      const ask = resolveCourses(moodleData.courses);
+      if (ask.length) renderCourseResolver(ask, false);
+      else renderMoodleList();
       renderMoodleStatus();
     } catch (e) {
       renderMoodleStatus(e.code === 'invalidtoken' ? 'La sesión del campus ha caducado: vuelve a conectar.' : e.message);
@@ -328,12 +332,98 @@
     }
   }
 
-  // Asignatura de la app a la que parece corresponder un curso del campus (por código o nombre)
-  const plain = s => String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-  function guessModule(course) {
-    const text = plain(`${course.fullname} ${course.shortname}`);
-    return Object.keys(MODULES).find(code =>
-      new RegExp(`\\b${code.toLowerCase()}\\b`).test(text) || text.includes(plain(MODULES[code].name))) || null;
+  // --- Correspondencia curso del campus → asignatura de la app ---
+  // localStorage['horario_moodle_courses'] = { [id del curso en Moodle]: { module, fullname, shortname, by } }
+  // La clave es el id del curso, que no cambia; los nombres solo sirven para mostrarlos y se
+  // actualizan si Moodle los cambia. module null = no corresponde a ninguna asignatura (no se
+  // vuelve a preguntar). by: 'auto' (emparejado seguro) o 'user' (lo eligió el usuario).
+  function loadCourseMap() {
+    try { return JSON.parse(localStorage.getItem('horario_moodle_courses')) || {}; } catch { return {}; }
+  }
+  function saveCourseMap(map) {
+    try { localStorage.setItem('horario_moodle_courses', JSON.stringify(map)); } catch {}
+  }
+
+  const plain = s => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
+
+  // Solo criterios seguros: el código de la asignatura como pieza exacta del nombre corto o del
+  // idnumber (782NNS-IMW-2026_27 → IMW) o el nombre completo idéntico al de la app. Si no hay
+  // ninguna o hay varias, no se adivina: devuelve null y se pregunta.
+  function autoModule(course) {
+    const tokens = new Set(`${course.shortname} ${course.idnumber || ''}`.toUpperCase().split(/[^A-Z0-9]+/));
+    const byCode = Object.keys(MODULES).filter(code => tokens.has(code));
+    if (byCode.length) return byCode.length === 1 ? byCode[0] : null;
+    const byName = Object.keys(MODULES).filter(code => plain(MODULES[code].name) === plain(course.fullname));
+    return byName.length === 1 ? byName[0] : null;
+  }
+
+  // Guardada y válida → se usa. Si no (nueva, o su asignatura ya no existe en la app) → emparejado
+  // seguro, que se guarda; si tampoco, el curso se devuelve para preguntar.
+  function resolveCourses(courses) {
+    const map = loadCourseMap();
+    const ask = [];
+    courses.forEach(c => {
+      const saved = map[c.id];
+      if (saved && (saved.module === null || MODULES[saved.module])) {
+        Object.assign(saved, { fullname: c.fullname, shortname: c.shortname });
+        return;
+      }
+      const auto = autoModule(c);
+      if (auto) map[c.id] = { module: auto, fullname: c.fullname, shortname: c.shortname, by: 'auto' };
+      else ask.push(c);
+    });
+    saveCourseMap(map);
+    return ask;
+  }
+
+  function moduleOf(courseId) {
+    const m = loadCourseMap()[courseId];
+    return m && MODULES[m.module] ? m.module : null;
+  }
+
+  // Pregunta la asignatura de los cursos que no se han podido resolver (all: revisar todos)
+  function renderCourseResolver(courses, all) {
+    const map = loadCourseMap();
+    document.getElementById('moodleDialog').dataset.mode = 'resolve';
+    document.getElementById('moodleTitle').textContent = all ? 'Asignaturas del campus' : 'Cursos nuevos del campus';
+    document.getElementById('moodleMeta').textContent = all
+      ? 'A qué asignatura de la app corresponde cada curso.'
+      : `${courses.length === 1 ? 'Un curso no se ha podido' : `${courses.length} cursos no se han podido`} relacionar solo. Elige su asignatura; se recordará.`;
+    document.getElementById('moodleList').innerHTML = courses.map(c => {
+      const saved = map[c.id];
+      const current = saved ? (saved.module === null ? 'none' : MODULES[saved.module] ? saved.module : '') : '';
+      return `
+        <li class="moodle-task">
+          <div class="moodle-task-text">
+            <div class="moodle-name">${escapeHTML(c.fullname)}</div>
+            <div class="moodle-due">${escapeHTML(c.shortname)}</div>
+          </div>
+          <select class="moodle-map" data-course="${c.id}" aria-label="Asignatura de ${escapeHTML(c.fullname)}" onchange="this.removeAttribute('aria-invalid')">
+            <option value="" disabled${current ? '' : ' selected'}>Elige…</option>
+            ${Object.keys(MODULES).map(m => `<option value="${m}"${m === current ? ' selected' : ''}>${m} · ${MODULES[m].name}</option>`).join('')}
+            <option value="none"${current === 'none' ? ' selected' : ''}>Ninguna asignatura</option>
+          </select>
+        </li>`;
+    }).join('');
+    document.getElementById('moodleResolveError').hidden = true;
+    const dialog = document.getElementById('moodleDialog');
+    dialog.classList.remove('is-closing');
+    if (!dialog.open) dialog.showModal();
+  }
+
+  function saveCourseResolver() {
+    const selects = [...document.querySelectorAll('#moodleList select[data-course]')];
+    const missing = selects.filter(s => !s.value);
+    selects.forEach(s => missing.includes(s) ? s.setAttribute('aria-invalid', 'true') : s.removeAttribute('aria-invalid'));
+    document.getElementById('moodleResolveError').hidden = !missing.length;
+    if (missing.length) { missing[0].focus(); return; }
+    const map = loadCourseMap();
+    selects.forEach(s => {
+      const c = moodleData.courses.find(x => x.id === Number(s.dataset.course));
+      map[c.id] = { module: s.value === 'none' ? null : s.value, fullname: c.fullname, shortname: c.shortname, by: 'user' };
+    });
+    saveCourseMap(map);
+    renderMoodleList();
   }
 
   function moodleState(a) {
@@ -365,7 +455,7 @@
   // como tarea personal con su asignatura. Lo que pusiste tú (descripción, peso, avisos) se queda.
   function placeMoodleTask(a, old) {
     const course = moodleData.courses.find(c => c.id === a.courseid);
-    const code = guessModule(course);
+    const code = moduleOf(a.courseid);
     const due = new Date(a.duedate * 1000);
     const idx = CALENDAR_DATES.findIndex(cd => realDate(cd).toDateString() === due.toDateString());
     const schedule = getSchedule();
@@ -401,8 +491,8 @@
 
   // Tareas del campus pendientes de entrega (ni enviadas ni calificadas), por fecha de entrega.
   // Las que ya añadiste se ponen al día (entrega, nota, fecha) cada vez que se abre la lista.
-  function renderMoodleList(site, courses, assigns) {
-    moodleData = { courses, assigns };
+  function renderMoodleList() {
+    const { site, assigns } = moodleData;
     const added = moodleAdded();
     let changed = false;
     assigns.forEach(a => {
@@ -415,6 +505,8 @@
 
     const pending = assigns.filter(a => !moodleState(a).done)
       .sort((x, y) => (x.duedate || Infinity) - (y.duedate || Infinity));
+    document.getElementById('moodleDialog').dataset.mode = 'list';
+    document.getElementById('moodleTitle').textContent = 'Pendientes en el campus';
     document.getElementById('moodleMeta').textContent =
       `${site.fullname} · ${pending.length} ${pending.length === 1 ? 'tarea pendiente' : 'tareas pendientes'} de entrega`;
     renderMoodleRows();
@@ -433,7 +525,7 @@
       .sort((x, y) => (x.duedate || Infinity) - (y.duedate || Infinity));
     document.getElementById('moodleList').innerHTML = pending.map(a => {
       const course = courses.find(c => c.id === a.courseid);
-      const code = guessModule(course);
+      const code = moduleOf(a.courseid);
       const late = a.duedate && a.duedate < now;
       const btn = !a.duedate
         ? '<button type="button" class="btn btn-ghost moodle-add" disabled>Sin fecha</button>'
