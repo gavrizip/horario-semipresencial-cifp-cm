@@ -1,0 +1,13 @@
+# Clave de firma de la APK y sus contraseñas: nunca al repositorio
+android/horario-release.jks
+android/keystore.properties
+
+# Artefactos de android/build.sh (se regeneran en cada compilación)
+android/build/
+
+# Bases de datos generadas a partir de db/*.sql
+*.db
+*.db-wal
+*.db-shm
+
+__pycache__/
