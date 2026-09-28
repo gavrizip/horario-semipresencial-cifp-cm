@@ -2135,7 +2135,7 @@
     e.preventDefault();
     const inputs = [...document.querySelectorAll('#limitList input')];
     const bad = inputs.filter(i => !/^\d+$/.test(i.value.trim()) || +i.value < 50 || +i.value > 100);
-    inputs.forEach(i => i.toggleAttribute('aria-invalid', bad.includes(i)));
+    inputs.forEach(i => bad.includes(i) ? i.setAttribute('aria-invalid', 'true') : i.removeAttribute('aria-invalid'));
     document.querySelector('[data-error="limitList"]').hidden = !bad.length;
     if (bad.length) { bad[0].focus(); return; }
     inputs.forEach(i => {
