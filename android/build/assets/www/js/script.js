@@ -330,7 +330,9 @@
     wrapEl.addEventListener('wheel', e => {
       if (!isTableFull() || !e.ctrlKey) return;
       e.preventDefault();
-      setTableZoom(fullZoom * Math.exp(-e.deltaY * 0.01), e.clientX, e.clientY);
+      // deltaY en píxeles (Chrome), líneas (Firefox) o páginas: una muesca de rueda ≈ 100 px ≈ ×1,16
+      const px = e.deltaY * (e.deltaMode === 1 ? 33 : e.deltaMode === 2 ? innerHeight : 1);
+      animateTableZoom(zoomBase() * Math.exp(-px * 0.0015), e.clientX, e.clientY);
     }, { passive: false });
     document.addEventListener('keydown', e => {
       if (e.key === 'Escape' && isTableFull() && !menuTarget && !document.querySelector('dialog[open]')) closeTableFull();
@@ -1158,6 +1160,7 @@
   }
 
   function closeTableFull() {
+    stopTableZoom();
     hideTip();
     document.documentElement.classList.remove('table-full');
     document.getElementById('fullBar').hidden = true;
@@ -1170,6 +1173,7 @@
   function fitTableFull() {
     const table = document.getElementById('matrixTable');
     const wrap = document.querySelector('.table-wrap');
+    stopTableZoom();
     table.style.zoom = 1;
     fullZoom = 1;
     fullFit = Math.min(wrap.clientWidth / table.offsetWidth, wrap.clientHeight / table.offsetHeight, 1.6);
@@ -1178,7 +1182,27 @@
   }
 
   function zoomTableFull(dir) {
-    setTableZoom(fullZoom * (dir > 0 ? 1.25 : 0.8));
+    animateTableZoom(zoomBase() * (dir > 0 ? 1.25 : 0.8));
+  }
+
+  // Zoom suave (rueda y botones): se fija un objetivo y en cada fotograma la tabla recorre
+  // parte de lo que falta, con el punto bajo el cursor quieto. Girar rápido acumula objetivo.
+  let zoomTarget = null, zoomAt = [], zoomRaf = 0;
+  const zoomBase = () => zoomRaf ? zoomTarget : fullZoom;
+  function animateTableZoom(z, x, y) {
+    zoomTarget = Math.min(3, Math.max(fullFit, z));
+    zoomAt = [x, y];
+    if (!zoomRaf) zoomRaf = requestAnimationFrame(stepTableZoom);
+  }
+  function stepTableZoom() {
+    const left = zoomTarget - fullZoom;
+    const done = Math.abs(left) < 0.002;
+    setTableZoom(done ? zoomTarget : fullZoom + left * 0.22, ...zoomAt);
+    zoomRaf = done ? 0 : requestAnimationFrame(stepTableZoom);
+  }
+  function stopTableZoom() {
+    cancelAnimationFrame(zoomRaf);
+    zoomRaf = 0;
   }
 
   // Cambia el zoom manteniendo quieto el punto (x, y) de la pantalla (por defecto, el centro)
