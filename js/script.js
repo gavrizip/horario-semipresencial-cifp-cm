@@ -340,34 +340,119 @@
     const st = a.state && a.state.lastattempt;
     const sub = st && (st.submission || st.teamsubmission);
     const fb = a.state && a.state.feedback;
-    const grade = fb && fb.gradefordisplay ? fb.gradefordisplay.replace(/<[^>]*>/g, '').trim() : '';
-    if (grade) return { done: true, text: `Calificada: ${grade}` };
+    const shown = fb && fb.gradefordisplay ? fb.gradefordisplay.replace(/<[^>]*>/g, '').trim() : '';
+    // Nota sobre 10 para la app (solo si la tarea se califica con puntos, no con escala)
+    const points = fb && fb.grade ? parseFloat(fb.grade.grade) : NaN;
+    const grade = Number.isFinite(points) && a.grade > 0 ? Math.round(points / a.grade * 1000) / 100 : undefined;
+    if (shown || grade !== undefined) return { done: true, grade, text: `Calificada: ${shown || fmtNum(grade)}` };
     if (sub && sub.status === 'submitted') return { done: true, text: 'Entregada' };
     if (sub && sub.status === 'draft') return { done: false, text: 'Borrador sin enviar' };
     return { done: false, text: a.state ? 'Pendiente' : 'Estado desconocido' };
   }
 
+  // Asignatura elegida para cada curso del campus (si no se ha elegido, la que se adivina)
+  function loadMoodleMap() {
+    try { return JSON.parse(localStorage.getItem('horario_moodle_map')) || {}; } catch { return {}; }
+  }
+  function moduleFor(course) {
+    const map = loadMoodleMap();
+    return course.id in map ? (MODULES[map[course.id]] ? map[course.id] : null) : guessModule(course);
+  }
+  function setMoodleMap(courseId, code) {
+    const map = loadMoodleMap();
+    map[courseId] = code;
+    try { localStorage.setItem('horario_moodle_map', JSON.stringify(map)); } catch {}
+  }
+
+  let moodleData = null;
+
   function renderMoodlePreview(site, courses, assigns) {
+    moodleData = { courses, assigns };
     const fmt = ts => new Date(ts * 1000).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
+    const dated = assigns.filter(a => a.duedate).length;
     document.getElementById('moodleMeta').textContent =
-      `${site.fullname} · curso 2026-27: ${courses.length} cursos · ${assigns.length} tareas. Vista previa: aún no se añaden al horario.`;
+      `${site.fullname} · curso 2026-27: ${courses.length} cursos · ${assigns.length} tareas`;
     document.getElementById('moodleList').innerHTML = courses.map(c => {
-      const code = guessModule(c);
+      const code = moduleFor(c);
       const list = assigns.filter(a => a.courseid === c.id).sort((a, b) => (a.duedate || Infinity) - (b.duedate || Infinity));
       return `
         <section class="moodle-course">
-          <h4>${code ? chip(code) : '<span class="moodle-unmapped">?</span>'}
-            <span>${escapeHTML(c.fullname)}<small>${escapeHTML(c.shortname)}</small></span></h4>
-          ${list.length ? `<ul>${list.map(a => {
+          <h4>${escapeHTML(c.fullname)}<small>${escapeHTML(c.shortname)}</small></h4>
+          <select class="moodle-map" onchange="setMoodleMap(${c.id}, this.value)" aria-label="Asignatura de ${escapeHTML(c.fullname)}">
+            <option value="">Sin asignatura (tarea personal)</option>
+            ${Object.keys(MODULES).map(m => `<option value="${m}"${m === code ? ' selected' : ''}>${m} · ${MODULES[m].name}</option>`).join('')}
+          </select>
+          <ul>${list.map(a => {
             const s = moodleState(a);
             return `<li><span>${escapeHTML(a.name)}</span><span class="when">${a.duedate ? fmt(a.duedate) : 'Sin fecha'}</span>
-              <span class="state${s.done ? ' is-done' : ''}">${escapeHTML(s.text)}</span></li>`;
-          }).join('')}</ul>` : '<p class="empty">Sin tareas</p>'}
+              <span class="state${s.done ? ' is-done' : ''}">${escapeHTML(s.text)}${a.duedate ? '' : ' · sin fecha de entrega, no se añade'}</span></li>`;
+          }).join('')}</ul>
         </section>`;
     }).join('') || '<p class="att-empty">No hay tareas del campus entre el 1 de septiembre y el 30 de junio.</p>';
+    const btn = document.getElementById('moodleImportBtn');
+    btn.hidden = !dated;
+    btn.textContent = `Añadir al horario (${dated})`;
     const dialog = document.getElementById('moodleDialog');
     dialog.classList.remove('is-closing');
     if (!dialog.open) dialog.showModal();
+  }
+
+  // Mete las tareas del campus en el horario. Si la entrega cae un miércoles con clase de esa
+  // asignatura va a esa clase (como una tarea del menú del día); si no, a ese día como tarea
+  // personal con su asignatura. El id de Moodle evita duplicados: al volver a sincronizar se
+  // actualizan título, estado, nota y día. Lo que pusiste tú (descripción, peso, avisos) se queda.
+  function moodleImport() {
+    if (!moodleData) return;
+    const { courses, assigns } = moodleData;
+    const course = Object.fromEntries(courses.map(c => [c.id, c]));
+    const schedule = getSchedule();
+    const found = {};
+    [userEvents, personalEvents].forEach(store => Object.entries(store).forEach(([day, list]) =>
+      list.forEach(ev => { if (ev.moodle) found[ev.moodle] = { store, day, ev }; })));
+
+    let added = 0, updated = 0;
+    assigns.filter(a => a.duedate).forEach(a => {
+      const code = moduleFor(course[a.courseid]);
+      const due = new Date(a.duedate * 1000);
+      const idx = CALENDAR_DATES.findIndex(cd => realDate(cd).toDateString() === due.toDateString());
+      const slot = idx !== -1 && code && schedule[idx] ? schedule[idx].indexOf(code) : -1;
+      const s = moodleState(a);
+      const old = found[a.id];
+      const rec = { ...(old ? old.ev : { notify: true, notifyDays: [3], id: newRecordId() }),
+        type: 'task', text: a.name, title: a.name, moodle: a.id,
+        status: s.done || (old && old.ev.status === 'done') ? 'done' : 'pending' };
+      if (s.grade !== undefined) rec.grade = s.grade;
+      delete rec.module; delete rec.slot; delete rec.byDay;
+      let store, day;
+      if (slot !== -1) {
+        store = userEvents; day = String(idx);
+        Object.assign(rec, { module: code, slot, byDay: true });
+      } else {
+        store = personalEvents; day = isoOf(due.getFullYear(), due.getMonth(), due.getDate());
+        if (code) rec.module = code;
+        else if (!rec.desc) rec.desc = course[a.courseid].fullname;
+      }
+
+      if (old && old.store === store && old.day === day) {
+        const list = store[day];
+        list[list.indexOf(old.ev)] = rec;
+      } else {
+        if (old) {
+          const list = old.store[old.day];
+          list.splice(list.indexOf(old.ev), 1);
+          if (!list.length) delete old.store[old.day];
+        }
+        (store[day] = store[day] || []).push(rec);
+      }
+      if (!old) added++;
+      else if (old.store !== store || old.day !== day || JSON.stringify(old.ev) !== JSON.stringify(rec)) updated++;
+    });
+
+    saveData();
+    closeDialog('moodleDialog');
+    showToast(added || updated
+      ? `Campus: ${added} ${added === 1 ? 'tarea añadida' : 'tareas añadidas'} · ${updated} ${updated === 1 ? 'actualizada' : 'actualizadas'}`
+      : 'Campus: el horario ya estaba al día');
   }
 
   // --- Arranque ---
@@ -566,7 +651,7 @@
         t.setHours(REMINDER_HOUR, 0, 0, 0);
         return t.getTime();
       });
-      list.push({ id: ev.id, kind: 'task', code: '', what: ev.title || ev.text, when: isoLong(iso), due: due.getTime(), times, hour: REMINDER_HOUR, repeat: true });
+      list.push({ id: ev.id, kind: 'task', code: ev.module || '', what: ev.title || ev.text, when: isoLong(iso), due: due.getTime(), times, hour: REMINDER_HOUR, repeat: true });
     }));
     if (assigned) localStorage.setItem('academic_events_dark', JSON.stringify(userEvents));
     AndroidApp.syncReminders(JSON.stringify(list));
@@ -1138,11 +1223,12 @@
           const status = recordStatus(ev);
           html += `
           <li class="record is-editable is-personal${isNew}" data-type="${ev.type}" style="--i:${i++}">
-            <div class="record-when">${recordDate(isoShort(iso))}<span class="personal-tag">Personal</span></div>
+            <div class="record-when">${recordDate(isoShort(iso))}${ev.module && MODULES[ev.module] ? chip(ev.module) : '<span class="personal-tag">Personal</span>'}</div>
             <div class="record-body" onclick="openPersonalDialog('${ev.type}', '${iso}', ${evIdx})" onkeydown="if(event.key==='Enter'){this.click()}" tabindex="0" role="button" title="Editar">
               <div class="record-head"><span class="record-meta">${recordMeta(EVENT_TYPES[ev.type].label)}${status ? `<span class="record-status">— <span data-status="${ev.status || 'pending'}">${status}</span></span>` : ''}</span></div>
               <div class="record-text">${escapeHTML(ev.text)}</div>
               ${ev.type === 'task' && ev.desc ? `<div class="record-detail">${escapeHTML(ev.desc)}</div>` : ''}
+              ${recordExtra(ev) ? `<div class="record-detail">${recordExtra(ev)}</div>` : ''}
             </div>
             <button class="record-del" onclick="deletePersonal('${iso}', ${evIdx}, this)" aria-label="Eliminar registro">${icon('x')}</button>
           </li>`;
@@ -2412,6 +2498,12 @@
     rec.id = (index !== null && store[day][index].id) || newRecordId();
     if (slotEditing.byDay) rec.byDay = true;
     if (slotEditing.personal) { delete rec.module; delete rec.slot; delete rec.weight; delete rec.grade; }
+    // Las tareas del campus conservan su id de Moodle (y su asignatura si son personales)
+    const prevRec = index !== null ? store[day][index] : null;
+    if (prevRec && prevRec.moodle) {
+      rec.moodle = prevRec.moodle;
+      if (slotEditing.personal && prevRec.module) rec.module = prevRec.module;
+    }
 
     ['examTopics', 'examWeight', 'examGrade', 'taskTitle', 'taskWeight', 'taskGrade', 'noteText', 'notifyDays'].forEach(id => setFieldError(id, errors.includes(id)));
     if (errors.length) {

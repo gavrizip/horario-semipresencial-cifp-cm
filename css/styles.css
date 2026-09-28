@@ -1743,15 +1743,22 @@ tr.break-row td:first-child { background: var(--inset); padding-left: 8px; paddi
 .moodle-dialog { width: min(560px, calc(100vw - 32px)); }
 .moodle-dialog .dialog-head { align-items: flex-start; margin-bottom: 12px; }
 .moodle-list { display: flex; flex-direction: column; gap: 18px; max-height: min(60dvh, 560px); overflow-y: auto; overscroll-behavior: contain; }
-.moodle-course h4 { display: flex; align-items: center; gap: 8px; font-size: 0.875rem; line-height: 1.3; }
+.moodle-course h4 { font-size: 0.875rem; line-height: 1.3; }
+.moodle-map {
+  width: 100%; height: 36px; margin-top: 8px; padding: 0 32px 0 10px;
+  background: var(--inset) var(--select-arrow) no-repeat right 10px center;
+  border: 1px solid var(--line-strong); border-radius: var(--r);
+  font-size: 0.8125rem; appearance: none; outline: none;
+}
+.moodle-map:focus { border-color: var(--accent); }
+.moodle-map option { background: var(--surface-2); color: var(--text); }
+.dialog-actions [hidden] { display: none; }
 .moodle-course h4 small { display: block; font-weight: 400; font-size: 0.75rem; color: var(--text-3); }
-.moodle-unmapped { flex: none; padding: 2px 7px; border-radius: 6px; border: 1px dashed var(--line-strong); font-family: var(--mono); font-size: 0.75rem; color: var(--text-3); }
 .moodle-course ul { list-style: none; margin: 8px 0 0; padding: 0; }
 .moodle-course li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; padding: 8px 0; border-top: 1px solid var(--line); font-size: 0.8125rem; }
 .moodle-course li .when { font-family: var(--mono); font-size: 0.75rem; color: var(--text-2); text-align: right; white-space: nowrap; }
 .moodle-course li .state { grid-column: 1 / -1; font-size: 0.75rem; color: var(--text-3); }
 .moodle-course li .state.is-done { color: var(--done); }
-.moodle-course .empty { margin-top: 6px; font-size: 0.75rem; color: var(--text-3); }
 .is-app #slotDialog[data-kind="exam"] .notify-fields,
 .is-app #slotDialog[data-kind="task"] .notify-fields { display: block; }
 .type-option[data-type="yes"] { --c: var(--accent); }
