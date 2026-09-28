@@ -535,7 +535,8 @@
     renderMatrix();
     renderAttendanceBars();
     renderSidebarNotes();
-    scrollMatrixToToday();
+    if (isTableFull()) fitTableFull();   // en pantalla completa, el nuevo tramo también entero
+    else scrollMatrixToToday();
     replay(document.querySelector('.table-wrap'), 'is-swapping');
   }
 
@@ -1166,8 +1167,9 @@
   function openTableFull() {
     hideTip();
     document.documentElement.classList.add('table-full');
-    document.getElementById('fullBar').hidden = false;
-    document.getElementById('fullRange').textContent = document.getElementById('subTab' + currentMatrixSubTab).textContent;
+    const bar = document.getElementById('fullBar');
+    bar.hidden = false;
+    bar.prepend(document.getElementById('subTab1').parentElement);   // el selector de tramo sube a la barra
     fitTableFull();
   }
 
@@ -1176,6 +1178,7 @@
     hideTip();
     document.documentElement.classList.remove('table-full');
     document.getElementById('fullBar').hidden = true;
+    document.querySelector('.grid-toolbar').prepend(document.getElementById('subTab1').parentElement);
     document.getElementById('matrixTable').style.zoom = '';
     fullZoom = viewZoom = 1;
     alignSidebar();
