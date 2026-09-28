@@ -19,8 +19,8 @@ INSERT INTO curso_academico (id, nombre, inicio, fin) VALUES
 
 INSERT INTO periodo (id, curso_academico_id, orden, nombre, inicio, fin) VALUES
   (1, 1, 1, '1.er trimestre', '2026-09-01', '2027-01-19'),
-  (2, 1, 2, '2.º trimestre', '2027-01-20', '2027-04-20'),
-  (3, 1, 3, '3.er trimestre', '2027-04-21', '2027-06-30');
+  (2, 1, 2, '2.º trimestre', '2027-01-20', '2027-05-04'),
+  (3, 1, 3, '3.er trimestre', '2027-05-05', '2027-06-30');
 
 INSERT INTO familia_profesional (id, codigo, nombre) VALUES
   (1, 'IFC', 'Informática y Comunicaciones');

@@ -1164,7 +1164,7 @@
   // --- 5. TRIMESTRE ---
   // Fechas del tramo elegido en "Trimestre"
   function matrixRange() {
-    const bounds = { 1: ['23 Sep', '13 Ene'], 2: ['20 Ene', '14 Abr'], 3: ['21 Abr', '16 Jun'] }[currentMatrixSubTab] || [];
+    const bounds = { 1: ['23 Sep', '13 Ene'], 2: ['20 Ene', '28 Abr'], 3: ['5 May', '16 Jun'] }[currentMatrixSubTab] || [];
     let startIdx = CALENDAR_DATES.findIndex(d => d.date === bounds[0]);
     let endIdx = CALENDAR_DATES.findIndex(d => d.date === bounds[1]);
     if (startIdx === -1) startIdx = 0;
