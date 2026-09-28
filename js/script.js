@@ -1108,9 +1108,9 @@
         <li class="slot${dim}" style="--i:${i}" data-date="${selectedDateIndex}" data-slots="${b.slots.map(t => t.key).join(',')}">
           <div class="slot-body">
             ${chip(b.code, 'chip-lg')}
-            <div>
+            <div class="slot-text">
               <div class="slot-name">${mod.name} ${sessions}</div>
-              <div class="slot-meta">${capitalize(mod.teacher)} · ${room}</div>
+              <div class="slot-meta">${capitalize(mod.teacher)} · ${room}<span class="slot-count">${n} ${n === 1 ? 'sesión' : 'sesiones'}</span></div>
             </div>
           </div>
           ${time}

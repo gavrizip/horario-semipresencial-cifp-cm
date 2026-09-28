@@ -675,6 +675,7 @@ h3 { font-size: 0.9375rem; font-weight: 600; letter-spacing: -0.01em; }
 .slot-dur { font-weight: 400; color: var(--text-3); white-space: nowrap; }
 .slot-meta { color: var(--text-2); font-size: 0.8125rem; margin-top: 2px; }
 .slot.is-free .slot-name { color: var(--text-3); font-weight: 400; }
+.slot-count { display: none; }
 
 /* Descanso centrado en su franja, con su hora de inicio y fin */
 .slot-break {
@@ -1438,6 +1439,20 @@ tr.break-row td:first-child { background: var(--inset); padding-left: 8px; paddi
   /* Días sin clase: las marcas van bajo el número, no en la esquina junto al día de al lado */
   .month-day.is-free .day-marks { position: static; }
 
+  /* Clase en el móvil: el nombre ocupa toda la primera línea junto al chip; debajo, docente · aula
+     y las sesiones, con la hora a su derecha */
+  .slot:not(.is-free) {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas: "chip name name" ". meta time";
+    column-gap: 12px; row-gap: 4px;
+  }
+  .slot:not(.is-free) :is(.slot-body, .slot-text) { display: contents; }
+  .slot:not(.is-free) .chip { grid-area: chip; }
+  .slot:not(.is-free) .slot-name { grid-area: name; align-self: center; }
+  .slot:not(.is-free) .slot-meta { grid-area: meta; margin: 0; }
+  .slot:not(.is-free) .slot-time { grid-area: time; align-self: end; }
+  .slot-name .slot-dur { display: none; }
+  .slot-count { display: block; margin-top: 2px; color: var(--text-3); }
   .slot { gap: 12px; }
   .slot-time { font-size: 1.0625rem; }
   .field-row { grid-template-columns: 1fr; gap: 0; }
