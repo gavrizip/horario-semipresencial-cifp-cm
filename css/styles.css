@@ -1421,6 +1421,9 @@ tr.break-row td:first-child { background: var(--inset); padding-left: 8px; paddi
   .tab { padding: 10px 9px 12px; }
   .layout { margin-top: 16px; gap: 24px; }
   .sidebar { grid-template-columns: 1fr; }
+  /* «Día» en el móvil: sin la lista de registros del día (ocupa mucho) y con Registros antes que Asistencia */
+  #viewWeekly .day-events { display: none; }
+  .layout:has(#viewWeekly.is-shown) .sidebar > .panel:first-child { order: 1; }
 
   .month-grid { gap: 3px; }
   .month-day { min-height: 60px; padding: 6px; gap: 4px; border-radius: var(--r-sm); }
