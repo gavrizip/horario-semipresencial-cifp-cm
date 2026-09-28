@@ -305,14 +305,21 @@
       const courses = await moodleCall('core_enrol_get_users_courses', { userid: site.userid });
       const ids = courses.map(c => c.id);
       const res = ids.length ? await moodleCall('mod_assign_get_assignments', { courseids: ids }) : { courses: [] };
-      const assigns = res.courses.flatMap(c => c.assignments.map(a => ({ ...a, courseid: c.id })));
+      // Solo las de este curso escolar (1 sep – 30 jun, de MONTHS_DATA), por fecha de entrega o,
+      // si no tiene, por la fecha en que se abrió
+      const first = MONTHS_DATA[0], last = MONTHS_DATA[MONTHS_DATA.length - 1];
+      const from = new Date(first.year, first.monthIdx, 1) / 1000;
+      const to = new Date(last.year, last.monthIdx, last.daysInMonth, 23, 59, 59) / 1000;
+      const assigns = res.courses
+        .flatMap(c => c.assignments.map(a => ({ ...a, courseid: c.id })))
+        .filter(a => { const t = a.duedate || a.allowsubmissionsfromdate; return t >= from && t <= to; });
       // Estado de cada entrega, de 4 en 4 para no saturar el campus
       for (let i = 0; i < assigns.length; i += 4) {
         await Promise.all(assigns.slice(i, i + 4).map(async a => {
           try { a.state = await moodleCall('mod_assign_get_submission_status', { assignid: a.id }); } catch { a.state = null; }
         }));
       }
-      renderMoodlePreview(site, courses, assigns);
+      renderMoodlePreview(site, courses.filter(c => assigns.some(a => a.courseid === c.id)), assigns);
       renderMoodleStatus();
     } catch (e) {
       renderMoodleStatus(e.code === 'invalidtoken' ? 'La sesión del campus ha caducado: vuelve a conectar.' : e.message);
@@ -343,7 +350,7 @@
   function renderMoodlePreview(site, courses, assigns) {
     const fmt = ts => new Date(ts * 1000).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
     document.getElementById('moodleMeta').textContent =
-      `${site.fullname} · ${courses.length} cursos · ${assigns.length} tareas. Vista previa: aún no se añaden al horario.`;
+      `${site.fullname} · curso 2026-27: ${courses.length} cursos · ${assigns.length} tareas. Vista previa: aún no se añaden al horario.`;
     document.getElementById('moodleList').innerHTML = courses.map(c => {
       const code = guessModule(c);
       const list = assigns.filter(a => a.courseid === c.id).sort((a, b) => (a.duedate || Infinity) - (b.duedate || Infinity));
@@ -357,7 +364,7 @@
               <span class="state${s.done ? ' is-done' : ''}">${escapeHTML(s.text)}</span></li>`;
           }).join('')}</ul>` : '<p class="empty">Sin tareas</p>'}
         </section>`;
-    }).join('') || '<p class="att-empty">No estás matriculado en ningún curso del campus.</p>';
+    }).join('') || '<p class="att-empty">No hay tareas del campus entre el 1 de septiembre y el 30 de junio.</p>';
     const dialog = document.getElementById('moodleDialog');
     dialog.classList.remove('is-closing');
     if (!dialog.open) dialog.showModal();
