@@ -238,6 +238,17 @@
     <p class="field-help">Se guarda y se usa cada vez que abras la aplicación.</p>
   </section>
 
+  <!-- Campus (Moodle): solo en la app de Android, que es quien habla con el campus -->
+  <section class="drawer-section moodle-section">
+    <h4 class="drawer-label"><svg class="icon"><use href="#i-task"/></svg>Campus</h4>
+    <p class="field-help" id="moodleStatus">Conecta tu cuenta de Medusa para traer tus tareas del campus.</p>
+    <div class="moodle-actions">
+      <button type="button" class="btn btn-primary" id="moodleConnectBtn" onclick="moodleConnect()">Conectar</button>
+      <button type="button" class="btn btn-primary" id="moodleSyncBtn" onclick="moodleSync()" hidden>Ver mis tareas</button>
+      <button type="button" class="btn btn-ghost" id="moodleLogoutBtn" onclick="moodleDisconnect()" hidden>Desconectar</button>
+    </div>
+  </section>
+
   <section class="drawer-section">
     <h4 class="drawer-label"><svg class="icon"><use href="#i-info"/></svg>Cómo se usa</h4>
     <ul class="help-list">
@@ -379,6 +390,21 @@
       <button type="submit" class="btn btn-primary">Guardar</button>
     </div>
   </form>
+</dialog>
+
+<dialog class="dialog moodle-dialog" id="moodleDialog" aria-labelledby="moodleTitle">
+  <div class="dialog-head">
+    <div>
+      <h3 id="moodleTitle">Tareas del campus</h3>
+      <p class="slot-dialog-meta" id="moodleMeta"></p>
+    </div>
+    <button type="button" class="icon-btn" onclick="closeDialog('moodleDialog')" aria-label="Cerrar"><svg class="icon"><use href="#i-x"/></svg></button>
+  </div>
+  <div class="moodle-list" id="moodleList"></div>
+  <div class="dialog-actions">
+    <span class="spacer"></span>
+    <button type="button" class="btn btn-primary" onclick="closeDialog('moodleDialog')">Cerrar</button>
+  </div>
 </dialog>
 
 <div class="toast" id="toast" role="status" aria-live="polite">

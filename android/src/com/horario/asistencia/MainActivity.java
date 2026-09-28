@@ -1,6 +1,7 @@
 package com.horario.asistencia;
 
 import android.app.Activity;
+import android.app.Dialog;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Build;
@@ -11,21 +12,25 @@ import android.os.Vibrator;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowInsetsController;
+import android.webkit.CookieManager;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
+import org.json.JSONObject;
+
 import java.lang.ref.WeakReference;
 
-/** Muestra la página incluida en assets/www a pantalla completa, sin red. */
+/** Muestra la página incluida en assets/www a pantalla completa. La única red es la del campus (Moodle). */
 public class MainActivity extends Activity {
 
     private static final String START_URL = "file:///android_asset/www/horario.html";
 
     private WebView web;
     private boolean askedNotifications;
+    private Dialog moodleDialog;
     private static WeakReference<MainActivity> current = new WeakReference<>(null);
 
     @Override
@@ -99,8 +104,44 @@ public class MainActivity extends Activity {
         a.runOnUiThread(() -> a.web.evaluateJavascript("window.applyNativeActions && applyNativeActions()", null));
     }
 
+    /**
+     * Inicio de sesión en el campus: launch.php en un navegador aparte (CAS de Medusa) hasta que
+     * Moodle redirige a moodlemobile://token=...; ahí se guarda el token y se cierra.
+     */
+    private void openMoodleLogin() {
+        if (moodleDialog != null) return;
+        String passport = Moodle.newPassport();
+        WebView login = new WebView(this);
+        login.getSettings().setJavaScriptEnabled(true);
+        login.getSettings().setDomStorageEnabled(true);
+        CookieManager.getInstance().setAcceptThirdPartyCookies(login, true);
+        Dialog d = new Dialog(this, android.R.style.Theme_DeviceDefault_Light_NoActionBar);
+        final boolean[] ok = {false};
+        login.setWebViewClient(new WebViewClient() {
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest req) {
+                String url = req.getUrl().toString();
+                if (!url.startsWith(Moodle.SCHEME + "://")) return false;
+                String token = Moodle.parseToken(url, passport);
+                if (token != null) { Moodle.save(getApplicationContext(), token); ok[0] = true; }
+                d.dismiss();
+                return true;
+            }
+        });
+        d.setContentView(login);
+        d.setOnDismissListener(x -> {
+            moodleDialog = null;
+            login.destroy();
+            web.evaluateJavascript("window.moodleLoginDone && moodleLoginDone(" + ok[0] + ")", null);
+        });
+        moodleDialog = d;
+        d.show();
+        login.loadUrl(Moodle.launchUrl(passport));
+    }
+
     @Override
     protected void onDestroy() {
+        if (moodleDialog != null) moodleDialog.dismiss();
         if (web != null) web.destroy();
         super.onDestroy();
     }
@@ -171,6 +212,30 @@ public class MainActivity extends Activity {
             // Como toque de interfaz: respeta el ajuste del sistema de «respuesta táctil»
             if (Build.VERSION.SDK_INT >= 33) v.vibrate(effect, VibrationAttributes.createForUsage(VibrationAttributes.USAGE_TOUCH));
             else v.vibrate(effect);
+        }
+
+        // --- Moodle ---
+        @JavascriptInterface
+        public boolean moodleConnected() { return Moodle.connected(getApplicationContext()); }
+
+        @JavascriptInterface
+        public void moodleLogin() { runOnUiThread(MainActivity.this::openMoodleLogin); }
+
+        /** Olvida el token y la sesión de Medusa guardada en las cookies. */
+        @JavascriptInterface
+        public void moodleLogout() {
+            Moodle.clear(getApplicationContext());
+            runOnUiThread(() -> CookieManager.getInstance().removeAllCookies(null));
+        }
+
+        /** Llamada a la API en segundo plano; la respuesta vuelve con moodleResult(id, json). */
+        @JavascriptInterface
+        public void moodleCall(String id, String fn, String argsJson) {
+            new Thread(() -> {
+                String result = Moodle.call(getApplicationContext(), fn, argsJson);
+                String js = "window.moodleResult && moodleResult(" + JSONObject.quote(id) + "," + JSONObject.quote(result) + ")";
+                runOnUiThread(() -> web.evaluateJavascript(js, null));
+            }).start();
         }
 
         @JavascriptInterface

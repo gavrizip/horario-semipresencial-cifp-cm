@@ -230,10 +230,144 @@
     el.classList.add(cls);
   }
 
+  // --- Campus (Moodle) ---
+  // Solo en la app de Android: el campus no admite peticiones desde la página (CORS), así que las
+  // hace Java (Moodle.java), que también guarda el token. Aquí se piden y se pintan los datos.
+  // Primera fase: ver las tareas del campus; todavía no se añaden al horario.
+  const moodlePending = {};
+  let moodleSeq = 0;
+
+  function moodleCall(fn, args = {}) {
+    return new Promise((resolve, reject) => {
+      const id = String(++moodleSeq);
+      moodlePending[id] = { resolve, reject };
+      AndroidApp.moodleCall(id, fn, JSON.stringify(flattenArgs(args)));
+    });
+  }
+
+  // Respuesta de Java: moodleResult(id, textoJSON)
+  function moodleResult(id, text) {
+    const p = moodlePending[id];
+    if (!p) return;
+    delete moodlePending[id];
+    let data;
+    try { data = JSON.parse(text); } catch { p.reject(new Error('Respuesta no válida del campus')); return; }
+    if (data && data.exception) {
+      const err = new Error(data.message || data.errorcode || 'Error del campus');
+      err.code = data.errorcode;
+      p.reject(err);
+    } else p.resolve(data);
+  }
+
+  // Parámetros al estilo PHP: { courseids: [3, 5] } → { 'courseids[0]': 3, 'courseids[1]': 5 }
+  function flattenArgs(obj, prefix = '', out = {}) {
+    Object.entries(obj).forEach(([k, v]) => {
+      const key = prefix ? `${prefix}[${k}]` : k;
+      if (v !== null && typeof v === 'object') flattenArgs(v, key, out);
+      else out[key] = v;
+    });
+    return out;
+  }
+
+  function renderMoodleStatus(message) {
+    if (!window.AndroidApp || !AndroidApp.moodleConnected) return;
+    const connected = AndroidApp.moodleConnected();
+    let user = null;
+    try { user = localStorage.getItem('horario_moodle_user'); } catch {}
+    document.getElementById('moodleStatus').textContent = message
+      || (connected ? `Conectado${user ? ' como ' + user : ''}.` : 'Conecta tu cuenta de Medusa para traer tus tareas del campus.');
+    document.getElementById('moodleConnectBtn').hidden = connected;
+    document.getElementById('moodleSyncBtn').hidden = !connected;
+    document.getElementById('moodleLogoutBtn').hidden = !connected;
+  }
+
+  function moodleConnect() { AndroidApp.moodleLogin(); }
+
+  // Java la llama al cerrar la ventana de inicio de sesión
+  function moodleLoginDone(ok) {
+    renderMoodleStatus();
+    showToast(ok ? 'Cuenta del campus conectada' : 'No se ha conectado la cuenta del campus');
+  }
+
+  function moodleDisconnect() {
+    AndroidApp.moodleLogout();
+    try { localStorage.removeItem('horario_moodle_user'); } catch {}
+    renderMoodleStatus();
+  }
+
+  async function moodleSync() {
+    const btn = document.getElementById('moodleSyncBtn');
+    btn.disabled = true;
+    renderMoodleStatus('Leyendo tus tareas del campus…');
+    try {
+      const site = await moodleCall('core_webservice_get_site_info');
+      try { localStorage.setItem('horario_moodle_user', site.fullname); } catch {}
+      const courses = await moodleCall('core_enrol_get_users_courses', { userid: site.userid });
+      const ids = courses.map(c => c.id);
+      const res = ids.length ? await moodleCall('mod_assign_get_assignments', { courseids: ids }) : { courses: [] };
+      const assigns = res.courses.flatMap(c => c.assignments.map(a => ({ ...a, courseid: c.id })));
+      // Estado de cada entrega, de 4 en 4 para no saturar el campus
+      for (let i = 0; i < assigns.length; i += 4) {
+        await Promise.all(assigns.slice(i, i + 4).map(async a => {
+          try { a.state = await moodleCall('mod_assign_get_submission_status', { assignid: a.id }); } catch { a.state = null; }
+        }));
+      }
+      renderMoodlePreview(site, courses, assigns);
+      renderMoodleStatus();
+    } catch (e) {
+      renderMoodleStatus(e.code === 'invalidtoken' ? 'La sesión del campus ha caducado: vuelve a conectar.' : e.message);
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  // Asignatura de la app a la que parece corresponder un curso del campus (por código o nombre)
+  const plain = s => String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  function guessModule(course) {
+    const text = plain(`${course.fullname} ${course.shortname}`);
+    return Object.keys(MODULES).find(code =>
+      new RegExp(`\\b${code.toLowerCase()}\\b`).test(text) || text.includes(plain(MODULES[code].name))) || null;
+  }
+
+  function moodleState(a) {
+    const st = a.state && a.state.lastattempt;
+    const sub = st && (st.submission || st.teamsubmission);
+    const fb = a.state && a.state.feedback;
+    const grade = fb && fb.gradefordisplay ? fb.gradefordisplay.replace(/<[^>]*>/g, '').trim() : '';
+    if (grade) return { done: true, text: `Calificada: ${grade}` };
+    if (sub && sub.status === 'submitted') return { done: true, text: 'Entregada' };
+    if (sub && sub.status === 'draft') return { done: false, text: 'Borrador sin enviar' };
+    return { done: false, text: a.state ? 'Pendiente' : 'Estado desconocido' };
+  }
+
+  function renderMoodlePreview(site, courses, assigns) {
+    const fmt = ts => new Date(ts * 1000).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
+    document.getElementById('moodleMeta').textContent =
+      `${site.fullname} · ${courses.length} cursos · ${assigns.length} tareas. Vista previa: aún no se añaden al horario.`;
+    document.getElementById('moodleList').innerHTML = courses.map(c => {
+      const code = guessModule(c);
+      const list = assigns.filter(a => a.courseid === c.id).sort((a, b) => (a.duedate || Infinity) - (b.duedate || Infinity));
+      return `
+        <section class="moodle-course">
+          <h4>${code ? chip(code) : '<span class="moodle-unmapped">?</span>'}
+            <span>${escapeHTML(c.fullname)}<small>${escapeHTML(c.shortname)}</small></span></h4>
+          ${list.length ? `<ul>${list.map(a => {
+            const s = moodleState(a);
+            return `<li><span>${escapeHTML(a.name)}</span><span class="when">${a.duedate ? fmt(a.duedate) : 'Sin fecha'}</span>
+              <span class="state${s.done ? ' is-done' : ''}">${escapeHTML(s.text)}</span></li>`;
+          }).join('')}</ul>` : '<p class="empty">Sin tareas</p>'}
+        </section>`;
+    }).join('') || '<p class="att-empty">No estás matriculado en ningún curso del campus.</p>';
+    const dialog = document.getElementById('moodleDialog');
+    dialog.classList.remove('is-closing');
+    if (!dialog.open) dialog.showModal();
+  }
+
   // --- Arranque ---
   function init() {
     // Segunda comprobación de la app de Android (la primera está en <head>)
     if (window.AndroidApp) document.documentElement.classList.add('is-app');
+    renderMoodleStatus();
     selectedDateIndex = nextClassIndex();
     selectedMonthIndex = CALENDAR_DATES[selectedDateIndex].monthIdx;
     setMatrixSubTab(subTabOf(selectedDateIndex));
@@ -292,6 +426,9 @@
     const slotDialog = document.getElementById('slotDialog');
     slotDialog.addEventListener('click', e => { if (e.target === slotDialog) closeSlotDialog(); });
     slotDialog.addEventListener('cancel', e => { e.preventDefault(); closeSlotDialog(); });
+    const moodleDialog = document.getElementById('moodleDialog');
+    moodleDialog.addEventListener('click', e => { if (e.target === moodleDialog) closeDialog('moodleDialog'); });
+    moodleDialog.addEventListener('cancel', e => { e.preventDefault(); closeDialog('moodleDialog'); });
     const limitDialog = document.getElementById('limitDialog');
     limitDialog.addEventListener('click', e => { if (e.target === limitDialog) closeDialog('limitDialog'); });
     limitDialog.addEventListener('cancel', e => { e.preventDefault(); closeDialog('limitDialog'); });

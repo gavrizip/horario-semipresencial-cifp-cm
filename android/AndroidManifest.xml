@@ -2,7 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.horario.asistencia">
 
-    <!-- Sin permiso de internet: todo es local -->
+    <!-- Internet solo para el campus (Moodle): tareas, entregas y notas -->
+    <uses-permission android:name="android.permission.INTERNET" />
     <!-- Respuesta háptica corta al marcar faltas y al abrir el menú con pulsación larga -->
     <uses-permission android:name="android.permission.VIBRATE" />
     <!-- Avisos de exámenes y tareas -->
