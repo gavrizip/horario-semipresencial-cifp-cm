@@ -922,6 +922,7 @@ button.th-inner.is-menu-open { color: var(--accent-text); }
 }
 
 /* Selector de tramo + botón de ayuda */
+.segmented-btn sup { font-size: 0.68em; line-height: 0; margin-left: 0.05em; }
 .grid-toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
 .grid-toolbar .segmented-wide { margin-bottom: 0; }
 
