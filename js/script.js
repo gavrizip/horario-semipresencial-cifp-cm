@@ -2246,7 +2246,8 @@
       rec = {
         type: 'task', module, slot: key, text: title, title,
         desc: val('taskDesc'), weight, grade,
-        status: document.querySelector('input[name="taskStatus"]:checked').value
+        // Con nota ya está entregada
+        status: grade !== undefined ? 'done' : document.querySelector('input[name="taskStatus"]:checked').value
       };
     } else {
       const text = val('noteText');
