@@ -924,6 +924,39 @@ button.th-inner.is-menu-open { color: var(--accent-text); }
 /* Selector de tramo + botón de ayuda */
 .grid-toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
 .grid-toolbar .segmented-wide { margin-bottom: 0; }
+
+/* ---------- Tabla en pantalla completa ----------
+   La misma tabla (sigue siendo interactiva) pasa a ocupar la pantalla bajo una barra;
+   se ajusta con «zoom» (escala el diseño real: los clics, la cabecera y la columna
+   «Hora» fijas siguen funcionando). Por debajo de avisos, bocadillos y menús. */
+.full-btn { margin-left: auto; flex: none; }
+html.table-full { overflow: hidden; }
+html.table-full .table-wrap {
+  position: fixed; z-index: 40;
+  inset: 56px 0 0 0;
+  max-height: none;
+  border: none; border-top: 1px solid var(--line); border-radius: 0;
+  touch-action: pan-x pan-y;          /* sin el pellizco del navegador: lo hace la app */
+  overscroll-behavior: contain;
+  animation: full-in 280ms var(--ease-drawer);
+}
+/* Centrada en el hueco; «safe» evita que al acercar quede cortada por arriba o la izquierda */
+html.table-full .table-wrap { display: grid; place-content: safe center; }
+html.table-full #matrixTable { min-width: 0; }
+.full-bar {
+  position: fixed; z-index: 41; top: 0; left: 0; right: 0; height: 56px;
+  display: flex; align-items: center; gap: 10px;
+  padding: 0 10px 0 16px;
+  background: var(--bg);
+  animation: full-in 280ms var(--ease-drawer);
+}
+.full-bar[hidden] { display: none; }
+.full-range { margin-right: auto; font-size: 0.875rem; font-weight: 600; color: var(--text); }
+.full-zoom { display: flex; align-items: center; gap: 2px; padding: 2px; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); }
+.full-zoom .icon-btn { border: none; width: 32px; height: 32px; }
+.full-pct { min-width: 58px; height: 32px; font-size: 0.8125rem; color: var(--text-2); border-radius: var(--r-sm); }
+.full-pct:hover { color: var(--text); background: var(--surface-2); }
+@keyframes full-in { from { opacity: 0; transform: scale(0.985); } }
 /* ---------- Menú lateral ---------- */
 
 .menu-btn { flex: none; border: none; }

@@ -31,6 +31,9 @@
 
 <svg class="icon-sprite" aria-hidden="true">
   <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+  <symbol id="i-expand" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></symbol>
+  <symbol id="i-collapse" viewBox="0 0 24 24"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></symbol>
   <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4.5 7h15M4.5 12h15M4.5 17h15"/></symbol>
   <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
   <symbol id="i-left" viewBox="0 0 24 24"><path d="m14.5 6-6 6 6 6"/></symbol>
@@ -76,6 +79,17 @@
             <button class="segmented-btn" id="subTab2" onclick="switchMatrixSubTab(2)">20 ene – 14 abr</button>
             <button class="segmented-btn" id="subTab3" onclick="switchMatrixSubTab(3)">21 abr – 16 jun</button>
           </div>
+          <button class="icon-btn full-btn" id="fullBtn" onclick="openTableFull()" aria-label="Ver la tabla en pantalla completa" title="Pantalla completa"><svg class="icon"><use href="#i-expand"/></svg></button>
+        </div>
+        <!-- Barra de la tabla en pantalla completa (tramo, zoom y salir) -->
+        <div class="full-bar" id="fullBar" hidden>
+          <span class="full-range num" id="fullRange"></span>
+          <div class="full-zoom" role="group" aria-label="Zoom de la tabla">
+            <button class="icon-btn" onclick="zoomTableFull(-1)" aria-label="Alejar" title="Alejar"><svg class="icon"><use href="#i-minus"/></svg></button>
+            <button class="full-pct num" id="fullZoom" onclick="fitTableFull()" title="Ajustar a la pantalla">100%</button>
+            <button class="icon-btn" onclick="zoomTableFull(1)" aria-label="Acercar" title="Acercar"><svg class="icon"><use href="#i-plus"/></svg></button>
+          </div>
+          <button class="icon-btn" onclick="closeTableFull()" aria-label="Salir de pantalla completa" title="Salir de pantalla completa"><svg class="icon"><use href="#i-collapse"/></svg></button>
         </div>
         <div class="table-wrap">
           <table id="matrixTable"></table>

@@ -308,7 +308,33 @@
     applyNativeActions();
     syncReminders();
 
-    window.addEventListener('resize', () => { moveTabIndicator(); alignSidebar(); });
+    window.addEventListener('resize', () => { moveTabIndicator(); alignSidebar(); if (isTableFull()) fitTableFull(); });
+
+    // Pantalla completa: pellizco (táctil) y Ctrl + rueda / pellizco del trackpad (ordenador).
+    // Con un dedo la tabla se desplaza de forma nativa.
+    const wrapEl = document.querySelector('.table-wrap');
+    let pinch = null;
+    const span = t => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+    wrapEl.addEventListener('touchstart', e => {
+      if (!isTableFull() || e.touches.length !== 2) return;
+      cancelLongPress();
+      pinch = { d: span(e.touches), z: fullZoom };
+    }, { passive: true });
+    wrapEl.addEventListener('touchmove', e => {
+      if (!pinch || e.touches.length !== 2) return;
+      e.preventDefault();
+      const [a, b] = e.touches;
+      setTableZoom(pinch.z * span(e.touches) / pinch.d, (a.clientX + b.clientX) / 2, (a.clientY + b.clientY) / 2);
+    }, { passive: false });
+    wrapEl.addEventListener('touchend', e => { if (e.touches.length < 2) pinch = null; });
+    wrapEl.addEventListener('wheel', e => {
+      if (!isTableFull() || !e.ctrlKey) return;
+      e.preventDefault();
+      setTableZoom(fullZoom * Math.exp(-e.deltaY * 0.01), e.clientX, e.clientY);
+    }, { passive: false });
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && isTableFull() && !menuTarget && !document.querySelector('dialog[open]')) closeTableFull();
+    });
     alignSidebar();
     scrollMatrixToToday();
     if (document.fonts) document.fonts.ready.then(() => { moveTabIndicator(); alignSidebar(); scrollMatrixToToday(); });
@@ -1116,6 +1142,59 @@
   function sidebarRange() {
     if (currentTab !== 'grid') return { startIdx: 0, endIdx: CALENDAR_DATES.length - 1, all: true };
     return { ...matrixRange(), all: false };
+  }
+
+  // --- Tabla en pantalla completa ---
+  let fullZoom = 1;   // zoom actual de la tabla
+  let fullFit = 1;    // zoom con el que cabe entera (el mínimo)
+  const isTableFull = () => document.documentElement.classList.contains('table-full');
+
+  function openTableFull() {
+    hideTip();
+    document.documentElement.classList.add('table-full');
+    document.getElementById('fullBar').hidden = false;
+    document.getElementById('fullRange').textContent = document.getElementById('subTab' + currentMatrixSubTab).textContent;
+    fitTableFull();
+  }
+
+  function closeTableFull() {
+    hideTip();
+    document.documentElement.classList.remove('table-full');
+    document.getElementById('fullBar').hidden = true;
+    document.getElementById('matrixTable').style.zoom = '';
+    fullZoom = 1;
+    alignSidebar();
+  }
+
+  // Zoom con el que se ve todo el tramo en la pantalla (hasta ×1,6 si sobra sitio)
+  function fitTableFull() {
+    const table = document.getElementById('matrixTable');
+    const wrap = document.querySelector('.table-wrap');
+    table.style.zoom = 1;
+    fullZoom = 1;
+    fullFit = Math.min(wrap.clientWidth / table.offsetWidth, wrap.clientHeight / table.offsetHeight, 1.6);
+    setTableZoom(fullFit);
+    wrap.scrollTo(0, 0);
+  }
+
+  function zoomTableFull(dir) {
+    setTableZoom(fullZoom * (dir > 0 ? 1.25 : 0.8));
+  }
+
+  // Cambia el zoom manteniendo quieto el punto (x, y) de la pantalla (por defecto, el centro)
+  function setTableZoom(z, x, y) {
+    const table = document.getElementById('matrixTable');
+    const wrap = document.querySelector('.table-wrap');
+    z = Math.min(3, Math.max(fullFit, z));
+    const r = wrap.getBoundingClientRect();
+    const ox = (x ?? r.left + r.width / 2) - r.left, oy = (y ?? r.top + r.height / 2) - r.top;
+    const px = (wrap.scrollLeft + ox) / fullZoom, py = (wrap.scrollTop + oy) / fullZoom;
+    fullZoom = z;
+    table.style.zoom = z;
+    wrap.scrollLeft = px * z - ox;
+    wrap.scrollTop = py * z - oy;
+    // 100 % = la tabla entera en pantalla
+    document.getElementById('fullZoom').textContent = `${Math.round(z / fullFit * 100)}%`;
   }
 
   function renderMatrix() {

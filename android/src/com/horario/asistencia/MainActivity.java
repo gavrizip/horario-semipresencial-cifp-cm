@@ -79,6 +79,7 @@ public class MainActivity extends Activity {
             + "if(d){d.dispatchEvent(new Event('cancel',{cancelable:true}));return true;}"
             + "var m=document.getElementById('ctxMenu');"
             + "if(m&&!m.hidden){document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));return true;}"
+            + "if(document.documentElement.classList.contains('table-full')){closeTableFull();return true;}"
             + "return false;})()";
         web.evaluateJavascript(js, handled -> {
             if (!"true".equals(handled)) finish();
