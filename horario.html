@@ -150,7 +150,7 @@
       <section class="panel">
         <div class="panel-head">
           <h3>Asistencia</h3>
-          <button type="button" class="icon-btn panel-btn" onclick="openLimitDialog()" aria-label="Configurar el límite de faltas" title="Límite de faltas"><svg class="icon"><use href="#i-gear"/></svg></button>
+          <button type="button" class="icon-btn panel-btn" onclick="openLimitDialog()" aria-label="Configurar la asistencia mínima de cada asignatura" title="Asistencia mínima"><svg class="icon"><use href="#i-gear"/></svg></button>
         </div>
         <div id="attendanceBarsContainer" class="attendance"></div>
       </section>
@@ -364,15 +364,15 @@
 <dialog class="dialog limit-dialog" id="limitDialog" aria-labelledby="limitTitle">
   <form method="dialog" onsubmit="saveLimit(event)" novalidate>
     <div class="dialog-head">
-      <h3 id="limitTitle">Límite de faltas</h3>
+      <div>
+        <h3 id="limitTitle">Asistencia mínima</h3>
+        <p class="slot-dialog-meta" id="limitMeta"></p>
+      </div>
       <button type="button" class="icon-btn" onclick="closeDialog('limitDialog')" aria-label="Cerrar"><svg class="icon"><use href="#i-x"/></svg></button>
     </div>
-    <div class="field">
-      <label class="field-label" for="limitInput">Horas de cada módulo que puedes faltar</label>
-      <div class="input-suffix"><input type="number" id="limitInput" min="0" max="50" step="1" inputmode="numeric" oninput="previewLimit()"><span>%</span></div>
-      <p class="field-help"><span id="limitHelp"></span> <button type="button" class="limit-reset" onclick="resetLimit()">Volver al 20 %</button></p>
-      <p class="field-error" data-error="limitInput" hidden>Pon un número entero entre 0 y 50.</p>
-    </div>
+    <p class="field-help limit-intro">El % de horas de cada asignatura al que hay que asistir, según lo que pida su profesor. Cuenta sobre todo el curso. <button type="button" class="limit-reset" onclick="resetLimit()">Todas al 80 %</button></p>
+    <div class="limit-list" id="limitList"></div>
+    <p class="field-error" data-error="limitList" hidden>Pon un número entero entre 50 y 100.</p>
     <div class="dialog-actions">
       <span class="spacer"></span>
       <button type="button" class="btn btn-ghost" onclick="closeDialog('limitDialog')">Cancelar</button>

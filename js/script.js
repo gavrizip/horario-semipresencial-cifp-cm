@@ -125,18 +125,22 @@
   // Van aparte de userEvents, que se indexa por posición en CALENDAR_DATES.
   let personalEvents = loadPersonal();
 
-  // % de horas de cada módulo que se puede faltar (20 % = asistencia mínima del 80 %);
-  // el profesor puede cambiarlo durante el curso
-  const DEFAULT_LIMIT = 20;
-  let absenceLimit = loadLimit();
+  // Asistencia mínima (%) de cada asignatura: 80 % salvo que su profesor pida otra cosa,
+  // también a mitad de curso. Solo se guardan las que no son 80.
+  const DEFAULT_MIN = 80;
+  let minAttendanceByModule = loadMinAttendance();
 
   // --- Utilidades ---
-  function loadLimit() {
+  function loadMinAttendance() {
     try {
-      const v = localStorage.getItem('horario_limit');
-      return v !== null && Number.isInteger(+v) && +v >= 0 && +v <= 50 ? +v : DEFAULT_LIMIT;
-    } catch { return DEFAULT_LIMIT; }
+      const v = JSON.parse(localStorage.getItem('horario_min'));
+      return v && typeof v === 'object' ? v : {};
+    } catch { return {}; }
   }
+  const minAttendance = m => {
+    const v = minAttendanceByModule[m];
+    return Number.isInteger(v) && v >= 50 && v <= 100 ? v : DEFAULT_MIN;
+  };
 
   // El grupo elegido se recuerda entre sesiones
   function loadGroup() {
@@ -796,8 +800,6 @@
       previous[r.dataset.code] = r.querySelector('.bar-fill').style.getPropertyValue('--p');
     });
 
-    const minPct = 100 - absenceLimit;
-    container.style.setProperty('--min', minPct + '%');
     let html = '';
     let i = 0;
     shown.forEach(m => {
@@ -807,7 +809,8 @@
       const missed = missedHoursPerModule[m];
       const attended = Math.max(0, total - missed);
       const percentage = Math.round((attended / total) * 100);
-      const allowed = Math.floor(total * absenceLimit / 100);
+      const minPct = minAttendance(m);
+      const allowed = Math.floor(total * (100 - minPct) / 100);
       const left = allowed - missed;
 
       const state = percentage < minPct ? 'risk' : percentage < minPct + 10 ? 'warn' : 'ok';
@@ -819,7 +822,7 @@
 
       const dim = filterModule && filterModule !== m ? ' is-dimmed' : '';
       html += `
-        <div class="att-row${dim}" data-state="${state}" data-code="${m}" data-p="${percentage / 100}">
+        <div class="att-row${dim}" data-state="${state}" data-code="${m}" data-p="${percentage / 100}" style="--min:${minPct}%">
           <div class="att-top">
             ${chip(m)}
             <span class="att-name">${MODULES[m].name}</span>
@@ -2103,44 +2106,43 @@
     document.getElementById(firstField).focus();
   }
 
-  // --- Límite de faltas (engranaje de Asistencia) ---
+  // --- Asistencia mínima de cada asignatura (engranaje de Asistencia) ---
+  // Lista las asignaturas del trimestre elegido en la tabla, cada una con su %
   function openLimitDialog() {
     const dialog = document.getElementById('limitDialog');
-    document.getElementById('limitInput').value = absenceLimit;
-    previewLimit();
+    const { startIdx, endIdx } = matrixRange();
+    const codes = new Set();
+    getSchedule().forEach((day, i) => { if (day && i >= startIdx && i <= endIdx) day.forEach(m => { if (m && MODULES[m]) codes.add(m); }); });
+    const label = document.getElementById('subTab' + currentMatrixSubTab).textContent;
+    document.getElementById('limitMeta').textContent = `${label} · Grupo ${currentGroup}`;
+    document.getElementById('limitList').innerHTML = Object.keys(MODULES).filter(m => codes.has(m)).map(m => `
+      <label class="limit-row">
+        ${chip(m)}
+        <span class="limit-name">${MODULES[m].name}</span>
+        <span class="input-suffix"><input type="number" data-code="${m}" value="${minAttendance(m)}" min="50" max="100" step="1" inputmode="numeric" aria-label="Asistencia mínima de ${MODULES[m].name}" oninput="this.removeAttribute('aria-invalid')"><span>%</span></span>
+      </label>`).join('');
+    document.querySelector('[data-error="limitList"]').hidden = true;
     dialog.classList.remove('is-closing');
     dialog.showModal();
   }
 
-  function readLimit() {
-    const raw = document.getElementById('limitInput').value.trim();
-    return /^\d+$/.test(raw) && +raw <= 50 ? +raw : NaN;
-  }
-
-  function previewLimit() {
-    const v = readLimit();
-    document.querySelector('[data-error="limitInput"]').hidden = !Number.isNaN(v) || !document.getElementById('limitInput').value;
-    document.getElementById('limitHelp').textContent = Number.isNaN(v)
-      ? ''
-      : `Asistencia mínima: ${100 - v} %. Se aplica a todo el curso.`;
-  }
-
   function resetLimit() {
-    document.getElementById('limitInput').value = DEFAULT_LIMIT;
-    previewLimit();
+    document.querySelectorAll('#limitList input').forEach(i => { i.value = DEFAULT_MIN; i.removeAttribute('aria-invalid'); });
+    document.querySelector('[data-error="limitList"]').hidden = true;
   }
 
   function saveLimit(e) {
     e.preventDefault();
-    const v = readLimit();
-    if (Number.isNaN(v)) {
-      previewLimit();
-      document.querySelector('[data-error="limitInput"]').hidden = false;
-      document.getElementById('limitInput').focus();
-      return;
-    }
-    absenceLimit = v;
-    try { localStorage.setItem('horario_limit', String(v)); } catch {}
+    const inputs = [...document.querySelectorAll('#limitList input')];
+    const bad = inputs.filter(i => !/^\d+$/.test(i.value.trim()) || +i.value < 50 || +i.value > 100);
+    inputs.forEach(i => i.toggleAttribute('aria-invalid', bad.includes(i)));
+    document.querySelector('[data-error="limitList"]').hidden = !bad.length;
+    if (bad.length) { bad[0].focus(); return; }
+    inputs.forEach(i => {
+      if (+i.value === DEFAULT_MIN) delete minAttendanceByModule[i.dataset.code];
+      else minAttendanceByModule[i.dataset.code] = +i.value;
+    });
+    try { localStorage.setItem('horario_min', JSON.stringify(minAttendanceByModule)); } catch {}
     renderAttendanceBars();
     closeDialog('limitDialog');
   }
