@@ -318,15 +318,19 @@
     wrapEl.addEventListener('touchstart', e => {
       if (!isTableFull() || e.touches.length !== 2) return;
       cancelLongPress();
-      pinch = { d: span(e.touches), z: fullZoom };
+      stopTableZoom();
+      const [a, b] = e.touches;
+      beginZoomGesture((a.clientX + b.clientX) / 2, (a.clientY + b.clientY) / 2);
+      pinch = { d: span(e.touches), z: viewZoom };
     }, { passive: true });
     wrapEl.addEventListener('touchmove', e => {
       if (!pinch || e.touches.length !== 2) return;
       e.preventDefault();
-      const [a, b] = e.touches;
-      setTableZoom(pinch.z * span(e.touches) / pinch.d, (a.clientX + b.clientX) / 2, (a.clientY + b.clientY) / 2);
+      previewZoom(clampZoom(pinch.z * span(e.touches) / pinch.d));
     }, { passive: false });
-    wrapEl.addEventListener('touchend', e => { if (e.touches.length < 2) pinch = null; });
+    wrapEl.addEventListener('touchend', e => {
+      if (pinch && e.touches.length < 2) { pinch = null; commitZoom(); }
+    });
     wrapEl.addEventListener('wheel', e => {
       if (!isTableFull() || !e.ctrlKey) return;
       e.preventDefault();
@@ -1147,9 +1151,17 @@
   }
 
   // --- Tabla en pantalla completa ---
-  let fullZoom = 1;   // zoom actual de la tabla
-  let fullFit = 1;    // zoom con el que cabe entera (el mínimo)
+  // El zoom «de verdad» es CSS zoom sobre la tabla (diseño real: clics y cabecera fija funcionan).
+  // Durante un gesto (rueda, botones, pellizco) no se toca: se escala la capa #tableZoom con
+  // transform, que va por GPU y sin redibujar la tabla, y al terminar se aplica el zoom una vez.
+  // Así no tiembla: rehacer el diseño en cada fotograma redondea celdas y letras a píxeles.
+  let fullZoom = 1;     // zoom aplicado a la tabla
+  let fullFit = 1;      // zoom con el que cabe entera (el mínimo; se muestra como 100 %)
+  let viewZoom = 1;     // zoom que se ve (durante un gesto, fullZoom × escala de la capa)
+  let gesture = null;   // { ax, ay, ox, oy }: punto que no se mueve y esquina de la capa
+  let zoomTarget = 1, zoomRaf = 0;
   const isTableFull = () => document.documentElement.classList.contains('table-full');
+  const clampZoom = z => Math.min(3, Math.max(fullFit, z));
 
   function openTableFull() {
     hideTip();
@@ -1165,7 +1177,7 @@
     document.documentElement.classList.remove('table-full');
     document.getElementById('fullBar').hidden = true;
     document.getElementById('matrixTable').style.zoom = '';
-    fullZoom = 1;
+    fullZoom = viewZoom = 1;
     alignSidebar();
   }
 
@@ -1175,50 +1187,98 @@
     const wrap = document.querySelector('.table-wrap');
     stopTableZoom();
     table.style.zoom = 1;
-    fullZoom = 1;
     fullFit = Math.min(wrap.clientWidth / table.offsetWidth, wrap.clientHeight / table.offsetHeight, 1.6);
-    setTableZoom(fullFit);
+    fullZoom = viewZoom = fullFit;
+    table.style.zoom = fullFit;
     wrap.scrollTo(0, 0);
+    showZoomPct();
+  }
+
+  function showZoomPct() {
+    document.getElementById('fullZoom').textContent = `${Math.round(viewZoom / fullFit * 100)}%`;
+  }
+
+  // Empieza un gesto con el punto (x, y) fijo (el cursor o los dedos). En los ejes en que la
+  // tabla va a caber con el zoom z (quedará centrada) se escala desde el centro, que es como
+  // quedará al aplicarlo; si va a desbordar, desde el cursor.
+  // Cada muesca de la rueda vuelve a decidirlo con el nuevo objetivo y la posición del cursor:
+  // si cambia, se asienta lo hecho (un solo rediseño por muesca, nunca por fotograma) y se sigue.
+  function beginZoomGesture(x, y, z) {
+    const w = document.querySelector('.table-wrap').getBoundingClientRect();
+    const t = document.getElementById('matrixTable').getBoundingClientRect();
+    const k = (z ?? viewZoom * 1.2) / viewZoom;   // pellizco: se supone que acerca
+    const ax = x === undefined || t.width * k <= w.width + 0.5 ? w.left + w.width / 2 : x;
+    const ay = y === undefined || t.height * k <= w.height + 0.5 ? w.top + w.height / 2 : y;
+    if (gesture && Math.abs(ax - gesture.ax) < 1 && Math.abs(ay - gesture.ay) < 1) return;
+    commitZoom();
+    const layer = document.getElementById('tableZoom').getBoundingClientRect();
+    const t0 = document.getElementById('matrixTable').getBoundingClientRect();
+    gesture = { ax, ay, ox: layer.left, oy: layer.top, t: t0, w };
+  }
+
+  // Muestra el zoom z escalando la capa alrededor del punto fijo (sin rehacer el diseño).
+  // La tabla se limita a donde podrá quedar de verdad: centrada si cabe en ese eje y, si no,
+  // cubriendo el hueco (el desplazamiento no llega más allá); si no, al aplicar daría un salto.
+  function previewZoom(z) {
+    viewZoom = z;
+    const s = z / fullZoom, g = gesture;
+    const fit = (move, start, size, wStart, wSize) => {
+      const pos = start + move;
+      const want = size <= wSize ? wStart + (wSize - size) / 2 : Math.min(wStart, Math.max(wStart + wSize - size, pos));
+      return move + want - pos;
+    };
+    let tx = (g.ax - g.ox) * (1 - s), ty = (g.ay - g.oy) * (1 - s);
+    // Dónde quedaría la tabla con esa escala: esquina de la capa + distancia escalada + traslación
+    tx = fit(tx, g.ox + (g.t.left - g.ox) * s, g.t.width * s, g.w.left, g.w.width);
+    ty = fit(ty, g.oy + (g.t.top - g.oy) * s, g.t.height * s, g.w.top, g.w.height);
+    document.getElementById('tableZoom').style.transform = `translate(${tx}px, ${ty}px) scale(${s})`;
+    showZoomPct();
+  }
+
+  // Fin del gesto: aplica el zoom a la tabla, quita la escala y desplaza para que lo que había
+  // bajo el punto fijo siga ahí. Se mide sobre la celda real (el zoom no escala el diseño de
+  // forma exactamente proporcional: bordes y letras se redondean)
+  function commitZoom() {
+    if (!gesture) return;
+    const table = document.getElementById('matrixTable');
+    const wrap = document.querySelector('.table-wrap');
+    const g = gesture;
+    const hit = document.elementFromPoint(g.ax, g.ay);
+    const ref = hit && table.contains(hit) ? hit : table;
+    const r = ref.getBoundingClientRect();
+    const fx = (g.ax - r.left) / r.width, fy = (g.ay - r.top) / r.height;
+    table.style.zoom = viewZoom;
+    document.getElementById('tableZoom').style.transform = '';
+    fullZoom = viewZoom;
+    const r2 = ref.getBoundingClientRect();
+    wrap.scrollLeft += r2.left + fx * r2.width - g.ax;
+    wrap.scrollTop += r2.top + fy * r2.height - g.ay;
+    gesture = null;
   }
 
   function zoomTableFull(dir) {
     animateTableZoom(zoomBase() * (dir > 0 ? 1.25 : 0.8));
   }
 
-  // Zoom suave (rueda y botones): se fija un objetivo y en cada fotograma la tabla recorre
-  // parte de lo que falta, con el punto bajo el cursor quieto. Girar rápido acumula objetivo.
-  let zoomTarget = null, zoomAt = [], zoomRaf = 0;
-  const zoomBase = () => zoomRaf ? zoomTarget : fullZoom;
+  // Rueda y botones: objetivo al que se llega suavemente (22 % de lo que falta por fotograma);
+  // girar rápido acumula objetivo
+  const zoomBase = () => zoomRaf ? zoomTarget : viewZoom;
   function animateTableZoom(z, x, y) {
-    zoomTarget = Math.min(3, Math.max(fullFit, z));
-    zoomAt = [x, y];
+    zoomTarget = clampZoom(z);
+    beginZoomGesture(x, y, zoomTarget);
     if (!zoomRaf) zoomRaf = requestAnimationFrame(stepTableZoom);
   }
   function stepTableZoom() {
-    const left = zoomTarget - fullZoom;
-    const done = Math.abs(left) < 0.002;
-    setTableZoom(done ? zoomTarget : fullZoom + left * 0.22, ...zoomAt);
-    zoomRaf = done ? 0 : requestAnimationFrame(stepTableZoom);
+    const left = zoomTarget - viewZoom;
+    const done = Math.abs(left) < 0.001;
+    previewZoom(done ? zoomTarget : viewZoom + left * 0.22);
+    if (done) { zoomRaf = 0; commitZoom(); }
+    else zoomRaf = requestAnimationFrame(stepTableZoom);
   }
   function stopTableZoom() {
     cancelAnimationFrame(zoomRaf);
     zoomRaf = 0;
-  }
-
-  // Cambia el zoom manteniendo quieto el punto (x, y) de la pantalla (por defecto, el centro)
-  function setTableZoom(z, x, y) {
-    const table = document.getElementById('matrixTable');
-    const wrap = document.querySelector('.table-wrap');
-    z = Math.min(3, Math.max(fullFit, z));
-    const r = wrap.getBoundingClientRect();
-    const ox = (x ?? r.left + r.width / 2) - r.left, oy = (y ?? r.top + r.height / 2) - r.top;
-    const px = (wrap.scrollLeft + ox) / fullZoom, py = (wrap.scrollTop + oy) / fullZoom;
-    fullZoom = z;
-    table.style.zoom = z;
-    wrap.scrollLeft = px * z - ox;
-    wrap.scrollTop = py * z - oy;
-    // 100 % = la tabla entera en pantalla
-    document.getElementById('fullZoom').textContent = `${Math.round(z / fullFit * 100)}%`;
+    commitZoom();
   }
 
   function renderMatrix() {

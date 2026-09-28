@@ -92,7 +92,8 @@
           <button class="icon-btn" onclick="closeTableFull()" aria-label="Salir de pantalla completa" title="Salir de pantalla completa"><svg class="icon"><use href="#i-collapse"/></svg></button>
         </div>
         <div class="table-wrap">
-          <table id="matrixTable"></table>
+          <!-- Capa para escalar la tabla con transform durante el zoom en pantalla completa -->
+          <div class="table-zoom" id="tableZoom"><table id="matrixTable"></table></div>
         </div>
         <div class="live" id="liveClass" hidden></div>
       </section>
