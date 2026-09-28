@@ -49,23 +49,6 @@
 
 <div class="app">
 
-  <!-- BARRA DE PRUEBAS de la clase en curso: simula la hora en el próximo día de clase.
-       Para quitarla, borra este bloque (y su CSS «Barra de pruebas»). -->
-  <div class="sim-bar" role="group" aria-label="Pruebas de la clase en curso">
-    <span class="sim-label">Pruebas</span>
-    <div class="sim-btns">
-      <button type="button" class="sim-btn" onclick="simulateAt('18:00', this)">Antes de clase</button>
-      <button type="button" class="sim-btn" onclick="simulateAt('19:31', this)">En clase</button>
-      <button type="button" class="sim-btn" onclick="simulateAt('20:49:50', this)">Fin de hora → descanso</button>
-      <button type="button" class="sim-btn" onclick="simulateAt('20:55', this)">Descanso</button>
-      <button type="button" class="sim-btn" onclick="simulateAt('22:44:50', this)">Fin del día → fuegos</button>
-      <button type="button" class="sim-btn" onclick="simulateAt('22:50', this)">Día completado</button>
-      <button type="button" class="sim-btn" onclick="simulateAt('23:58:50', this)">23:59 → desaparece</button>
-      <button type="button" class="sim-btn is-active" onclick="simulateAt(null, this)">Hora real</button>
-    </div>
-    <span class="sim-clock mono" id="simClock"></span>
-  </div>
-
   <header class="topbar intro-1">
     <nav class="tabs" aria-label="Vistas">
       <button class="tab is-active" id="tabGrid" onclick="switchTab('grid')">Trimestre</button>

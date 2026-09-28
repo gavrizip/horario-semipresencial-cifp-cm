@@ -2269,25 +2269,6 @@
   // clase queda al 100 % en verde (con fuegos artificiales una vez) hasta las 23:59.
   const DAY_END = '23:59';
   let liveKey = null;
-  // Desfase del reloj para la barra de pruebas (0 = hora real)
-  let clockOffset = 0;
-  const liveNow = () => new Date(Date.now() + clockOffset);
-
-  // Barra de pruebas: lleva el reloj a esa hora del próximo día de clase y lo deja correr
-  function simulateAt(time, btn) {
-    if (!time) clockOffset = 0;
-    else {
-      const [h, m, sec = 0] = time.split(':').map(Number);
-      const d = realDate(CALENDAR_DATES[nextClassIndex()]);
-      d.setHours(h, m, sec);
-      clockOffset = d - Date.now();
-    }
-    document.querySelectorAll('.sim-btn').forEach(b => b.classList.toggle('is-active', b === btn));
-    if (currentTab !== 'grid') switchTab('grid');
-    tickLive();
-    const box = document.getElementById('liveClass');
-    if (!box.hidden) box.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-  }
 
   function atTime(hhmm, base) {
     const [h, m] = hhmm.split(':').map(Number);
@@ -2383,11 +2364,7 @@
   function tickLive() {
     if (document.hidden) return;
     const box = document.getElementById('liveClass');
-    const now = liveNow();
-    const clock = document.getElementById('simClock');
-    if (clock) clock.textContent = clockOffset
-      ? `${CALENDAR_DATES[todayClassIndex(now)]?.date || ''} ${now.toTimeString().slice(0, 8)}`
-      : '';
+    const now = new Date();
     const ph = livePhase(now);
     const key = ph ? `${currentGroup}:${ph.idx}:${ph.kind}:${ph.seg ? ph.seg.start : ''}` : null;
 
@@ -2416,8 +2393,6 @@
 
   // Los fuegos salen una sola vez por día completado (aunque se abra la app más tarde)
   function celebrateDay(idx) {
-    // En las pruebas salen siempre y no gastan los del día real
-    if (clockOffset) { launchFireworks(); return; }
     const key = CALENDAR_DATES[idx].date;
     let seen = null;
     try { seen = localStorage.getItem('horario_fireworks'); } catch {}

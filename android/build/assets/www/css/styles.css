@@ -767,33 +767,6 @@ h3 { font-size: 0.9375rem; font-weight: 600; letter-spacing: -0.01em; }
 }
 .live-foot .btn-sm { margin: -2px 0; }
 
-/* Barra de pruebas de la clase en curso (temporal) */
-.sim-bar {
-  display: flex; align-items: center; gap: 8px 12px; flex-wrap: wrap;
-  margin-bottom: 16px;
-  padding: 8px 10px;
-  border: 1px dashed var(--line-strong);
-  border-radius: var(--r);
-}
-.sim-label { font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-3); }
-.sim-btns { display: flex; gap: 6px; min-width: 0; overflow-x: auto; scrollbar-width: none; flex: 1 1 auto; }
-.sim-btns::-webkit-scrollbar { display: none; }
-.sim-btn {
-  flex: none;
-  height: 28px; padding: 0 10px;
-  border-radius: var(--r-sm);
-  border: 1px solid var(--line);
-  font-size: 0.75rem; font-weight: 550;
-  color: var(--text-2);
-  white-space: nowrap;
-  transition: background-color var(--t) var(--ease-out), color var(--t) var(--ease-out), transform var(--t-fast) var(--ease-out);
-}
-.sim-btn:hover { color: var(--text); background: var(--surface-2); }
-.sim-btn:active { transform: scale(0.97); }
-.sim-btn.is-active { color: var(--accent-text); background: var(--accent-soft); border-color: color-mix(in oklch, var(--accent) 45%, var(--line)); }
-.sim-clock { font-size: 0.75rem; color: var(--accent-text); }
-.sim-clock:empty { display: none; }
-
 /* Fuegos artificiales: por encima de todo salvo el círculo del cambio de tema */
 .fireworks { position: fixed; inset: 0; z-index: 90; width: 100%; height: 100%; pointer-events: none; }
 
