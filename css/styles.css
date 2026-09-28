@@ -1134,7 +1134,8 @@ tr.break-row td:first-child { background: var(--inset); padding-left: 8px; paddi
 .limit-name { font-size: 0.875rem; color: var(--text-2); line-height: 1.3; }
 .limit-list .limit-row .input-suffix input { height: 38px; padding: 8px 30px 8px 12px; font-family: var(--mono); text-align: right; }
 .limit-row .input-suffix span { right: 12px; }
-.limit-row input { -moz-appearance: textfield; appearance: textfield; }
+.limit-list .limit-row input { -moz-appearance: textfield; appearance: textfield; transition: border-color var(--t) var(--ease-out), color 200ms var(--ease-out); }
+.limit-list .limit-row input.is-counting { color: var(--accent-text); }
 .limit-row input::-webkit-inner-spin-button, .limit-row input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 .limit-dialog [data-error="limitList"] { margin-top: 10px; }
 

@@ -2116,6 +2116,7 @@
   // --- Asistencia mínima de cada asignatura (engranaje de Asistencia) ---
   // Lista las mismas asignaturas que se ven en la caja (trimestre, mes o día según la pestaña)
   function openLimitDialog() {
+    finishReset();
     const dialog = document.getElementById('limitDialog');
     const codes = [...document.querySelectorAll('#attendanceBarsContainer .att-row')].map(r => r.dataset.code);
     const label = currentTab === 'monthly' ? MONTHS_DATA[selectedMonthIndex].name
@@ -2135,13 +2136,58 @@
     dialog.showModal();
   }
 
+  // Resetear: cada % cuenta de 1 en 1 hasta el 80 (como mucho un número por fotograma, así
+  // que nunca salta) y todos terminan a la vez. Si escribes en un campo mientras cuenta, ese se deja.
+  let resetAnim = null;
+
   function resetLimit() {
-    document.querySelectorAll('#limitList input').forEach(i => { i.value = DEFAULT_MIN; i.removeAttribute('aria-invalid'); });
+    finishReset();
     document.querySelector('[data-error="limitList"]').hidden = true;
+    const items = [...document.querySelectorAll('#limitList input')].map(input => {
+      input.removeAttribute('aria-invalid');
+      const n = parseInt(input.value, 10);
+      const from = Number.isNaN(n) ? DEFAULT_MIN : Math.min(100, Math.max(50, n));
+      input.value = from;
+      return { input, from, dir: Math.sign(DEFAULT_MIN - from), dist: Math.abs(DEFAULT_MIN - from), done: 0 };
+    }).filter(it => it.dist);
+    if (!items.length) return;
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) { items.forEach(it => { it.input.value = DEFAULT_MIN; }); return; }
+
+    const maxDist = Math.max(...items.map(it => it.dist));
+    const duration = Math.min(560, Math.max(220, maxDist * 24));
+    const start = performance.now();
+    items.forEach(it => it.input.classList.add('is-counting'));
+    const tick = now => {
+      const p = Math.min(1, (now - start) / duration);
+      const eased = 1 - (1 - p) * (1 - p);
+      let pending = false;
+      items.forEach(it => {
+        if (it.input.value !== String(it.from + it.dir * it.done)) { it.input.classList.remove('is-counting'); it.dist = it.done; return; }
+        if (it.done < Math.round(it.dist * eased)) it.done++;
+        it.input.value = it.from + it.dir * it.done;
+        if (it.done < it.dist) pending = true;
+        else it.input.classList.remove('is-counting');
+      });
+      if (pending) resetAnim.raf = requestAnimationFrame(tick);
+      else resetAnim = null;
+    };
+    resetAnim = { items, raf: requestAnimationFrame(tick) };
+  }
+
+  // Termina de golpe una cuenta en marcha (al guardar o al volver a pulsar Resetear)
+  function finishReset() {
+    if (!resetAnim) return;
+    cancelAnimationFrame(resetAnim.raf);
+    resetAnim.items.forEach(it => {
+      if (it.input.value === String(it.from + it.dir * it.done)) it.input.value = it.from + it.dir * it.dist;
+      it.input.classList.remove('is-counting');
+    });
+    resetAnim = null;
   }
 
   function saveLimit(e) {
     e.preventDefault();
+    finishReset();
     const inputs = [...document.querySelectorAll('#limitList input')];
     const bad = inputs.filter(i => !/^\d+$/.test(i.value.trim()) || +i.value < 50 || +i.value > 100);
     inputs.forEach(i => bad.includes(i) ? i.setAttribute('aria-invalid', 'true') : i.removeAttribute('aria-invalid'));
