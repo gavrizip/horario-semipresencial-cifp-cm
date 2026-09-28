@@ -125,7 +125,19 @@
   // Van aparte de userEvents, que se indexa por posición en CALENDAR_DATES.
   let personalEvents = loadPersonal();
 
+  // % de horas de cada módulo que se puede faltar (20 % = asistencia mínima del 80 %);
+  // el profesor puede cambiarlo durante el curso
+  const DEFAULT_LIMIT = 20;
+  let absenceLimit = loadLimit();
+
   // --- Utilidades ---
+  function loadLimit() {
+    try {
+      const v = localStorage.getItem('horario_limit');
+      return v !== null && Number.isInteger(+v) && +v >= 0 && +v <= 50 ? +v : DEFAULT_LIMIT;
+    } catch { return DEFAULT_LIMIT; }
+  }
+
   // El grupo elegido se recuerda entre sesiones
   function loadGroup() {
     try { return localStorage.getItem('horario_group') === 'B' ? 'B' : 'A'; }
@@ -276,6 +288,9 @@
     const slotDialog = document.getElementById('slotDialog');
     slotDialog.addEventListener('click', e => { if (e.target === slotDialog) closeSlotDialog(); });
     slotDialog.addEventListener('cancel', e => { e.preventDefault(); closeSlotDialog(); });
+    const limitDialog = document.getElementById('limitDialog');
+    limitDialog.addEventListener('click', e => { if (e.target === limitDialog) closeDialog('limitDialog'); });
+    limitDialog.addEventListener('cancel', e => { e.preventDefault(); closeDialog('limitDialog'); });
     slotDialog.querySelectorAll('input, textarea').forEach(el => el.addEventListener('input', () => setFieldError(el.id, false)));
 
     document.getElementById('matrixTable').addEventListener('click', e => {
@@ -781,6 +796,8 @@
       previous[r.dataset.code] = r.querySelector('.bar-fill').style.getPropertyValue('--p');
     });
 
+    const minPct = 100 - absenceLimit;
+    container.style.setProperty('--min', minPct + '%');
     let html = '';
     let i = 0;
     shown.forEach(m => {
@@ -790,10 +807,10 @@
       const missed = missedHoursPerModule[m];
       const attended = Math.max(0, total - missed);
       const percentage = Math.round((attended / total) * 100);
-      const allowed = Math.floor(total * 0.2);
+      const allowed = Math.floor(total * absenceLimit / 100);
       const left = allowed - missed;
 
-      const state = percentage < 80 ? 'risk' : percentage < 90 ? 'warn' : 'ok';
+      const state = percentage < minPct ? 'risk' : percentage < minPct + 10 ? 'warn' : 'ok';
       const margin = left < 0
         ? `Límite superado por ${-left} h`
         : left === 0
@@ -2086,8 +2103,52 @@
     document.getElementById(firstField).focus();
   }
 
-  function closeSlotDialog() {
-    const dialog = document.getElementById('slotDialog');
+  // --- Límite de faltas (engranaje de Asistencia) ---
+  function openLimitDialog() {
+    const dialog = document.getElementById('limitDialog');
+    document.getElementById('limitInput').value = absenceLimit;
+    previewLimit();
+    dialog.classList.remove('is-closing');
+    dialog.showModal();
+  }
+
+  function readLimit() {
+    const raw = document.getElementById('limitInput').value.trim();
+    return /^\d+$/.test(raw) && +raw <= 50 ? +raw : NaN;
+  }
+
+  function previewLimit() {
+    const v = readLimit();
+    document.querySelector('[data-error="limitInput"]').hidden = !Number.isNaN(v) || !document.getElementById('limitInput').value;
+    document.getElementById('limitHelp').textContent = Number.isNaN(v)
+      ? ''
+      : `Asistencia mínima: ${100 - v} %. Se aplica a todo el curso.`;
+  }
+
+  function resetLimit() {
+    document.getElementById('limitInput').value = DEFAULT_LIMIT;
+    previewLimit();
+  }
+
+  function saveLimit(e) {
+    e.preventDefault();
+    const v = readLimit();
+    if (Number.isNaN(v)) {
+      previewLimit();
+      document.querySelector('[data-error="limitInput"]').hidden = false;
+      document.getElementById('limitInput').focus();
+      return;
+    }
+    absenceLimit = v;
+    try { localStorage.setItem('horario_limit', String(v)); } catch {}
+    renderAttendanceBars();
+    closeDialog('limitDialog');
+  }
+
+  function closeSlotDialog() { closeDialog('slotDialog'); }
+
+  function closeDialog(id) {
+    const dialog = document.getElementById(id);
     if (!dialog.open || dialog.classList.contains('is-closing')) return;
     const finish = () => { dialog.classList.remove('is-closing'); dialog.close(); };
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) { finish(); return; }

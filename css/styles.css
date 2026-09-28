@@ -1119,6 +1119,14 @@ tr.break-row td:first-child { background: var(--inset); padding-left: 8px; paddi
   padding: 18px 18px 20px;
 }
 .panel-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+/* Engranaje del límite de faltas: discreto, en la esquina de la caja */
+.panel-btn { width: 36px; height: 36px; margin: -8px -10px -8px 0; border: none; background: none; color: var(--text-2); }
+.panel-btn .icon { width: 19px; height: 19px; }
+.panel-btn:hover { color: var(--text); }
+.panel-btn .icon { transition: transform 420ms var(--ease-out); }
+.panel-btn:hover .icon, .panel-btn:focus-visible .icon { transform: rotate(60deg); }
+.limit-dialog { width: min(400px, calc(100vw - 32px)); }
+.limit-reset { border: none; background: none; padding: 0; font: inherit; color: var(--accent-text); text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
 
 
 .att-empty { color: var(--text-3); font-size: 0.8125rem; line-height: 1.45; padding: 4px 0; }
@@ -1152,7 +1160,7 @@ tr.break-row td:first-child { background: var(--inset); padding-left: 8px; paddi
 }
 .att-row[data-state="warn"] .bar-fill { background: var(--warn); }
 .att-row[data-state="risk"] .bar-fill { background: var(--risk); }
-.bar-limit { position: absolute; top: 0; bottom: 0; left: 80%; width: 2px; background: var(--panel); z-index: 1; }
+.bar-limit { position: absolute; top: 0; bottom: 0; left: var(--min, 80%); width: 2px; background: var(--panel); z-index: 1; }
 
 .att-margin { margin-top: 5px; font-size: 0.75rem; color: var(--text-3); }
 .att-row[data-state="risk"] .att-margin { color: var(--risk); }

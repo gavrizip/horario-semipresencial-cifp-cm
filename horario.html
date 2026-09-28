@@ -47,6 +47,7 @@
   <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="4" y="5.5" width="16" height="14.5" rx="2"/><path d="M8.5 3.5v4M15.5 3.5v4M4 10.5h16"/></symbol>
   <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
   <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.1a4.3 4.3 0 0 1 7.5 2.7C19.5 15.4 12 20 12 20Z"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><path d="M10.3 3.5h3.4l.5 2.4 1.6.9 2.3-.8 1.7 2.9-1.8 1.6v1.9l1.8 1.6-1.7 2.9-2.3-.8-1.6.9-.5 2.4h-3.4l-.5-2.4-1.6-.9-2.3.8-1.7-2.9 1.8-1.6v-1.9L4.2 8.9l1.7-2.9 2.3.8 1.6-.9Z"/><circle cx="12" cy="12" r="2.8"/></symbol>
   <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z"/></symbol>
 </svg>
 
@@ -149,6 +150,7 @@
       <section class="panel">
         <div class="panel-head">
           <h3>Asistencia</h3>
+          <button type="button" class="icon-btn panel-btn" onclick="openLimitDialog()" aria-label="Configurar el límite de faltas" title="Límite de faltas"><svg class="icon"><use href="#i-gear"/></svg></button>
         </div>
         <div id="attendanceBarsContainer" class="attendance"></div>
       </section>
@@ -354,6 +356,26 @@
       <button type="button" class="btn btn-danger" id="slotDelete" onclick="deleteSlotRecord()" hidden>Eliminar</button>
       <span class="spacer"></span>
       <button type="button" class="btn btn-ghost" onclick="closeSlotDialog()">Cancelar</button>
+      <button type="submit" class="btn btn-primary">Guardar</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="dialog limit-dialog" id="limitDialog" aria-labelledby="limitTitle">
+  <form method="dialog" onsubmit="saveLimit(event)" novalidate>
+    <div class="dialog-head">
+      <h3 id="limitTitle">Límite de faltas</h3>
+      <button type="button" class="icon-btn" onclick="closeDialog('limitDialog')" aria-label="Cerrar"><svg class="icon"><use href="#i-x"/></svg></button>
+    </div>
+    <div class="field">
+      <label class="field-label" for="limitInput">Horas de cada módulo que puedes faltar</label>
+      <div class="input-suffix"><input type="number" id="limitInput" min="0" max="50" step="1" inputmode="numeric" oninput="previewLimit()"><span>%</span></div>
+      <p class="field-help"><span id="limitHelp"></span> <button type="button" class="limit-reset" onclick="resetLimit()">Volver al 20 %</button></p>
+      <p class="field-error" data-error="limitInput" hidden>Pon un número entero entre 0 y 50.</p>
+    </div>
+    <div class="dialog-actions">
+      <span class="spacer"></span>
+      <button type="button" class="btn btn-ghost" onclick="closeDialog('limitDialog')">Cancelar</button>
       <button type="submit" class="btn btn-primary">Guardar</button>
     </div>
   </form>
