@@ -2114,15 +2114,17 @@
   }
 
   // --- Asistencia mínima de cada asignatura (engranaje de Asistencia) ---
-  // Lista las asignaturas del trimestre elegido en la tabla, cada una con su %
+  // Lista las mismas asignaturas que se ven en la caja (trimestre, mes o día según la pestaña)
   function openLimitDialog() {
     const dialog = document.getElementById('limitDialog');
-    const { startIdx, endIdx } = matrixRange();
-    const codes = new Set();
-    getSchedule().forEach((day, i) => { if (day && i >= startIdx && i <= endIdx) day.forEach(m => { if (m && MODULES[m]) codes.add(m); }); });
-    const label = document.getElementById('subTab' + currentMatrixSubTab).textContent;
+    const codes = [...document.querySelectorAll('#attendanceBarsContainer .att-row')].map(r => r.dataset.code);
+    const label = currentTab === 'monthly' ? MONTHS_DATA[selectedMonthIndex].name
+      : currentTab === 'weekly' ? document.getElementById('selectedDateTitle').textContent
+      : document.getElementById('subTab' + currentMatrixSubTab).textContent;
     document.getElementById('limitMeta').textContent = `${label} · Grupo ${currentGroup}`;
-    document.getElementById('limitList').innerHTML = Object.keys(MODULES).filter(m => codes.has(m)).map(m => `
+    document.getElementById('limitList').innerHTML = !codes.length
+      ? '<p class="att-empty">No hay asignaturas en la caja de Asistencia.</p>'
+      : codes.map(m => `
       <label class="limit-row">
         ${chip(m)}
         <span class="limit-name">${MODULES[m].name}</span>
