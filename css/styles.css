@@ -943,6 +943,8 @@ html.table-full .table-wrap {
 /* Centrada en el hueco; «safe» evita que al acercar quede cortada por arriba o la izquierda */
 html.table-full .table-wrap { display: grid; place-content: safe center; }
 html.table-full #matrixTable { min-width: 0; }
+/* Capa que se escala (transform) mientras dura el gesto de zoom; luego se aplica el zoom real */
+.table-zoom { transform-origin: 0 0; }
 .full-bar {
   position: fixed; z-index: 41; top: 0; left: 0; right: 0; height: 56px;
   display: flex; align-items: center; gap: 10px;
