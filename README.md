@@ -95,4 +95,3 @@ sqlite3 cifp.db < db/schema.sql && sqlite3 cifp.db < db/views.sql && sqlite3 cif
 
 - En `js/script.js`, `CALENDAR_DATES`, `SCHEDULE_A` y `SCHEDULE_B` van alineados **por posición**. Además, los registros guardados se refieren a una fecha por su posición, así que insertar o reordenar fechas mueve los datos del usuario a otros días.
 - Si cambia el horario, hay que volver a generar la APK (`android/build.sh`) y los datos de la base de datos (`node db/generar_seed.js`).
-- La barra **Pruebas** de la parte superior simula la hora para probar la barra de progreso de la clase en curso. Es temporal: está marcada con un comentario en `horario.html` y en `css/styles.css`.
