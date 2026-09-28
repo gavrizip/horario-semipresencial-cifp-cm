@@ -81,9 +81,8 @@
           </div>
           <button class="icon-btn full-btn" id="fullBtn" onclick="openTableFull()" aria-label="Ver la tabla en pantalla completa" title="Pantalla completa"><svg class="icon"><use href="#i-expand"/></svg></button>
         </div>
-        <!-- Barra de la tabla en pantalla completa (tramo, zoom y salir) -->
+        <!-- Barra de la tabla en pantalla completa: al abrirla recibe el selector de tramo -->
         <div class="full-bar" id="fullBar" hidden>
-          <span class="full-range num" id="fullRange"></span>
           <div class="full-zoom" role="group" aria-label="Zoom de la tabla">
             <button class="icon-btn" onclick="zoomTableFull(-1)" aria-label="Alejar" title="Alejar"><svg class="icon"><use href="#i-minus"/></svg></button>
             <button class="full-pct num" id="fullZoom" onclick="fitTableFull()" title="Ajustar a la pantalla">100%</button>
