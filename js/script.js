@@ -319,7 +319,7 @@
           try { a.state = await moodleCall('mod_assign_get_submission_status', { assignid: a.id }); } catch { a.state = null; }
         }));
       }
-      renderMoodlePreview(site, courses.filter(c => assigns.some(a => a.courseid === c.id)), assigns);
+      renderMoodleList(site, courses, assigns);
       renderMoodleStatus();
     } catch (e) {
       renderMoodleStatus(e.code === 'invalidtoken' ? 'La sesión del campus ha caducado: vuelve a conectar.' : e.message);
@@ -350,109 +350,115 @@
     return { done: false, text: a.state ? 'Pendiente' : 'Estado desconocido' };
   }
 
-  // Asignatura elegida para cada curso del campus (si no se ha elegido, la que se adivina)
-  function loadMoodleMap() {
-    try { return JSON.parse(localStorage.getItem('horario_moodle_map')) || {}; } catch { return {}; }
-  }
-  function moduleFor(course) {
-    const map = loadMoodleMap();
-    return course.id in map ? (MODULES[map[course.id]] ? map[course.id] : null) : guessModule(course);
-  }
-  function setMoodleMap(courseId, code) {
-    const map = loadMoodleMap();
-    map[courseId] = code;
-    try { localStorage.setItem('horario_moodle_map', JSON.stringify(map)); } catch {}
-  }
-
   let moodleData = null;
 
-  function renderMoodlePreview(site, courses, assigns) {
+  // Dónde está ya cada tarea del campus añadida a la app (por id de Moodle)
+  function moodleAdded() {
+    const found = {};
+    [userEvents, personalEvents].forEach(store => Object.entries(store).forEach(([day, list]) =>
+      list.forEach(ev => { if (ev.moodle) found[ev.moodle] = { store, day, ev }; })));
+    return found;
+  }
+
+  // Coloca (o recoloca) una tarea del campus en la app. Si la entrega cae un miércoles con
+  // clase de esa asignatura va a esa clase, como una tarea del menú del día; si no, a ese día
+  // como tarea personal con su asignatura. Lo que pusiste tú (descripción, peso, avisos) se queda.
+  function placeMoodleTask(a, old) {
+    const course = moodleData.courses.find(c => c.id === a.courseid);
+    const code = guessModule(course);
+    const due = new Date(a.duedate * 1000);
+    const idx = CALENDAR_DATES.findIndex(cd => realDate(cd).toDateString() === due.toDateString());
+    const schedule = getSchedule();
+    const slot = idx !== -1 && code && schedule[idx] ? schedule[idx].indexOf(code) : -1;
+    const s = moodleState(a);
+    const rec = { ...(old ? old.ev : { notify: true, notifyDays: [3], id: newRecordId() }),
+      type: 'task', text: a.name, title: a.name, moodle: a.id,
+      status: s.done || (old && old.ev.status === 'done') ? 'done' : 'pending' };
+    if (s.grade !== undefined) rec.grade = s.grade;
+    delete rec.module; delete rec.slot; delete rec.byDay;
+    let store, day;
+    if (slot !== -1) {
+      store = userEvents; day = String(idx);
+      Object.assign(rec, { module: code, slot, byDay: true });
+    } else {
+      store = personalEvents; day = isoOf(due.getFullYear(), due.getMonth(), due.getDate());
+      if (code) rec.module = code;
+      else if (!rec.desc) rec.desc = course.fullname;
+    }
+    if (old && old.store === store && old.day === day) {
+      const list = store[day];
+      list[list.indexOf(old.ev)] = rec;
+    } else {
+      if (old) {
+        const list = old.store[old.day];
+        list.splice(list.indexOf(old.ev), 1);
+        if (!list.length) delete old.store[old.day];
+      }
+      (store[day] = store[day] || []).push(rec);
+    }
+    return day;
+  }
+
+  // Tareas del campus pendientes de entrega (ni enviadas ni calificadas), por fecha de entrega.
+  // Las que ya añadiste se ponen al día (entrega, nota, fecha) cada vez que se abre la lista.
+  function renderMoodleList(site, courses, assigns) {
     moodleData = { courses, assigns };
-    const fmt = ts => new Date(ts * 1000).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
-    const dated = assigns.filter(a => a.duedate).length;
+    const added = moodleAdded();
+    let changed = false;
+    assigns.forEach(a => {
+      if (!added[a.id] || !a.duedate) return;
+      const before = JSON.stringify(added[a.id].ev);
+      const day = placeMoodleTask(a, added[a.id]);
+      if (day !== added[a.id].day || before !== JSON.stringify(moodleAdded()[a.id].ev)) changed = true;
+    });
+    if (changed) saveData();
+
+    const pending = assigns.filter(a => !moodleState(a).done)
+      .sort((x, y) => (x.duedate || Infinity) - (y.duedate || Infinity));
     document.getElementById('moodleMeta').textContent =
-      `${site.fullname} · curso 2026-27: ${courses.length} cursos · ${assigns.length} tareas`;
-    document.getElementById('moodleList').innerHTML = courses.map(c => {
-      const code = moduleFor(c);
-      const list = assigns.filter(a => a.courseid === c.id).sort((a, b) => (a.duedate || Infinity) - (b.duedate || Infinity));
-      return `
-        <section class="moodle-course">
-          <h4>${escapeHTML(c.fullname)}<small>${escapeHTML(c.shortname)}</small></h4>
-          <select class="moodle-map" onchange="setMoodleMap(${c.id}, this.value)" aria-label="Asignatura de ${escapeHTML(c.fullname)}">
-            <option value="">Sin asignatura (tarea personal)</option>
-            ${Object.keys(MODULES).map(m => `<option value="${m}"${m === code ? ' selected' : ''}>${m} · ${MODULES[m].name}</option>`).join('')}
-          </select>
-          <ul>${list.map(a => {
-            const s = moodleState(a);
-            return `<li><span>${escapeHTML(a.name)}</span><span class="when">${a.duedate ? fmt(a.duedate) : 'Sin fecha'}</span>
-              <span class="state${s.done ? ' is-done' : ''}">${escapeHTML(s.text)}${a.duedate ? '' : ' · sin fecha de entrega, no se añade'}</span></li>`;
-          }).join('')}</ul>
-        </section>`;
-    }).join('') || '<p class="att-empty">No hay tareas del campus entre el 1 de septiembre y el 30 de junio.</p>';
-    const btn = document.getElementById('moodleImportBtn');
-    btn.hidden = !dated;
-    btn.textContent = `Añadir al horario (${dated})`;
+      `${site.fullname} · ${pending.length} ${pending.length === 1 ? 'tarea pendiente' : 'tareas pendientes'} de entrega`;
+    renderMoodleRows();
     const dialog = document.getElementById('moodleDialog');
     dialog.classList.remove('is-closing');
     if (!dialog.open) dialog.showModal();
   }
 
-  // Mete las tareas del campus en el horario. Si la entrega cae un miércoles con clase de esa
-  // asignatura va a esa clase (como una tarea del menú del día); si no, a ese día como tarea
-  // personal con su asignatura. El id de Moodle evita duplicados: al volver a sincronizar se
-  // actualizan título, estado, nota y día. Lo que pusiste tú (descripción, peso, avisos) se queda.
-  function moodleImport() {
-    if (!moodleData) return;
+  function renderMoodleRows() {
     const { courses, assigns } = moodleData;
-    const course = Object.fromEntries(courses.map(c => [c.id, c]));
-    const schedule = getSchedule();
-    const found = {};
-    [userEvents, personalEvents].forEach(store => Object.entries(store).forEach(([day, list]) =>
-      list.forEach(ev => { if (ev.moodle) found[ev.moodle] = { store, day, ev }; })));
+    const added = moodleAdded();
+    const now = Date.now() / 1000;
+    const fmt = ts => new Date(ts * 1000).toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' })
+      + ' · ' + new Date(ts * 1000).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+    const pending = assigns.filter(a => !moodleState(a).done)
+      .sort((x, y) => (x.duedate || Infinity) - (y.duedate || Infinity));
+    document.getElementById('moodleList').innerHTML = pending.map(a => {
+      const course = courses.find(c => c.id === a.courseid);
+      const code = guessModule(course);
+      const late = a.duedate && a.duedate < now;
+      const btn = !a.duedate
+        ? '<button type="button" class="btn btn-ghost moodle-add" disabled>Sin fecha</button>'
+        : added[a.id]
+          ? '<button type="button" class="btn btn-ghost moodle-add is-added" disabled><svg class="icon"><use href="#i-check"/></svg>Añadida</button>'
+          : `<button type="button" class="btn btn-primary moodle-add" onclick="addMoodleTask(${a.id})">Añadir tarea</button>`;
+      return `
+        <li class="moodle-task">
+          <div class="moodle-task-text">
+            <div class="moodle-subject">${code ? chip(code) : ''}<span>${escapeHTML(code ? MODULES[code].name : course.fullname)}</span></div>
+            <div class="moodle-name">${escapeHTML(a.name)}</div>
+            <div class="moodle-due${late ? ' is-late' : ''}">${a.duedate ? `${late ? 'Venció' : 'Entrega'} ${fmt(a.duedate)}` : 'Sin fecha de entrega'}</div>
+          </div>
+          ${btn}
+        </li>`;
+    }).join('') || '<li class="att-empty">No tienes tareas pendientes de entrega en el campus.</li>';
+  }
 
-    let added = 0, updated = 0;
-    assigns.filter(a => a.duedate).forEach(a => {
-      const code = moduleFor(course[a.courseid]);
-      const due = new Date(a.duedate * 1000);
-      const idx = CALENDAR_DATES.findIndex(cd => realDate(cd).toDateString() === due.toDateString());
-      const slot = idx !== -1 && code && schedule[idx] ? schedule[idx].indexOf(code) : -1;
-      const s = moodleState(a);
-      const old = found[a.id];
-      const rec = { ...(old ? old.ev : { notify: true, notifyDays: [3], id: newRecordId() }),
-        type: 'task', text: a.name, title: a.name, moodle: a.id,
-        status: s.done || (old && old.ev.status === 'done') ? 'done' : 'pending' };
-      if (s.grade !== undefined) rec.grade = s.grade;
-      delete rec.module; delete rec.slot; delete rec.byDay;
-      let store, day;
-      if (slot !== -1) {
-        store = userEvents; day = String(idx);
-        Object.assign(rec, { module: code, slot, byDay: true });
-      } else {
-        store = personalEvents; day = isoOf(due.getFullYear(), due.getMonth(), due.getDate());
-        if (code) rec.module = code;
-        else if (!rec.desc) rec.desc = course[a.courseid].fullname;
-      }
-
-      if (old && old.store === store && old.day === day) {
-        const list = store[day];
-        list[list.indexOf(old.ev)] = rec;
-      } else {
-        if (old) {
-          const list = old.store[old.day];
-          list.splice(list.indexOf(old.ev), 1);
-          if (!list.length) delete old.store[old.day];
-        }
-        (store[day] = store[day] || []).push(rec);
-      }
-      if (!old) added++;
-      else if (old.store !== store || old.day !== day || JSON.stringify(old.ev) !== JSON.stringify(rec)) updated++;
-    });
-
+  function addMoodleTask(id) {
+    const a = moodleData && moodleData.assigns.find(x => x.id === id);
+    if (!a) return;
+    const day = placeMoodleTask(a, moodleAdded()[a.id]);
     saveData();
-    closeDialog('moodleDialog');
-    showToast(added || updated
-      ? `Campus: ${added} ${added === 1 ? 'tarea añadida' : 'tareas añadidas'} · ${updated} ${updated === 1 ? 'actualizada' : 'actualizadas'}`
-      : 'Campus: el horario ya estaba al día');
+    renderMoodleRows();
+    showToast(`Tarea añadida · ${/^\d+$/.test(day) ? CALENDAR_DATES[day].date : isoShort(day).date}`);
   }
 
   // --- Arranque ---

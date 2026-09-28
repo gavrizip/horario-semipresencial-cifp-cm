@@ -395,16 +395,15 @@
 <dialog class="dialog moodle-dialog" id="moodleDialog" aria-labelledby="moodleTitle">
   <div class="dialog-head">
     <div>
-      <h3 id="moodleTitle">Tareas del campus</h3>
+      <h3 id="moodleTitle">Pendientes en el campus</h3>
       <p class="slot-dialog-meta" id="moodleMeta"></p>
     </div>
     <button type="button" class="icon-btn" onclick="closeDialog('moodleDialog')" aria-label="Cerrar"><svg class="icon"><use href="#i-x"/></svg></button>
   </div>
-  <div class="moodle-list" id="moodleList"></div>
+  <ul class="moodle-list" id="moodleList"></ul>
   <div class="dialog-actions">
     <span class="spacer"></span>
     <button type="button" class="btn btn-ghost" onclick="closeDialog('moodleDialog')">Cerrar</button>
-    <button type="button" class="btn btn-primary" id="moodleImportBtn" onclick="moodleImport()">Añadir al horario</button>
   </div>
 </dialog>
 
