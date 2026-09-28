@@ -1127,7 +1127,6 @@ tr.break-row td:first-child { background: var(--inset); padding-left: 8px; paddi
 .panel-btn:hover .icon, .panel-btn:focus-visible .icon { transform: rotate(60deg); }
 .limit-dialog { width: min(440px, calc(100vw - 32px)); }
 .limit-dialog .dialog-head { align-items: flex-start; margin-bottom: 12px; }
-.limit-intro { margin: 0 0 14px; }
 /* Una fila por asignatura: chip, nombre y su % */
 .limit-list { gap: 0; margin-bottom: 0; }
 .limit-row { display: grid; grid-template-columns: auto minmax(0, 1fr) 92px; align-items: center; gap: 10px; padding: 8px 0; border-top: 1px solid var(--line); }
@@ -1138,7 +1137,6 @@ tr.break-row td:first-child { background: var(--inset); padding-left: 8px; paddi
 .limit-row input { -moz-appearance: textfield; appearance: textfield; }
 .limit-row input::-webkit-inner-spin-button, .limit-row input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 .limit-dialog [data-error="limitList"] { margin-top: 10px; }
-.limit-reset { border: none; background: none; padding: 0; font: inherit; color: var(--accent-text); text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
 
 
 .att-empty { color: var(--text-3); font-size: 0.8125rem; line-height: 1.45; padding: 4px 0; }

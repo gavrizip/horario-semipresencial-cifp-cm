@@ -370,10 +370,10 @@
       </div>
       <button type="button" class="icon-btn" onclick="closeDialog('limitDialog')" aria-label="Cerrar"><svg class="icon"><use href="#i-x"/></svg></button>
     </div>
-    <p class="field-help limit-intro">El % de horas de cada asignatura al que hay que asistir, según lo que pida su profesor. Cuenta sobre todo el curso. <button type="button" class="limit-reset" onclick="resetLimit()">Todas al 80 %</button></p>
     <div class="field limit-list" id="limitList"></div>
     <p class="field-error" data-error="limitList" hidden>Pon un número entero entre 50 y 100.</p>
     <div class="dialog-actions">
+      <button type="button" class="btn btn-danger" onclick="resetLimit()" title="Todas al 80 %">Resetear</button>
       <span class="spacer"></span>
       <button type="button" class="btn btn-ghost" onclick="closeDialog('limitDialog')">Cancelar</button>
       <button type="submit" class="btn btn-primary">Guardar</button>
