@@ -1,14 +1,15 @@
 # Horario 2º ASIR
 
-Horario del curso 2026-27 de 2.º de ASIR (clases los miércoles por la tarde, de septiembre a junio) para los grupos A y B. Registra faltas, exámenes, tareas y notas y controla la asistencia mínima del 80 % por módulo. Funciona como página web y como app de Android, sin conexión a internet.
+Horario del curso 2026-27 de 2.º de ASIR (clases los miércoles por la tarde, de septiembre a junio) para los grupos A y B. Registra faltas, exámenes, tareas y notas y controla la asistencia mínima de cada módulo (80 % por defecto, o la que pida su profesor). Funciona como página web y como app de Android, sin conexión a internet.
 
 ## Qué hace
 
-- **Trimestre**: tabla de fechas × horas. Un toque marca la falta de esa hora y un toque en la fecha marca todo el día. Pulsación larga o clic derecho para añadir un examen, una tarea o una nota. Barra de progreso de la clase en curso, con fuegos artificiales al acabar el día.
+- **Trimestre**: tabla de fechas × horas, dividida en 1<sup>er</sup> trimestre (23 sep – 13 ene), 2º (20 ene – 28 abr) y 3<sup>er</sup> (5 may – 16 jun). Un toque marca la falta de esa hora y un toque en la fecha marca todo el día. Pulsación larga o clic derecho para añadir un examen, una tarea o una nota. Botón de pantalla completa que muestra el trimestre entero, con zoom (pellizco, Ctrl + rueda o los botones − / +) y cambio de trimestre sin salir. Barra de progreso de la clase en curso, con fuegos artificiales al acabar el día.
 - **Mes**: calendario con los días de clase. En los días sin clase se pueden apuntar tareas y notas personales.
-- **Día**: clases de una fecha, con sus registros.
+- **Día**: clases de una fecha con su docente, aula y horario. En el móvil, debajo van Registros y después Asistencia.
 - **Módulos**: docentes, aulas y horas presenciales de cada módulo.
-- **Asistencia y Registros**: % de cada módulo sobre el curso completo y lista de faltas, exámenes, tareas y notas.
+- **Asistencia**: % de cada módulo, siempre contado sobre el curso completo. Solo salen las asignaturas del trimestre, mes o día que se está viendo. El engranaje de la caja permite cambiar la asistencia mínima de cada una (por ejemplo, 90 % si el profesor lo pide); «Resetear» las devuelve todas al 80 %.
+- **Registros**: faltas, exámenes, tareas y notas, con filtros por tipo.
 - Tema de noche y de día, cambio de grupo y ayuda en el menú lateral. Todo se guarda en el propio dispositivo.
 - En la app de Android: recordatorios de exámenes y tareas, y vibración ligera al marcar faltas.
 
@@ -20,7 +21,7 @@ flowchart LR
     html["horario.html<br/>vistas y formularios"]
     js["js/script.js<br/>datos del horario y lógica"]
     css["css/ + fonts/<br/>temas y tipografía"]
-    ls[("localStorage<br/>faltas, registros,<br/>tema y grupo")]
+    ls[("localStorage<br/>faltas, registros, tema,<br/>grupo y asistencia mínima")]
     html --> js
     css --> html
     js <--> ls
@@ -95,3 +96,4 @@ sqlite3 cifp.db < db/schema.sql && sqlite3 cifp.db < db/views.sql && sqlite3 cif
 
 - En `js/script.js`, `CALENDAR_DATES`, `SCHEDULE_A` y `SCHEDULE_B` van alineados **por posición**. Además, los registros guardados se refieren a una fecha por su posición, así que insertar o reordenar fechas mueve los datos del usuario a otros días.
 - Si cambia el horario, hay que volver a generar la APK (`android/build.sh`) y los datos de la base de datos (`node db/generar_seed.js`).
+- Las fechas de cada trimestre están escritas en `matrixRange()` (`js/script.js`), en el `title` de los botones de trimestre (`horario.html`) y en los periodos de `db/generar_seed.js`: si cambian, hay que tocar los tres sitios.
