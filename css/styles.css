@@ -1135,7 +1135,6 @@ tr.break-row td:first-child { background: var(--inset); padding-left: 8px; paddi
 .notify-group legend { padding: 0; margin-bottom: 4px; font-size: 0.75rem; font-weight: 550; color: var(--text-3); }
 /* Interruptor: texto a la izquierda, pastilla a la derecha, como en los ajustes del móvil */
 .switch-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 42px; font-size: 0.875rem; color: var(--text); cursor: pointer; }
-.switch-row.is-sub { padding-left: 14px; color: var(--text-2); }
 .switch-row:has(input:disabled) { color: var(--text-3); cursor: default; }
 .switch-row input {
   appearance: none; position: relative; flex: none; margin: 0;

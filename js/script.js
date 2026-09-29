@@ -311,11 +311,11 @@
   }
 
   // --- Notificaciones (menú) ---
-  // localStorage['horario_notify'] = { exams, tasks, repeat, campusNew, campusMoved }: qué avisa la
+  // localStorage['horario_notify'] = { exams, tasks, campusNew, campusMoved }: qué avisa la
   // app. Cuándo (días antes y hora) se elige en cada examen o tarea. Los recordatorios se filtran
   // en syncReminders() y los del campus los aplica Java (MoodleWatch). Sonido y vibración son cosa
   // de los ajustes de Android.
-  const NOTIFY_DEFAULTS = { exams: true, tasks: true, repeat: true, campusNew: true, campusMoved: true };
+  const NOTIFY_DEFAULTS = { exams: true, tasks: true, campusNew: true, campusMoved: true };
 
   function notifyPrefs() {
     let p = {};
@@ -342,7 +342,6 @@
     if (!window.AndroidApp) return;
     const p = notifyPrefs();
     document.querySelectorAll('.notify-section [data-pref]').forEach(i => { i.checked = !!p[i.dataset.pref]; });
-    document.querySelector('.notify-section [data-pref="repeat"]').disabled = !p.tasks;
     document.getElementById('notifyCampus').hidden = !campusConnected();
     document.getElementById('notifyBlocked').hidden = !(AndroidApp.notificationsEnabled && !AndroidApp.notificationsEnabled());
     syncWatchBtn();
@@ -958,8 +957,7 @@
           when: `miércoles ${cd.date}, ${start}`,
           due: due.getTime(),
           times,
-          hour,
-          repeat: ev.type === 'task' && pref.repeat
+          hour
         });
       });
     });
@@ -974,7 +972,7 @@
         t.setHours(hour, 0, 0, 0);
         return t.getTime();
       });
-      list.push({ id: ev.id, kind: 'task', code: ev.module || '', what: ev.title || ev.text, when: isoLong(iso), due: due.getTime(), times, hour, repeat: pref.repeat });
+      list.push({ id: ev.id, kind: 'task', code: ev.module || '', what: ev.title || ev.text, when: isoLong(iso), due: due.getTime(), times, hour });
     }));
     if (assigned) localStorage.setItem('academic_events_dark', JSON.stringify(userEvents));
     AndroidApp.syncReminders(JSON.stringify(list));

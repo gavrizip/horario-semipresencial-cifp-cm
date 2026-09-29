@@ -20,8 +20,7 @@ import java.util.Calendar;
 /**
  * Avisos de exámenes y tareas. La página manda la lista completa (syncReminders) cada vez
  * que cambian los registros; aquí se guarda y se programa una alarma por registro con la
- * próxima hora de aviso. Las tareas se repiten cada día desde el primer aviso hasta que se
- * marcan como entregadas.
+ * próxima hora de aviso: los días y la hora que se eligieron en cada registro.
  */
 final class Reminders {
 
@@ -99,22 +98,10 @@ final class Reminders {
     static long nextTime(JSONObject r, long now) {
         JSONArray times = r.optJSONArray("times");
         if (times == null || times.length() == 0) return -1;
-        long first = Long.MAX_VALUE, next = Long.MAX_VALUE;
+        long next = Long.MAX_VALUE;
         for (int i = 0; i < times.length(); i++) {
             long t = times.optLong(i);
-            first = Math.min(first, t);
             if (t > now) next = Math.min(next, t);
-        }
-        if (r.optBoolean("repeat") && now >= first) {
-            // Tarea sin entregar: cada día a la hora de aviso
-            Calendar cal = Calendar.getInstance();
-            cal.setTimeInMillis(now);
-            cal.set(Calendar.HOUR_OF_DAY, r.optInt("hour", 10));
-            cal.set(Calendar.MINUTE, 0);
-            cal.set(Calendar.SECOND, 0);
-            cal.set(Calendar.MILLISECOND, 0);
-            if (cal.getTimeInMillis() <= now) cal.add(Calendar.DAY_OF_MONTH, 1);
-            return cal.getTimeInMillis();
         }
         return next == Long.MAX_VALUE ? -1 : next;
     }
