@@ -713,18 +713,10 @@
     try { return JSON.parse(localStorage.getItem('horario_moodle_grades')); } catch { return null; }
   }
 
+  // «Actualizar notas» solo con la cuenta conectada; los errores salen como aviso
   function renderGradesBar(message) {
-    const bar = document.getElementById('gradesBar');
-    bar.hidden = !campusConnected();
-    if (bar.hidden) return;
-    const cache = loadGrades();
-    let when = 'sin cargar';
-    if (cache) {
-      const min = Math.round((Date.now() - cache.at) / 60000);
-      when = min < 2 ? 'actualizadas ahora' : min < 60 ? `actualizadas hace ${min} min` : min < 24 * 60 ? `actualizadas hace ${Math.round(min / 60)} h`
-        : `actualizadas el ${new Date(cache.at).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}`;
-    }
-    document.getElementById('gradesStatus').textContent = message || `Notas del campus · ${when}`;
+    document.getElementById('gradesBar').hidden = !campusConnected();
+    if (message) showToast(message);
   }
 
   // Nota total de cada curso de este curso escolar, llevada a su asignatura con la misma

@@ -1095,7 +1095,7 @@ tr.break-row td:first-child { background: var(--inset); padding-left: 8px; paddi
 
 .modules-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; margin-bottom: 16px; }
 /* Notas del campus: estado y botón junto al título */
-.grades-bar { display: flex; align-items: center; gap: 12px; font-size: 0.8125rem; color: var(--text-3); }
+.grades-bar { display: flex; margin-left: auto; }
 .grades-bar[hidden] { display: none; }
 
 .modules-list { border-top: 1px solid var(--line); }
