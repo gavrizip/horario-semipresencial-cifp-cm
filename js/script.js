@@ -386,9 +386,9 @@
     const map = loadCourseMap();
     document.getElementById('moodleDialog').dataset.mode = 'resolve';
     document.getElementById('moodleTitle').textContent = all ? 'Asignaturas del campus' : 'Cursos nuevos del campus';
-    document.getElementById('moodleMeta').innerHTML = all
+    document.getElementById('moodleMeta').textContent = all
       ? 'A qué asignatura de la app corresponde cada curso.'
-      : 'Se han encontrado nuevas asignaturas.<br>Selecciona las asignaturas correspondientes.';
+      : 'Se han encontrado nuevas asignaturas.';
     document.getElementById('moodleList').innerHTML = courses.map(c => {
       const saved = map[c.id];
       const current = saved ? (saved.module === null ? 'none' : MODULES[saved.module] ? saved.module : '') : '';
@@ -540,7 +540,7 @@
           <div class="moodle-subject">${code ? chip(code) : ''}<span>${escapeHTML(code ? MODULES[code].name : course.fullname)}</span></div>
           <div class="moodle-name">${escapeHTML(a.name)}</div>
           <div class="moodle-foot">
-            <span class="moodle-due${late ? ' is-late' : ''}">${a.duedate ? `${late ? 'Venció' : 'Entrega'} ${fmt(a.duedate)}` : 'Sin fecha de entrega · no se puede añadir'}</span>
+            <span class="moodle-due${late ? ' is-late' : ''}">${a.duedate ? `${late ? 'Venció ' : ''}${fmt(a.duedate)}` : 'Sin fecha de entrega · no se puede añadir'}</span>
             ${btn}
           </div>
         </li>`;
