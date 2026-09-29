@@ -187,8 +187,41 @@
     return name.charAt(0) + name.slice(1).toLowerCase();
   }
 
+  // --- Ajustes de cada asignatura (Módulos → «⋯») ---
+  // localStorage['horario_modules'] = { IMW: { teacher?, room?, status? } }: solo lo que cambia el
+  // usuario. status 'convalidada' | 'desistida' saca la asignatura del horario.
+  function loadModulePrefs() {
+    try { return JSON.parse(localStorage.getItem('horario_modules')) || {}; } catch { return {}; }
+  }
+  let modulePrefs = loadModulePrefs();
+  const teacherOf = code => (modulePrefs[code] && modulePrefs[code].teacher) || capitalize(MODULES[code].teacher);
+  // Aula o null si no tiene
+  function roomOf(code) {
+    const p = modulePrefs[code];
+    const room = p && p.room !== undefined ? p.room : MODULES[code].presencial;
+    return room && room !== '-' ? room : null;
+  }
+  const statusOf = code => (modulePrefs[code] && modulePrefs[code].status) || null;
+  const STATUS_LABEL = { convalidada: 'Convalidada', desistida: 'Desistida' };
+
+  // Horario del grupo sin las asignaturas convalidadas o desistidas: todo lo que sale de aquí
+  // (tabla, Día, Mes, Asistencia, clase en curso, avisos) las deja fuera sin tocar nada más.
+  // Un día que se queda sin ninguna clase pasa a ser un día sin clase.
+  let scheduleCache = null;
   function getSchedule() {
-    return currentGroup === 'A' ? SCHEDULE_A : SCHEDULE_B;
+    const base = currentGroup === 'A' ? SCHEDULE_A : SCHEDULE_B;
+    const off = Object.keys(modulePrefs).filter(c => MODULES[c] && statusOf(c));
+    if (!off.length) return base;
+    const key = currentGroup + off.sort().join();
+    if (!scheduleCache || scheduleCache.key !== key) {
+      const list = base.map(day => {
+        if (!day) return day;
+        const kept = day.map(m => off.includes(m) ? null : m);
+        return kept.some(Boolean) ? kept : null;
+      });
+      scheduleCache = { key, list };
+    }
+    return scheduleCache.list;
   }
 
   function realDate(cd) {
@@ -860,6 +893,9 @@
     const slotDialog = document.getElementById('slotDialog');
     slotDialog.addEventListener('click', e => { if (e.target === slotDialog) closeSlotDialog(); });
     slotDialog.addEventListener('cancel', e => { e.preventDefault(); closeSlotDialog(); });
+    const moduleDialog = document.getElementById('moduleDialog');
+    moduleDialog.addEventListener('click', e => { if (e.target === moduleDialog) closeDialog('moduleDialog'); });
+    moduleDialog.addEventListener('cancel', e => { e.preventDefault(); closeDialog('moduleDialog'); });
     const gradesDialog = document.getElementById('gradesDialog');
     gradesDialog.addEventListener('click', e => { if (e.target === gradesDialog) closeDialog('gradesDialog'); });
     gradesDialog.addEventListener('cancel', e => { e.preventDefault(); closeDialog('gradesDialog'); });
@@ -965,6 +1001,7 @@
         if (!ev.notify || !ev.notifyDays || !ev.notifyDays.length) return;
         if (ev.type === 'task' && ev.status === 'done') return;
         if (!pref[ev.type === 'exam' ? 'exams' : 'tasks']) return;
+        if (ev.module && statusOf(ev.module)) return;
         const slot = TIME_SLOTS.find(t => t.key === ev.slot);
         const start = slot ? slotBounds(slot).start : '18:15';
         const [hh, mm] = start.split(':').map(Number);
@@ -990,7 +1027,7 @@
       });
     });
     Object.entries(personalEvents).forEach(([iso, events]) => events.forEach(ev => {
-      if (ev.type !== 'task' || !pref.tasks || !ev.notify || !ev.notifyDays || !ev.notifyDays.length || ev.status === 'done') return;
+      if (ev.type !== 'task' || !pref.tasks || (ev.module && statusOf(ev.module)) || !ev.notify || !ev.notifyDays || !ev.notifyDays.length || ev.status === 'done') return;
       const due = isoDate(iso);
       due.setHours(23, 59, 0, 0);
       const hour = ev.notifyHour ?? REMINDER_HOUR;
@@ -1718,14 +1755,14 @@
         return `<li class="slot is-free" style="--i:${i}"><div class="slot-body"><div class="slot-name">Sin clase</div></div>${time}</li>`;
       }
       const dim = filterModule && filterModule !== b.code ? ' is-dimmed' : '';
-      const room = mod.presencial === '-' ? 'Sin aula asignada' : mod.presencial;
+      const room = roomOf(b.code) || 'Sin aula asignada';
       return `
         <li class="slot${dim}" style="--i:${i}" data-date="${selectedDateIndex}" data-slots="${b.slots.map(t => t.key).join(',')}">
           <div class="slot-body">
             ${chip(b.code, 'chip-lg')}
             <div class="slot-text">
               <div class="slot-name">${mod.name} ${sessions}</div>
-              <div class="slot-meta">${capitalize(mod.teacher)} · ${room}<span class="slot-count">${n} ${n === 1 ? 'sesión' : 'sesiones'}</span></div>
+              <div class="slot-meta">${escapeHTML(teacherOf(b.code))} · ${escapeHTML(room)}<span class="slot-count">${n} ${n === 1 ? 'sesión' : 'sesiones'}</span></div>
             </div>
           </div>
           ${time}
@@ -2923,19 +2960,25 @@
         <div class="module-th">Aula</div>
         <div class="module-th is-hours">Horas presenciales</div>
         ${grades ? '<div class="module-th is-hours is-grade">Nota campus</div>' : ''}
+        <div class="module-th is-more" aria-hidden="true"></div>
       </div>`;
     container.innerHTML = head + Object.values(MODULES).map(mod => {
-      const dim = filterModule && filterModule !== mod.code ? ' is-dimmed' : '';
-      const h = hours[mod.code] || 0;
-      const room = mod.presencial === '-' ? 'Sin aula' : mod.presencial;
+      const code = mod.code;
+      const dim = filterModule && filterModule !== code ? ' is-dimmed' : '';
+      const status = statusOf(code);
+      const h = status ? 0 : hours[code] || 0;
+      const teacher = escapeHTML(teacherOf(code));
+      const room = escapeHTML(roomOf(code) || 'Sin aula');
       return `
-        <div class="module-row${dim}" aria-label="${escapeHTML(mod.name)}. Docente: ${capitalize(mod.teacher)}. ${room}. ${h ? h + ' horas presenciales' : 'Sin sesiones'}">
-          ${chip(mod.code, 'chip-lg')}
-          <div class="module-name">${mod.name}</div>
-          <div class="module-cell">${capitalize(mod.teacher)}</div>
-          <div class="module-cell">${room}</div>
+        <div class="module-row${dim}${status ? ' is-off' : ''}" aria-label="${escapeHTML(mod.name)}${status ? ' (' + STATUS_LABEL[status].toLowerCase() + ')' : ''}. Docente: ${teacher}. ${room}. ${h ? h + ' horas presenciales' : 'Sin sesiones'}">
+          ${chip(code, 'chip-lg')}
+          <div class="module-name">${mod.name}${status ? `<span class="module-state">${STATUS_LABEL[status]}</span>` : ''}</div>
+          <div class="module-cell is-teacher">${teacher}</div>
+          <div class="module-cell is-room">${room}</div>
+          <div class="module-where">${teacher} – ${room}</div>
           <div class="module-hours${h ? '' : ' is-none'}">${h ? `${h} h` : '—'}</div>
-          ${grades ? gradeCell(mod.code, grades) : ''}
+          ${grades ? gradeCell(code, grades) : ''}
+          <button type="button" class="icon-btn module-more" onclick="openModuleDialog('${code}')" aria-label="Opciones de ${escapeHTML(mod.name)}" title="Opciones"><svg class="icon"><use href="#i-more"/></svg></button>
         </div>`;
     }).join('');
   }
@@ -2945,6 +2988,60 @@
     if (!g) return '<div class="module-grade is-none">—</div>';
     return `<button type="button" class="module-grade" onclick="openModuleGrades('${code}')" aria-label="Notas de ${escapeHTML(MODULES[code].name)}: ${escapeHTML(g.grade)}">
       <span class="grade-label">Nota </span>${escapeHTML(g.grade)}<svg class="icon" aria-hidden="true"><use href="#i-right"/></svg></button>`;
+  }
+
+  // Ajustes de una asignatura: docente, aula y si está convalidada o desistida
+  let moduleEditing = null;
+  function openModuleDialog(code) {
+    moduleEditing = code;
+    const mod = MODULES[code];
+    document.getElementById('moduleDialogChip').innerHTML = chip(code, 'chip-lg');
+    document.getElementById('moduleDialogTitle').textContent = mod.name;
+    document.getElementById('moduleTeacher').value = teacherOf(code);
+    document.getElementById('moduleTeacher').placeholder = capitalize(mod.teacher);
+    document.getElementById('moduleRoom').value = roomOf(code) || '';
+    document.querySelector(`input[name="moduleStatus"][value="${statusOf(code) || 'active'}"]`).checked = true;
+    const dialog = document.getElementById('moduleDialog');
+    dialog.classList.remove('is-closing');
+    dialog.showModal();
+  }
+
+  // Vuelve a lo que trae la app (docente y aula originales, cursándola)
+  function resetModuleDialog() {
+    const mod = MODULES[moduleEditing];
+    document.getElementById('moduleTeacher').value = capitalize(mod.teacher);
+    document.getElementById('moduleRoom').value = mod.presencial === '-' ? '' : mod.presencial;
+    document.querySelector('input[name="moduleStatus"][value="active"]').checked = true;
+  }
+
+  function saveModuleDialog(e) {
+    e.preventDefault();
+    const code = moduleEditing, mod = MODULES[code];
+    const teacher = document.getElementById('moduleTeacher').value.trim();
+    const room = document.getElementById('moduleRoom').value.trim();
+    const status = document.querySelector('input[name="moduleStatus"]:checked').value;
+    const was = statusOf(code);
+    // Solo se guarda lo que difiere de lo que trae la app
+    const p = {};
+    if (teacher && teacher !== capitalize(mod.teacher)) p.teacher = teacher;
+    if (room !== (mod.presencial === '-' ? '' : mod.presencial)) p.room = room;
+    if (status !== 'active') p.status = status;
+    if (Object.keys(p).length) modulePrefs[code] = p; else delete modulePrefs[code];
+    try { localStorage.setItem('horario_modules', JSON.stringify(modulePrefs)); } catch {}
+    closeDialog('moduleDialog');
+    // Lo mismo que al cambiar de grupo: todo lo que depende del horario
+    renderMonthView();
+    renderDateList();
+    renderTimeline();
+    renderAttendanceBars();
+    renderMatrix();
+    renderModulesList();
+    renderSidebarNotes();
+    tickLive();
+    syncReminders();
+    if ((p.status || null) !== was) {
+      showToast(p.status ? `${code} ${STATUS_LABEL[p.status].toLowerCase()}: ya no sale en el horario` : `${code} vuelve al horario`);
+    } else showToast(`${code} actualizada`);
   }
 
   // --- DIÁLOGO ---

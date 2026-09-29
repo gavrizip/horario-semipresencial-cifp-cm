@@ -1119,7 +1119,24 @@ tr.break-row td:first-child { background: var(--inset); padding-left: 8px; paddi
 .module-th.is-module { grid-column: span 2; }
 .module-th.is-hours { text-align: right; white-space: nowrap; }
 /* Con notas del campus, una columna más a la derecha; la nota se pulsa para ver el detalle */
-.modules-list.has-grades .module-row { grid-template-columns: 56px minmax(0, 1.6fr) minmax(0, 0.8fr) minmax(0, 0.7fr) 124px 112px; }
+.modules-list.has-grades .module-row { grid-template-columns: 56px minmax(0, 1.6fr) minmax(0, 0.8fr) minmax(0, 0.7fr) 124px 112px 36px; }
+/* Botón «⋯» de cada asignatura (abre sus ajustes) */
+.module-row { grid-template-columns: 56px minmax(0, 1.6fr) minmax(0, 0.8fr) minmax(0, 0.7fr) 148px 36px; }
+.module-more { justify-self: end; width: 34px; height: 34px; border: none; background: none; color: var(--text-3); }
+.module-more:hover { color: var(--text); background: var(--surface-2); }
+.module-more .icon { width: 18px; height: 18px; }
+/* Docente y aula juntos: solo en el móvil (en el ordenador van en sus columnas) */
+.module-where { display: none; }
+/* Convalidada o desistida: atenuada, con su estado junto al nombre */
+.module-row.is-off :is(.chip, .module-name, .module-cell, .module-where) { opacity: 0.55; }
+.module-state { display: inline-block; margin-left: 8px; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--line-strong); font-size: 0.6875rem; font-weight: 600; color: var(--text-2); vertical-align: 2px; }
+/* Ajustes de la asignatura */
+.module-dialog { width: min(460px, calc(100vw - 32px)); }
+.module-dialog-title { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.module-dialog-title h3 { line-height: 1.25; }
+.type-option[data-type="active"] { --c: var(--ok); }
+.type-option[data-type="convalidada"] { --c: var(--accent); }
+.type-option[data-type="desistida"] { --c: var(--absence); }
 .module-grade {
   justify-self: end; display: inline-flex; align-items: center; gap: 4px;
   min-height: 32px; padding: 0 6px 0 10px;
@@ -1515,10 +1532,13 @@ tr.break-row td:first-child { background: var(--inset); padding-left: 8px; paddi
   .month-list::-webkit-scrollbar, .date-list::-webkit-scrollbar { display: none; }
   .month-item, .date-item { flex: none; scroll-snap-align: start; border: 1px solid var(--line); }
   .month-item.is-active, .date-item.is-active { border-color: transparent; }
-  .module-row { grid-template-columns: 56px minmax(0, 1fr) 96px; row-gap: 4px; }
-  .module-row .module-cell { grid-column: 2; }
+  /* Móvil: nombre y, debajo, «docente – aula» en una línea; horas (y nota) a la derecha; «⋯» al final */
+  .module-row, .modules-list.has-grades .module-row { grid-template-columns: 56px minmax(0, 1fr) auto 34px; column-gap: 12px; row-gap: 4px; }
+  .module-row .module-cell { display: none; }
+  .module-row .module-where { display: block; grid-column: 2; color: var(--text-2); font-size: 0.875rem; }
   .module-row .module-hours { grid-column: 3; grid-row: 1; }
-  .modules-list.has-grades .module-row { grid-template-columns: 56px minmax(0, 1fr) 96px; }
+  .module-row .module-more { grid-column: 4; grid-row: 1 / span 2; align-self: center; }
+  .module-row.is-head .module-th.is-more { display: none; }
   .module-row .module-grade { grid-column: 3; grid-row: 2 / span 2; align-self: start; }
   .module-row.is-head .module-th.is-grade { display: none; }
   .module-row .module-grade.is-none { display: none; }

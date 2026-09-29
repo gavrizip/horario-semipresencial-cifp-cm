@@ -52,6 +52,7 @@
   <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15Z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></symbol>
   <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8.5" r="3.5"/><path d="M2.5 19.5c0-3.4 2.9-5.8 6.5-5.8s6.5 2.4 6.5 5.8"/><path d="M15.5 5.3a3.5 3.5 0 0 1 0 6.4"/><path d="M18 14.2c2 .8 3.5 2.7 3.5 5.3"/></symbol>
   <symbol id="i-contrast" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17Z" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24"><circle cx="5.5" cy="12" r="1.4" fill="currentColor"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/><circle cx="18.5" cy="12" r="1.4" fill="currentColor"/></symbol>
   <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z"/></symbol>
 </svg>
 
@@ -455,6 +456,44 @@
     <button type="button" class="btn btn-ghost moodle-list-only" onclick="closeDialog('moodleDialog')">Cerrar</button>
     <button type="button" class="btn btn-primary moodle-resolve-only" onclick="saveCourseResolver()">Continuar</button>
   </div>
+</dialog>
+
+<!-- Ajustes de una asignatura (Módulos → «⋯») -->
+<dialog class="dialog module-dialog" id="moduleDialog" aria-labelledby="moduleDialogTitle">
+  <form method="dialog" onsubmit="saveModuleDialog(event)" novalidate>
+    <div class="dialog-head">
+      <div class="module-dialog-title">
+        <span id="moduleDialogChip"></span>
+        <h3 id="moduleDialogTitle">Asignatura</h3>
+      </div>
+      <button type="button" class="icon-btn" onclick="closeDialog('moduleDialog')" aria-label="Cerrar"><svg class="icon"><use href="#i-x"/></svg></button>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label class="field-label" for="moduleTeacher">Docente</label>
+        <input type="text" id="moduleTeacher" autocomplete="off" maxlength="60">
+      </div>
+      <div class="field">
+        <label class="field-label" for="moduleRoom">Aula</label>
+        <input type="text" id="moduleRoom" autocomplete="off" maxlength="40" placeholder="Sin aula">
+      </div>
+    </div>
+    <fieldset class="field">
+      <legend class="field-label">Estado</legend>
+      <div class="type-picker">
+        <label class="type-option" data-type="active"><input type="radio" name="moduleStatus" value="active" checked><span>Cursando</span></label>
+        <label class="type-option" data-type="convalidada"><input type="radio" name="moduleStatus" value="convalidada"><span>Convalidada</span></label>
+        <label class="type-option" data-type="desistida"><input type="radio" name="moduleStatus" value="desistida"><span>Desistida</span></label>
+      </div>
+      <p class="field-help">Convalidada o desistida: deja de salir en el horario, la asistencia y los avisos. Sus registros se conservan y puedes volver a «Cursando» cuando quieras.</p>
+    </fieldset>
+    <div class="dialog-actions">
+      <button type="button" class="btn btn-ghost" onclick="resetModuleDialog()">Restablecer</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn btn-ghost" onclick="closeDialog('moduleDialog')">Cancelar</button>
+      <button type="submit" class="btn btn-primary">Guardar</button>
+    </div>
+  </form>
 </dialog>
 
 <dialog class="dialog moodle-dialog" id="gradesDialog" aria-labelledby="gradesTitle">
