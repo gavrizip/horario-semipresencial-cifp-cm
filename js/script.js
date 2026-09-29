@@ -372,35 +372,41 @@
   }
 
   // «Sincronizar»: el icono gira mientras Java comprueba el campus
+  // Estados del botón: Sincronizar → Sincronizando… (gira) → Sincronizado (verde) → Sincronizar
   let watchStarted = 0;
+  let watchDoneTimer = 0;
   function moodleWatchNow() {
     const btn = document.getElementById('moodleWatchBtn');
     if (btn.classList.contains('is-loading')) return;
+    clearTimeout(watchDoneTimer);
     btn.classList.remove('is-done');
     btn.querySelector('use').setAttribute('href', '#i-sync');
     btn.classList.add('is-loading');
     btn.setAttribute('aria-busy', 'true');
     btn.disabled = true;
-    btn.querySelector('span').textContent = 'Sincronizando…';
+    btn.querySelector('span').textContent = 'Sincronizando';
     watchStarted = performance.now();
     AndroidApp.moodleWatchNow();
   }
 
   // Respuesta de Java: nº de novedades avisadas, o -1 si no se pudo. El giro dura al menos
-  // 700 ms para que una respuesta instantánea no parezca un parpadeo; si ha ido bien, una ✓.
+  // 700 ms para que una respuesta instantánea no parezca un parpadeo; si ha ido bien, «Sincronizado»
+  // en verde con una ✓ durante 1,4 s y vuelta a «Sincronizar».
   function moodleWatchDone(n) {
     setTimeout(() => {
       const btn = document.getElementById('moodleWatchBtn');
+      const label = btn.querySelector('span');
       btn.classList.remove('is-loading');
       btn.removeAttribute('aria-busy');
-      btn.querySelector('span').textContent = 'Sincronizar';
+      label.textContent = n >= 0 ? 'Sincronizado' : 'Sincronizar';
       syncWatchBtn();
       if (n >= 0) {
         btn.classList.add('is-done');
         btn.querySelector('use').setAttribute('href', '#i-check');
-        setTimeout(() => {
+        watchDoneTimer = setTimeout(() => {
           btn.classList.remove('is-done');
           btn.querySelector('use').setAttribute('href', '#i-sync');
+          label.textContent = 'Sincronizar';
         }, 1400);
       }
       showToast(n < 0 ? 'No se ha podido sincronizar con el campus' : n ? `${n} ${n === 1 ? 'novedad' : 'novedades'}: mira las notificaciones` : 'Sin novedades en el campus');
