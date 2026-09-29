@@ -147,7 +147,7 @@
           <!-- Notas del campus: solo en la app con la cuenta conectada -->
           <div class="grades-bar" id="gradesBar" hidden>
             <span id="gradesStatus"></span>
-            <button type="button" class="btn btn-ghost" id="gradesRefreshBtn" onclick="moodleGrades()">Actualizar notas</button>
+            <button type="button" class="btn btn-ghost sync-btn" id="gradesRefreshBtn" onclick="moodleGrades()"><svg class="icon" aria-hidden="true"><use href="#i-sync"/></svg><span>Actualizar notas</span></button>
           </div>
         </div>
         <div class="modules-list" id="modulesGridList"></div>
@@ -255,7 +255,7 @@
     <div class="moodle-actions">
       <button type="button" class="btn btn-primary" id="moodleConnectBtn" onclick="moodleConnect()">Conectar</button>
       <button type="button" class="btn btn-primary" id="moodleSyncBtn" onclick="moodleSync()" hidden>Ver tareas</button>
-      <button type="button" class="btn btn-ghost moodle-sync" id="moodleWatchBtn" onclick="moodleWatchNow()" hidden><svg class="icon" aria-hidden="true"><use href="#i-sync"/></svg><span>Sincronizar</span></button>
+      <button type="button" class="btn btn-ghost sync-btn" id="moodleWatchBtn" onclick="moodleWatchNow()" hidden><svg class="icon" aria-hidden="true"><use href="#i-sync"/></svg><span>Sincronizar</span></button>
       <!-- Desconectar, en rojo y en su propia fila: borra el acceso al campus guardado en el móvil -->
       <button type="button" class="btn btn-danger moodle-logout" id="moodleLogoutBtn" onclick="moodleDisconnect()" hidden>Desconectar</button>
     </div>

@@ -377,11 +377,11 @@
     if (!btn.classList.contains('is-loading')) btn.disabled = !moodleWatchOn();
   }
 
-  // «Sincronizar»: el icono gira mientras Java comprueba el campus
-  // Pone el texto de «Sincronizar» y, si no cabe en el botón (que nunca cambia de tamaño), reduce
-  // su letra de medio en medio punto hasta que quepa
-  function setSyncLabel(text) {
-    const btn = document.getElementById('moodleWatchBtn');
+  // --- Botones con estados de carga («Sincronizar», «Actualizar notas») ---
+  // Normal → trabajando (el icono gira, al menos 700 ms para que no parezca un parpadeo) → hecho
+  // (verde con ✓ durante 2,4 s) → normal. Nunca cambian de tamaño: fuera de la rejilla del campus
+  // el ancho se fija al del primer texto (el más largo), y si un texto no cabe se reduce su letra.
+  function setBtnLabel(btn, text) {
     const label = btn.querySelector('span');
     label.textContent = text;
     label.style.fontSize = '';
@@ -393,44 +393,50 @@
     }
   }
 
-  // Estados del botón: Sincronizar → Sincronizando (gira) → Sincronizado (verde) → Sincronizar
-  let watchStarted = 0;
-  let watchDoneTimer = 0;
-  function moodleWatchNow() {
-    const btn = document.getElementById('moodleWatchBtn');
-    if (btn.classList.contains('is-loading')) return;
-    clearTimeout(watchDoneTimer);
+  function btnBusy(btn, text) {
+    clearTimeout(btn.doneTimer);
+    if (!btn.closest('.moodle-actions') && btn.offsetWidth) btn.style.minWidth = btn.offsetWidth + 'px';
     btn.classList.remove('is-done');
     btn.querySelector('use').setAttribute('href', '#i-sync');
     btn.classList.add('is-loading');
     btn.setAttribute('aria-busy', 'true');
     btn.disabled = true;
-    setSyncLabel('Sincronizando');
-    watchStarted = performance.now();
+    setBtnLabel(btn, text);
+    btn.started = performance.now();
+  }
+
+  // ok: verde con doneText y vuelta a idleText; si no, directamente idleText. after() se ejecuta
+  // al dejar de girar (para reactivar el botón según su contexto).
+  function btnDone(btn, ok, doneText, idleText, after) {
+    setTimeout(() => {
+      btn.classList.remove('is-loading');
+      btn.removeAttribute('aria-busy');
+      btn.disabled = false;
+      setBtnLabel(btn, ok ? doneText : idleText);
+      if (after) after();
+      if (!ok) return;
+      btn.classList.add('is-done');
+      btn.querySelector('use').setAttribute('href', '#i-check');
+      btn.doneTimer = setTimeout(() => {
+        btn.classList.remove('is-done');
+        btn.querySelector('use').setAttribute('href', '#i-sync');
+        setBtnLabel(btn, idleText);
+      }, 2400);
+    }, Math.max(0, 700 - (performance.now() - (btn.started || 0))));
+  }
+
+  // «Sincronizar»: Sincronizando (gira) → Sincronizado (verde) → Sincronizar
+  function moodleWatchNow() {
+    const btn = document.getElementById('moodleWatchBtn');
+    if (btn.classList.contains('is-loading')) return;
+    btnBusy(btn, 'Sincronizando');
     AndroidApp.moodleWatchNow();
   }
 
-  // Respuesta de Java: nº de novedades avisadas, o -1 si no se pudo. El giro dura al menos
-  // 700 ms para que una respuesta instantánea no parezca un parpadeo; si ha ido bien, «Sincronizado»
-  // en verde con una ✓ durante 1,4 s y vuelta a «Sincronizar».
+  // Respuesta de Java: nº de novedades avisadas, o -1 si no se pudo
   function moodleWatchDone(n) {
-    setTimeout(() => {
-      const btn = document.getElementById('moodleWatchBtn');
-      btn.classList.remove('is-loading');
-      btn.removeAttribute('aria-busy');
-      setSyncLabel(n >= 0 ? 'Sincronizado' : 'Sincronizar');
-      syncWatchBtn();
-      if (n >= 0) {
-        btn.classList.add('is-done');
-        btn.querySelector('use').setAttribute('href', '#i-check');
-        watchDoneTimer = setTimeout(() => {
-          btn.classList.remove('is-done');
-          btn.querySelector('use').setAttribute('href', '#i-sync');
-          setSyncLabel('Sincronizar');
-        }, 2400);
-      }
-      showToast(n < 0 ? 'No se ha podido sincronizar con el campus' : n ? `${n} ${n === 1 ? 'novedad' : 'novedades'}: mira las notificaciones` : 'Sin novedades en el campus');
-    }, Math.max(0, 700 - (performance.now() - watchStarted)));
+    btnDone(document.getElementById('moodleWatchBtn'), n >= 0, 'Sincronizado', 'Sincronizar', syncWatchBtn);
+    showToast(n < 0 ? 'No se ha podido sincronizar con el campus' : n ? `${n} ${n === 1 ? 'novedad' : 'novedades'}: mira las notificaciones` : 'Sin novedades en el campus');
   }
 
   async function moodleSync() {
@@ -725,8 +731,9 @@
   // correspondencia que las tareas (y el mismo diálogo si hay cursos nuevos).
   async function moodleGrades() {
     const btn = document.getElementById('gradesRefreshBtn');
-    btn.disabled = true;
-    renderGradesBar('Leyendo tus notas del campus…');
+    if (btn.classList.contains('is-loading')) return;
+    btnBusy(btn, 'Actualizando');
+    renderGradesBar();
     try {
       const site = await moodleCall('core_webservice_get_site_info');
       const [courses, overview] = await Promise.all([
@@ -750,13 +757,16 @@
         moodleWatchPush();
         renderModulesList();
         renderGradesBar();
+        btnDone(btn, true, 'Actualizadas', 'Actualizar notas');
       };
-      if (ask.length) renderCourseResolver(ask, false, finish);
-      else finish();
+      // Si hay que preguntar asignaturas, el botón deja de girar mientras se contesta
+      if (ask.length) {
+        btnDone(btn, false, '', 'Actualizar notas');
+        renderCourseResolver(ask, false, () => { btnBusy(btn, 'Actualizando'); finish(); });
+      } else finish();
     } catch (e) {
+      btnDone(btn, false, '', 'Actualizar notas');
       renderGradesBar(e.code === 'invalidtoken' ? 'La sesión del campus ha caducado: vuelve a conectar.' : e.message);
-    } finally {
-      btn.disabled = false;
     }
   }
 
@@ -1110,7 +1120,7 @@
     const menu = document.getElementById('menuDrawer');
     if (!menu.open) menu.showModal();
     const sync = document.getElementById('moodleWatchBtn');
-    if (!sync.hidden) setSyncLabel(sync.querySelector('span').textContent);
+    if (!sync.hidden) setBtnLabel(sync, sync.querySelector('span').textContent);
   }
 
   function closeMenu() {
