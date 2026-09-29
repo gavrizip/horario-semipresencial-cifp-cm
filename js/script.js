@@ -393,13 +393,11 @@
       const saved = map[c.id];
       const current = saved ? (saved.module === null ? 'none' : MODULES[saved.module] ? saved.module : '') : '';
       return `
-        <li class="moodle-task">
-          <div class="moodle-task-text">
-            <div class="moodle-name">${escapeHTML(c.fullname)}</div>
-            <div class="moodle-due">${escapeHTML(c.shortname)}</div>
-          </div>
+        <li class="moodle-task is-course">
+          <div class="moodle-name">${escapeHTML(c.fullname)}</div>
+          <div class="moodle-due">${escapeHTML(c.shortname)}</div>
           <select class="moodle-map" data-course="${c.id}" aria-label="Asignatura de ${escapeHTML(c.fullname)}" onchange="this.removeAttribute('aria-invalid')">
-            <option value="" disabled${current ? '' : ' selected'}>Elige…</option>
+            <option value="" disabled${current ? '' : ' selected'}>Elige su asignatura…</option>
             ${Object.keys(MODULES).map(m => `<option value="${m}"${m === current ? ' selected' : ''}>${m} · ${MODULES[m].name}</option>`).join('')}
             <option value="none"${current === 'none' ? ' selected' : ''}>Ninguna asignatura</option>
           </select>
@@ -519,8 +517,13 @@
     const { courses, assigns } = moodleData;
     const added = moodleAdded();
     const now = Date.now() / 1000;
-    const fmt = ts => new Date(ts * 1000).toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' })
-      + ' · ' + new Date(ts * 1000).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+    // «lun 5 oct · 12:00»: corto para que quepa junto al botón en el móvil
+    const fmt = ts => {
+      const d = new Date(ts * 1000);
+      const wd = d.toLocaleDateString('es-ES', { weekday: 'short' }).replace('.', '');
+      const mon = d.toLocaleDateString('es-ES', { month: 'short' }).replace('.', '').slice(0, 3);
+      return `${wd} ${d.getDate()} ${mon} · ${d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}`;
+    };
     const pending = assigns.filter(a => !moodleState(a).done)
       .sort((x, y) => (x.duedate || Infinity) - (y.duedate || Infinity));
     document.getElementById('moodleList').innerHTML = pending.map(a => {
@@ -528,18 +531,18 @@
       const code = moduleOf(a.courseid);
       const late = a.duedate && a.duedate < now;
       const btn = !a.duedate
-        ? '<button type="button" class="btn btn-ghost moodle-add" disabled>Sin fecha</button>'
+        ? ''
         : added[a.id]
           ? '<button type="button" class="btn btn-ghost moodle-add is-added" disabled><svg class="icon"><use href="#i-check"/></svg>Añadida</button>'
           : `<button type="button" class="btn btn-primary moodle-add" onclick="addMoodleTask(${a.id})">Añadir tarea</button>`;
       return `
         <li class="moodle-task">
-          <div class="moodle-task-text">
-            <div class="moodle-subject">${code ? chip(code) : ''}<span>${escapeHTML(code ? MODULES[code].name : course.fullname)}</span></div>
-            <div class="moodle-name">${escapeHTML(a.name)}</div>
-            <div class="moodle-due${late ? ' is-late' : ''}">${a.duedate ? `${late ? 'Venció' : 'Entrega'} ${fmt(a.duedate)}` : 'Sin fecha de entrega'}</div>
+          <div class="moodle-subject">${code ? chip(code) : ''}<span>${escapeHTML(code ? MODULES[code].name : course.fullname)}</span></div>
+          <div class="moodle-name">${escapeHTML(a.name)}</div>
+          <div class="moodle-foot">
+            <span class="moodle-due${late ? ' is-late' : ''}">${a.duedate ? `${late ? 'Venció' : 'Entrega'} ${fmt(a.duedate)}` : 'Sin fecha de entrega · no se puede añadir'}</span>
+            ${btn}
           </div>
-          ${btn}
         </li>`;
     }).join('') || '<li class="att-empty">No tienes tareas pendientes de entrega en el campus.</li>';
   }
