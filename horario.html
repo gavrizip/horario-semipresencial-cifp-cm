@@ -270,29 +270,6 @@
       <label class="switch-row"><span>Exámenes</span><input type="checkbox" role="switch" data-pref="exams" onchange="setNotifyPref(this)"></label>
       <label class="switch-row"><span>Entregas de tareas</span><input type="checkbox" role="switch" data-pref="tasks" onchange="setNotifyPref(this)"></label>
       <label class="switch-row is-sub"><span>Repetir cada día hasta entregarla</span><input type="checkbox" role="switch" data-pref="repeat" onchange="setNotifyPref(this)"></label>
-      <label class="notify-row"><span>Hora del aviso</span>
-        <select class="notify-select" id="notifyHour" onchange="setNotifyHour(this.value)">
-          <option value="7">7:00</option>
-          <option value="8">8:00</option>
-          <option value="9">9:00</option>
-          <option value="10">10:00</option>
-          <option value="11">11:00</option>
-          <option value="12">12:00</option>
-          <option value="13">13:00</option>
-          <option value="14">14:00</option>
-          <option value="15">15:00</option>
-          <option value="16">16:00</option>
-          <option value="17">17:00</option>
-          <option value="18">18:00</option>
-          <option value="19">19:00</option>
-          <option value="20">20:00</option>
-          <option value="21">21:00</option>
-          <option value="22">22:00</option>
-        </select></label>
-      <div class="notify-days-pref" role="group" aria-labelledby="notifyDaysPrefLabel">
-        <span class="notify-row-label" id="notifyDaysPrefLabel">Días de antelación en los nuevos</span>
-        <div class="day-chips"><label class="day-chip"><input type="checkbox" name="notifyDefault" value="1" onchange="setNotifyDays(this)"><span>1</span></label><label class="day-chip"><input type="checkbox" name="notifyDefault" value="2" onchange="setNotifyDays(this)"><span>2</span></label><label class="day-chip"><input type="checkbox" name="notifyDefault" value="3" onchange="setNotifyDays(this)"><span>3</span></label><label class="day-chip"><input type="checkbox" name="notifyDefault" value="5" onchange="setNotifyDays(this)"><span>5</span></label><label class="day-chip"><input type="checkbox" name="notifyDefault" value="7" onchange="setNotifyDays(this)"><span>7</span></label><label class="day-chip"><input type="checkbox" name="notifyDefault" value="14" onchange="setNotifyDays(this)"><span>14</span></label></div>
-      </div>
     </fieldset>
 
     <fieldset class="notify-group" id="notifyCampus" hidden>
@@ -406,6 +383,8 @@
           <label class="day-chip"><input type="checkbox" name="notifyDays" value="14"><span>14</span></label>
         </div>
         <p class="field-error" data-error="notifyDays" hidden>Marca al menos un día, o elige «No».</p>
+        <label class="notify-hour-field"><span class="field-help">A esta hora:</span>
+          <select name="notifyHour" id="notifyHour"><option value="7">7:00</option><option value="8">8:00</option><option value="9">9:00</option><option value="10" selected>10:00</option><option value="11">11:00</option><option value="12">12:00</option><option value="13">13:00</option><option value="14">14:00</option><option value="15">15:00</option><option value="16">16:00</option><option value="17">17:00</option><option value="18">18:00</option><option value="19">19:00</option><option value="20">20:00</option><option value="21">21:00</option><option value="22">22:00</option></select></label>
       </div>
     </fieldset>
 

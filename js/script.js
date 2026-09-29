@@ -311,10 +311,11 @@
   }
 
   // --- Notificaciones (menú) ---
-  // localStorage['horario_notify'] = { exams, tasks, repeat, hour, days, campusNew, campusMoved }:
-  // qué avisa la app y cuándo. Los recordatorios se filtran en syncReminders() y los del campus
-  // los aplica Java (MoodleWatch). Sonido y vibración son cosa de los ajustes de Android.
-  const NOTIFY_DEFAULTS = { exams: true, tasks: true, repeat: true, hour: 10, days: [3], campusNew: true, campusMoved: true };
+  // localStorage['horario_notify'] = { exams, tasks, repeat, campusNew, campusMoved }: qué avisa la
+  // app. Cuándo (días antes y hora) se elige en cada examen o tarea. Los recordatorios se filtran
+  // en syncReminders() y los del campus los aplica Java (MoodleWatch). Sonido y vibración son cosa
+  // de los ajustes de Android.
+  const NOTIFY_DEFAULTS = { exams: true, tasks: true, repeat: true, campusNew: true, campusMoved: true };
 
   function notifyPrefs() {
     let p = {};
@@ -337,28 +338,11 @@
     saveNotifyPrefs(p);
   }
 
-  function setNotifyHour(value) {
-    const p = notifyPrefs();
-    p.hour = Number(value);
-    saveNotifyPrefs(p);
-  }
-
-  // Al menos un día: desmarcar el último no se permite
-  function setNotifyDays(input) {
-    const days = [...document.querySelectorAll('input[name="notifyDefault"]:checked')].map(i => Number(i.value));
-    if (!days.length) { input.checked = true; showToast('Deja al menos un día de antelación'); return; }
-    const p = notifyPrefs();
-    p.days = days.sort((a, b) => b - a);
-    saveNotifyPrefs(p);
-  }
-
   function renderNotifySettings() {
     if (!window.AndroidApp) return;
     const p = notifyPrefs();
     document.querySelectorAll('.notify-section [data-pref]').forEach(i => { i.checked = !!p[i.dataset.pref]; });
     document.querySelector('.notify-section [data-pref="repeat"]').disabled = !p.tasks;
-    document.getElementById('notifyHour').value = p.hour;
-    document.querySelectorAll('input[name="notifyDefault"]').forEach(i => { i.checked = p.days.includes(Number(i.value)); });
     document.getElementById('notifyCampus').hidden = !campusConnected();
     document.getElementById('notifyBlocked').hidden = !(AndroidApp.notificationsEnabled && !AndroidApp.notificationsEnabled());
     syncWatchBtn();
@@ -590,7 +574,7 @@
     const schedule = getSchedule();
     const slot = idx !== -1 && code && schedule[idx] ? schedule[idx].indexOf(code) : -1;
     const s = moodleState(a);
-    const rec = { ...(old ? old.ev : { notify: true, notifyDays: notifyPrefs().days, id: newRecordId() }),
+    const rec = { ...(old ? old.ev : { notify: true, notifyDays: [3], id: newRecordId() }),
       type: 'task', text: a.name, title: a.name, moodle: a.id,
       status: s.done || (old && old.ev.status === 'done') ? 'done' : 'pending' };
     if (s.grade !== undefined) rec.grade = s.grade;
@@ -937,6 +921,9 @@
     return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
   }
 
+  // Hora del aviso si el registro no tiene la suya (los anteriores a poder elegirla)
+  const REMINDER_HOUR = 10;
+
   function syncReminders() {
     if (!window.AndroidApp || !AndroidApp.syncReminders) return;
     const pref = notifyPrefs();
@@ -956,10 +943,11 @@
         const [hh, mm] = start.split(':').map(Number);
         const due = realDate(cd);
         due.setHours(hh, mm, 0, 0);
+        const hour = ev.notifyHour ?? REMINDER_HOUR;
         const times = ev.notifyDays.map(d => {
           const t = realDate(cd);
           t.setDate(t.getDate() - d);
-          t.setHours(pref.hour, 0, 0, 0);
+          t.setHours(hour, 0, 0, 0);
           return t.getTime();
         });
         list.push({
@@ -970,7 +958,7 @@
           when: `miércoles ${cd.date}, ${start}`,
           due: due.getTime(),
           times,
-          hour: pref.hour,
+          hour,
           repeat: ev.type === 'task' && pref.repeat
         });
       });
@@ -979,13 +967,14 @@
       if (ev.type !== 'task' || !pref.tasks || !ev.notify || !ev.notifyDays || !ev.notifyDays.length || ev.status === 'done') return;
       const due = isoDate(iso);
       due.setHours(23, 59, 0, 0);
+      const hour = ev.notifyHour ?? REMINDER_HOUR;
       const times = ev.notifyDays.map(d => {
         const t = isoDate(iso);
         t.setDate(t.getDate() - d);
-        t.setHours(pref.hour, 0, 0, 0);
+        t.setHours(hour, 0, 0, 0);
         return t.getTime();
       });
-      list.push({ id: ev.id, kind: 'task', code: ev.module || '', what: ev.title || ev.text, when: isoLong(iso), due: due.getTime(), times, hour: pref.hour, repeat: pref.repeat });
+      list.push({ id: ev.id, kind: 'task', code: ev.module || '', what: ev.title || ev.text, when: isoLong(iso), due: due.getTime(), times, hour, repeat: pref.repeat });
     }));
     if (assigned) localStorage.setItem('academic_events_dark', JSON.stringify(userEvents));
     AndroidApp.syncReminders(JSON.stringify(list));
@@ -2671,16 +2660,12 @@
     } else {
       set('noteText', ev ? ev.text : '');
     }
-    // Nuevos: los días de antelación elegidos en Notificaciones
-    if (!ev && kind !== 'note') {
-      const days = notifyPrefs().days;
-      form.querySelectorAll('input[name="notifyDays"]').forEach(i => { i.checked = days.includes(Number(i.value)); });
-    }
     // Registros anteriores a los avisos no tienen el campo: se abren con «No»
     if (ev && kind !== 'note') {
       form.querySelector(`input[name="notify"][value="${ev.notify ? 'yes' : 'no'}"]`).checked = true;
       const days = ev.notify && ev.notifyDays ? ev.notifyDays : [3];
       form.querySelectorAll('input[name="notifyDays"]').forEach(i => { i.checked = days.includes(Number(i.value)); });
+      document.getElementById('notifyHour').value = ev.notifyHour ?? REMINDER_HOUR;
     }
 
     dialog.classList.remove('is-closing');
@@ -2838,6 +2823,7 @@
       if (notify && !days.length && document.documentElement.classList.contains('is-app')) errors.push('notifyDays');
       rec.notify = notify && days.length > 0;
       rec.notifyDays = days;
+      rec.notifyHour = Number(document.getElementById('notifyHour').value);
     }
     const store = slotEditing.personal ? personalEvents : userEvents;
     const day = slotEditing.personal ? slotEditing.iso : dateIdx;
