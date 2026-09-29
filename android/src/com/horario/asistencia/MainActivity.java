@@ -31,6 +31,7 @@ public class MainActivity extends Activity {
     private WebView web;
     private boolean askedNotifications;
     private Dialog moodleDialog;
+    private boolean openCampus;   // abrir la lista del campus al cargar (desde su notificación)
     private static WeakReference<MainActivity> current = new WeakReference<>(null);
 
     @Override
@@ -54,11 +55,17 @@ public class MainActivity extends Activity {
         s.setBuiltInZoomControls(false);
 
         web.addJavascriptInterface(new Bridge(), "AndroidApp");
+        openCampus = getIntent().getBooleanExtra(MoodleWatch.EXTRA_OPEN_CAMPUS, false);
         web.setWebViewClient(new WebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest req) {
                 // Nada fuera de la app
                 return !req.getUrl().toString().startsWith("file:///android_asset/");
+            }
+
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                if (openCampus) { openCampus = false; showCampus(); }
             }
         });
 
@@ -89,6 +96,18 @@ public class MainActivity extends Activity {
         web.evaluateJavascript(js, handled -> {
             if (!"true".equals(handled)) finish();
         });
+    }
+
+    /** La notificación del campus abre la lista de pendientes (con la app ya abierta). */
+    @Override
+    protected void onNewIntent(android.content.Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        if (intent.getBooleanExtra(MoodleWatch.EXTRA_OPEN_CAMPUS, false)) showCampus();
+    }
+
+    private void showCampus() {
+        web.evaluateJavascript("window.moodleSync && moodleSync()", null);
     }
 
     /** Al volver a la app se aplican las tareas marcadas como entregadas desde notificaciones. */
@@ -224,8 +243,25 @@ public class MainActivity extends Activity {
         /** Olvida el token y la sesión de Medusa guardada en las cookies. */
         @JavascriptInterface
         public void moodleLogout() {
+            MoodleWatch.clear(getApplicationContext());
             Moodle.clear(getApplicationContext());
             runOnUiThread(() -> CookieManager.getInstance().removeAllCookies(null));
+        }
+
+        /** Estado de los avisos del campus (activado, curso escolar, asignaturas, tareas vistas). */
+        @JavascriptInterface
+        public void moodleWatchState(String json) {
+            MoodleWatch.setState(getApplicationContext(), json);
+            if (json.contains("\"enabled\":true")) runOnUiThread(MainActivity.this::askNotificationPermission);
+        }
+
+        /** «Comprobar ahora»: la misma comprobación que en segundo plano; responde moodleWatchDone(n). */
+        @JavascriptInterface
+        public void moodleWatchNow() {
+            new Thread(() -> {
+                int n = MoodleWatch.check(getApplicationContext());
+                runOnUiThread(() -> web.evaluateJavascript("window.moodleWatchDone && moodleWatchDone(" + n + ")", null));
+            }).start();
         }
 
         /** Llamada a la API en segundo plano; la respuesta vuelve con moodleResult(id, json). */

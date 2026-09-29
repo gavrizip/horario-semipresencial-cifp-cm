@@ -140,6 +140,11 @@
       <section id="viewModules" class="view">
         <div class="modules-head">
           <h2>Módulos y docentes</h2>
+          <!-- Notas del campus: solo en la app con la cuenta conectada -->
+          <div class="grades-bar" id="gradesBar" hidden>
+            <span id="gradesStatus"></span>
+            <button type="button" class="btn btn-ghost" id="gradesRefreshBtn" onclick="moodleGrades()">Actualizar notas</button>
+          </div>
         </div>
         <div class="modules-list" id="modulesGridList"></div>
       </section>
@@ -246,6 +251,11 @@
       <button type="button" class="btn btn-primary" id="moodleConnectBtn" onclick="moodleConnect()">Conectar</button>
       <button type="button" class="btn btn-primary" id="moodleSyncBtn" onclick="moodleSync()" hidden>Ver mis tareas</button>
       <button type="button" class="btn btn-ghost" id="moodleLogoutBtn" onclick="moodleDisconnect()" hidden>Desconectar</button>
+    </div>
+    <div class="moodle-watch" id="moodleWatchRow" hidden>
+      <label class="moodle-watch-toggle"><input type="checkbox" id="moodleWatchToggle" onchange="setMoodleWatch(this.checked)" checked>
+        <span>Avisarme de tareas nuevas y cambios de fecha</span></label>
+      <button type="button" class="moodle-watch-now" onclick="moodleWatchNow()">Comprobar ahora</button>
     </div>
   </section>
 
@@ -403,10 +413,25 @@
   <ul class="moodle-list" id="moodleList"></ul>
   <p class="field-error" id="moodleResolveError" hidden>Elige una asignatura (o «Ninguna asignatura») para cada curso.</p>
   <div class="dialog-actions">
-    <button type="button" class="btn btn-ghost moodle-list-only" onclick="renderCourseResolver(moodleData.courses, true)">Cambiar asignaturas</button>
+    <button type="button" class="btn btn-ghost moodle-list-only" onclick="renderCourseResolver(moodleData.courses, true, renderMoodleList)">Cambiar asignaturas</button>
     <span class="spacer"></span>
     <button type="button" class="btn btn-ghost moodle-list-only" onclick="closeDialog('moodleDialog')">Cerrar</button>
     <button type="button" class="btn btn-primary moodle-resolve-only" onclick="saveCourseResolver()">Continuar</button>
+  </div>
+</dialog>
+
+<dialog class="dialog moodle-dialog" id="gradesDialog" aria-labelledby="gradesTitle">
+  <div class="dialog-head">
+    <div>
+      <h3 id="gradesTitle">Notas</h3>
+      <p class="slot-dialog-meta" id="gradesMeta"></p>
+    </div>
+    <button type="button" class="icon-btn" onclick="closeDialog('gradesDialog')" aria-label="Cerrar"><svg class="icon"><use href="#i-x"/></svg></button>
+  </div>
+  <ul class="moodle-list" id="gradesList"></ul>
+  <div class="dialog-actions">
+    <span class="spacer"></span>
+    <button type="button" class="btn btn-ghost" onclick="closeDialog('gradesDialog')">Cerrar</button>
   </div>
 </dialog>
 

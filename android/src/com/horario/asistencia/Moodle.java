@@ -37,7 +37,9 @@ final class Moodle {
         "core_webservice_get_site_info",
         "core_enrol_get_users_courses",
         "mod_assign_get_assignments",
-        "mod_assign_get_submission_status"
+        "mod_assign_get_submission_status",
+        "gradereport_overview_get_course_grades",
+        "gradereport_user_get_grade_items"
     ));
 
     private Moodle() {}

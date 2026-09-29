@@ -1078,7 +1078,10 @@ tr.break-row td:first-child { background: var(--inset); padding-left: 8px; paddi
 
 /* ---------- MÓDULOS ---------- */
 
-.modules-head { margin-bottom: 16px; }
+.modules-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; margin-bottom: 16px; }
+/* Notas del campus: estado y botón junto al título */
+.grades-bar { display: flex; align-items: center; gap: 12px; font-size: 0.8125rem; color: var(--text-3); }
+.grades-bar[hidden] { display: none; }
 
 .modules-list { border-top: 1px solid var(--line); }
 .module-row {
@@ -1100,6 +1103,34 @@ tr.break-row td:first-child { background: var(--inset); padding-left: 8px; paddi
 .module-th { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text); }
 .module-th.is-module { grid-column: span 2; }
 .module-th.is-hours { text-align: right; white-space: nowrap; }
+/* Con notas del campus, una columna más a la derecha; la nota se pulsa para ver el detalle */
+.modules-list.has-grades .module-row { grid-template-columns: 56px minmax(0, 1.6fr) minmax(0, 0.8fr) minmax(0, 0.7fr) 124px 112px; }
+.module-grade {
+  justify-self: end; display: inline-flex; align-items: center; gap: 4px;
+  min-height: 32px; padding: 0 6px 0 10px;
+  border: 1px solid var(--line); border-radius: var(--r); background: none;
+  font-family: var(--mono); font-size: 0.875rem; font-weight: 600; color: var(--text); cursor: pointer;
+  transition: border-color var(--t) var(--ease-out), background-color var(--t) var(--ease-out);
+}
+.module-grade:hover { border-color: var(--line-strong); background: var(--surface-2); }
+.module-grade .icon { width: 14px; height: 14px; color: var(--text-3); }
+.module-grade.is-none { border: none; padding: 0; min-height: 0; font-weight: 400; color: var(--text-3); }
+.grade-label { display: none; }
+/* Detalle de notas: nombre y nota; el peso debajo del nombre; el total separado */
+.grade-item { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; align-items: baseline; padding: 12px 0; border-top: 1px solid var(--line); }
+.grade-item:last-child { border-bottom: 1px solid var(--line); }
+.grade-name { font-size: 0.875rem; line-height: 1.35; }
+.grade-value { font-family: var(--mono); font-size: 0.875rem; font-weight: 600; text-align: right; white-space: nowrap; }
+.grade-value.is-none { font-weight: 400; color: var(--text-3); }
+.grade-weight { grid-column: 1; font-size: 0.75rem; color: var(--text-3); }
+.grade-item.is-total { border-top-color: var(--line-strong); }
+.grade-item.is-total .grade-name { font-weight: 600; }
+/* Avisos del campus en el menú */
+.moodle-watch { display: grid; gap: 6px; }
+.moodle-watch[hidden] { display: none; }
+.moodle-watch-toggle { display: flex; align-items: center; gap: 10px; font-size: 0.875rem; color: var(--text-2); cursor: pointer; }
+.moodle-watch-toggle input { width: 18px; height: 18px; margin: 0; accent-color: var(--accent); flex: none; }
+.moodle-watch-now { justify-self: start; padding: 4px 0; border: none; background: none; font: inherit; font-size: 0.8125rem; color: var(--accent-text); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 
 /* ---------- Barra lateral ---------- */
 
@@ -1431,6 +1462,11 @@ tr.break-row td:first-child { background: var(--inset); padding-left: 8px; paddi
   .module-row { grid-template-columns: 56px minmax(0, 1fr) 96px; row-gap: 4px; }
   .module-row .module-cell { grid-column: 2; }
   .module-row .module-hours { grid-column: 3; grid-row: 1; }
+  .modules-list.has-grades .module-row { grid-template-columns: 56px minmax(0, 1fr) 96px; }
+  .module-row .module-grade { grid-column: 3; grid-row: 2 / span 2; align-self: start; }
+  .module-row.is-head .module-th.is-grade { display: none; }
+  .module-row .module-grade.is-none { display: none; }
+  .grade-label { display: inline; font-weight: 400; color: var(--text-3); }
   /* Con las columnas apiladas, la cabecera solo nombra módulo y horas */
   .module-row.is-head .module-th:nth-child(2), .module-row.is-head .module-th:nth-child(3) { display: none; }
   .module-row.is-head .module-th.is-hours { grid-column: 3; white-space: normal; letter-spacing: 0.02em; line-height: 1.3; }

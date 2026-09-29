@@ -31,6 +31,7 @@
         </activity>
 
         <receiver android:name=".ReminderReceiver" android:exported="false" />
+        <receiver android:name=".MoodleWatchReceiver" android:exported="false" />
         <receiver android:name=".BootReceiver" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />

@@ -279,20 +279,66 @@
     document.getElementById('moodleConnectBtn').hidden = connected;
     document.getElementById('moodleSyncBtn').hidden = !connected;
     document.getElementById('moodleLogoutBtn').hidden = !connected;
+    document.getElementById('moodleWatchRow').hidden = !connected;
+    document.getElementById('moodleWatchToggle').checked = moodleWatchOn();
+    renderGradesBar();
   }
 
   function moodleConnect() { AndroidApp.moodleLogin(); }
 
   // Java la llama al cerrar la ventana de inicio de sesión
   function moodleLoginDone(ok) {
+    if (ok) moodleWatchPush();
     renderMoodleStatus();
     showToast(ok ? 'Cuenta del campus conectada' : 'No se ha conectado la cuenta del campus');
   }
 
   function moodleDisconnect() {
     AndroidApp.moodleLogout();
-    try { localStorage.removeItem('horario_moodle_user'); } catch {}
+    try { ['horario_moodle_user', 'horario_moodle_grades'].forEach(k => localStorage.removeItem(k)); } catch {}
     renderMoodleStatus();
+    renderModulesList();
+  }
+
+  // Curso escolar en segundos (1 sep – 30 jun, de MONTHS_DATA)
+  function schoolRange() {
+    const first = MONTHS_DATA[0], last = MONTHS_DATA[MONTHS_DATA.length - 1];
+    return {
+      from: new Date(first.year, first.monthIdx, 1) / 1000,
+      to: new Date(last.year, last.monthIdx, last.daysInMonth, 23, 59, 59) / 1000
+    };
+  }
+
+  // --- Avisos del campus en segundo plano (MoodleWatch.java) ---
+  // Activados salvo que se apaguen (localStorage['horario_moodle_watch'] = '0'). A Android se le
+  // manda el curso escolar, la asignatura de cada curso y, tras «Ver mis tareas», las tareas que
+  // ya se han visto, para que no las avise como nuevas.
+  function moodleWatchOn() {
+    try { return localStorage.getItem('horario_moodle_watch') !== '0'; } catch { return true; }
+  }
+
+  function moodleWatchPush() {
+    if (!window.AndroidApp || !AndroidApp.moodleWatchState) return;
+    const map = Object.fromEntries(Object.entries(loadCourseMap()).map(([id, m]) => [id, m.module]));
+    const state = { enabled: moodleWatchOn(), ...schoolRange(), map };
+    if (moodleData) state.seen = Object.fromEntries(moodleData.assigns.filter(a => a.duedate).map(a => [a.id, a.duedate]));
+    AndroidApp.moodleWatchState(JSON.stringify(state));
+  }
+
+  function setMoodleWatch(on) {
+    try { localStorage.setItem('horario_moodle_watch', on ? '1' : '0'); } catch {}
+    moodleWatchPush();
+  }
+
+  function moodleWatchNow() {
+    renderMoodleStatus('Comprobando el campus…');
+    AndroidApp.moodleWatchNow();
+  }
+
+  // Respuesta de Java a «Comprobar ahora»: nº de novedades avisadas, o -1 si no se pudo
+  function moodleWatchDone(n) {
+    renderMoodleStatus();
+    showToast(n < 0 ? 'No se ha podido comprobar el campus' : n ? `${n} ${n === 1 ? 'novedad' : 'novedades'}: mira las notificaciones` : 'Sin novedades en el campus');
   }
 
   async function moodleSync() {
@@ -305,11 +351,8 @@
       const courses = await moodleCall('core_enrol_get_users_courses', { userid: site.userid });
       const ids = courses.map(c => c.id);
       const res = ids.length ? await moodleCall('mod_assign_get_assignments', { courseids: ids }) : { courses: [] };
-      // Solo las de este curso escolar (1 sep – 30 jun, de MONTHS_DATA), por fecha de entrega o,
-      // si no tiene, por la fecha en que se abrió
-      const first = MONTHS_DATA[0], last = MONTHS_DATA[MONTHS_DATA.length - 1];
-      const from = new Date(first.year, first.monthIdx, 1) / 1000;
-      const to = new Date(last.year, last.monthIdx, last.daysInMonth, 23, 59, 59) / 1000;
+      // Solo las de este curso escolar, por fecha de entrega o, si no tiene, por la fecha en que se abrió
+      const { from, to } = schoolRange();
       const assigns = res.courses
         .flatMap(c => c.assignments.map(a => ({ ...a, courseid: c.id })))
         .filter(a => { const t = a.duedate || a.allowsubmissionsfromdate; return t >= from && t <= to; });
@@ -322,8 +365,9 @@
       // Solo importan los cursos con tareas de este curso escolar: por los demás no se pregunta
       moodleData = { site, courses: courses.filter(c => assigns.some(a => a.courseid === c.id)), assigns };
       const ask = resolveCourses(moodleData.courses);
-      if (ask.length) renderCourseResolver(ask, false);
+      if (ask.length) renderCourseResolver(ask, false, renderMoodleList);
       else renderMoodleList();
+      moodleWatchPush();
       renderMoodleStatus();
     } catch (e) {
       renderMoodleStatus(e.code === 'invalidtoken' ? 'La sesión del campus ha caducado: vuelve a conectar.' : e.message);
@@ -381,8 +425,11 @@
     return m && MODULES[m.module] ? m.module : null;
   }
 
-  // Pregunta la asignatura de los cursos que no se han podido resolver (all: revisar todos)
-  function renderCourseResolver(courses, all) {
+  // Pregunta la asignatura de los cursos que no se han podido resolver (all: revisar todos).
+  // next: qué mostrar al continuar (la lista de pendientes o las notas).
+  let resolving = null;
+  function renderCourseResolver(courses, all, next) {
+    resolving = { courses, next };
     const map = loadCourseMap();
     document.getElementById('moodleDialog').dataset.mode = 'resolve';
     document.getElementById('moodleTitle').textContent = all ? 'Asignaturas del campus' : 'Cursos nuevos del campus';
@@ -417,11 +464,12 @@
     if (missing.length) { missing[0].focus(); return; }
     const map = loadCourseMap();
     selects.forEach(s => {
-      const c = moodleData.courses.find(x => x.id === Number(s.dataset.course));
+      const c = resolving.courses.find(x => x.id === Number(s.dataset.course));
       map[c.id] = { module: s.value === 'none' ? null : s.value, fullname: c.fullname, shortname: c.shortname, by: 'user' };
     });
     saveCourseMap(map);
-    renderMoodleList();
+    moodleWatchPush();
+    resolving.next();
   }
 
   function moodleState(a) {
@@ -556,6 +604,105 @@
     showToast(`Tarea añadida · ${/^\d+$/.test(day) ? CALENDAR_DATES[day].date : isoShort(day).date}`);
   }
 
+  // --- Notas del campus por asignatura (pestaña Módulos) ---
+  // localStorage['horario_moodle_grades'] = { at, userid, byModule: { IMW: { courseid, grade } } }
+  // grade es la nota total del curso tal como la da Moodle («7,85», «78,50 %»…).
+  const GRADES_MAX_AGE = 6 * 60 * 60 * 1000;
+
+  const campusConnected = () => !!(window.AndroidApp && AndroidApp.moodleConnected && AndroidApp.moodleConnected());
+
+  function loadGrades() {
+    try { return JSON.parse(localStorage.getItem('horario_moodle_grades')); } catch { return null; }
+  }
+
+  function renderGradesBar(message) {
+    const bar = document.getElementById('gradesBar');
+    bar.hidden = !campusConnected();
+    if (bar.hidden) return;
+    const cache = loadGrades();
+    let when = 'sin cargar';
+    if (cache) {
+      const min = Math.round((Date.now() - cache.at) / 60000);
+      when = min < 2 ? 'actualizadas ahora' : min < 60 ? `actualizadas hace ${min} min` : min < 24 * 60 ? `actualizadas hace ${Math.round(min / 60)} h`
+        : `actualizadas el ${new Date(cache.at).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}`;
+    }
+    document.getElementById('gradesStatus').textContent = message || `Notas del campus · ${when}`;
+  }
+
+  // Nota total de cada curso de este curso escolar, llevada a su asignatura con la misma
+  // correspondencia que las tareas (y el mismo diálogo si hay cursos nuevos).
+  async function moodleGrades() {
+    const btn = document.getElementById('gradesRefreshBtn');
+    btn.disabled = true;
+    renderGradesBar('Leyendo tus notas del campus…');
+    try {
+      const site = await moodleCall('core_webservice_get_site_info');
+      const [courses, overview] = await Promise.all([
+        moodleCall('core_enrol_get_users_courses', { userid: site.userid }),
+        moodleCall('gradereport_overview_get_course_grades')
+      ]);
+      const graded = new Map((overview.grades || []).filter(g => g.grade && g.grade !== '-').map(g => [g.courseid, g.grade]));
+      // Cursos que empiezan este curso escolar (o sin fecha): no se mezclan notas de otros años
+      const { from, to } = schoolRange();
+      const relevant = courses.filter(c => graded.has(c.id) && (!c.startdate || (c.startdate >= from - 90 * 86400 && c.startdate <= to)));
+      const ask = resolveCourses(relevant);
+      const finish = () => {
+        const byModule = {};
+        relevant.forEach(c => {
+          const code = moduleOf(c.id);
+          // Dos cursos para la misma asignatura: el más reciente (id mayor)
+          if (code && (!byModule[code] || c.id > byModule[code].courseid)) byModule[code] = { courseid: c.id, grade: graded.get(c.id) };
+        });
+        try { localStorage.setItem('horario_moodle_grades', JSON.stringify({ at: Date.now(), userid: site.userid, byModule })); } catch {}
+        if (ask.length) closeDialog('moodleDialog');
+        moodleWatchPush();
+        renderModulesList();
+        renderGradesBar();
+      };
+      if (ask.length) renderCourseResolver(ask, false, finish);
+      else finish();
+    } catch (e) {
+      renderGradesBar(e.code === 'invalidtoken' ? 'La sesión del campus ha caducado: vuelve a conectar.' : e.message);
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  // Detalle de una asignatura: cada calificación del libro de notas y el total
+  async function openModuleGrades(code) {
+    const cache = loadGrades();
+    const g = cache && cache.byModule[code];
+    if (!g) return;
+    const dialog = document.getElementById('gradesDialog');
+    const list = document.getElementById('gradesList');
+    document.getElementById('gradesTitle').textContent = `Notas de ${code}`;
+    document.getElementById('gradesMeta').textContent = MODULES[code].name;
+    list.innerHTML = '<li class="att-empty">Leyendo las notas…</li>';
+    dialog.classList.remove('is-closing');
+    if (!dialog.open) dialog.showModal();
+    const clean = v => String(v == null ? '' : v).replace(/<[^>]*>/g, '').trim();
+    try {
+      const res = await moodleCall('gradereport_user_get_grade_items', { courseid: g.courseid, userid: cache.userid });
+      const items = res.usergrades && res.usergrades[0] ? res.usergrades[0].gradeitems : [];
+      const row = (it, name, total) => {
+        const grade = clean(it.gradeformatted);
+        const weight = clean(it.weightformatted);
+        return `<li class="grade-item${total ? ' is-total' : ''}">
+          <span class="grade-name">${escapeHTML(name)}</span>
+          <span class="grade-value${grade && grade !== '-' ? '' : ' is-none'}">${escapeHTML(grade && grade !== '-' ? grade : '—')}</span>
+          ${!total && weight && weight !== '-' ? `<span class="grade-weight">Peso ${escapeHTML(weight)}</span>` : ''}
+        </li>`;
+      };
+      const total = items.find(it => it.itemtype === 'course');
+      list.innerHTML = items.filter(it => it.itemtype === 'mod' || it.itemtype === 'manual')
+        .map(it => row(it, clean(it.itemname) || 'Sin nombre')).join('')
+        + (total ? row(total, 'Total del curso', true) : '')
+        || '<li class="att-empty">Todavía no hay calificaciones en este curso.</li>';
+    } catch (e) {
+      list.innerHTML = `<li class="att-empty">${escapeHTML(e.message)}</li>`;
+    }
+  }
+
   // --- Arranque ---
   function init() {
     // Segunda comprobación de la app de Android (la primera está en <head>)
@@ -619,6 +766,9 @@
     const slotDialog = document.getElementById('slotDialog');
     slotDialog.addEventListener('click', e => { if (e.target === slotDialog) closeSlotDialog(); });
     slotDialog.addEventListener('cancel', e => { e.preventDefault(); closeSlotDialog(); });
+    const gradesDialog = document.getElementById('gradesDialog');
+    gradesDialog.addEventListener('click', e => { if (e.target === gradesDialog) closeDialog('gradesDialog'); });
+    gradesDialog.addEventListener('cancel', e => { e.preventDefault(); closeDialog('gradesDialog'); });
     const moodleDialog = document.getElementById('moodleDialog');
     moodleDialog.addEventListener('click', e => { if (e.target === moodleDialog) closeDialog('moodleDialog'); });
     moodleDialog.addEventListener('cancel', e => { e.preventDefault(); closeDialog('moodleDialog'); });
@@ -832,6 +982,12 @@
     renderAttendanceBars();
     renderSidebarNotes();
     if (tab === 'grid' && matrixScroll !== null) wrap.scrollLeft = matrixScroll;
+
+    if (tab === 'modules' && campusConnected()) {
+      const cache = loadGrades();
+      if (!cache || Date.now() - cache.at > GRADES_MAX_AGE) moodleGrades();
+      else renderGradesBar();
+    }
 
     if (tab === 'weekly') {
       const active = document.querySelector('.date-item.is-active');
@@ -2649,6 +2805,9 @@
   // --- 6. MÓDULOS ---
   function renderModulesList() {
     const container = document.getElementById('modulesGridList');
+    // Nota del campus: solo en la app, con la cuenta conectada y las notas ya leídas
+    const grades = campusConnected() ? loadGrades() : null;
+    container.classList.toggle('has-grades', !!grades);
     const schedule = getSchedule();
     const hours = {};
     schedule.forEach(day => (day || []).forEach(m => { if (m) hours[m] = (hours[m] || 0) + 1; }));
@@ -2660,6 +2819,7 @@
         <div class="module-th">Docente</div>
         <div class="module-th">Aula</div>
         <div class="module-th is-hours">Horas presenciales</div>
+        ${grades ? '<div class="module-th is-hours is-grade">Nota campus</div>' : ''}
       </div>`;
     container.innerHTML = head + Object.values(MODULES).map(mod => {
       const dim = filterModule && filterModule !== mod.code ? ' is-dimmed' : '';
@@ -2672,8 +2832,16 @@
           <div class="module-cell">${capitalize(mod.teacher)}</div>
           <div class="module-cell">${room}</div>
           <div class="module-hours${h ? '' : ' is-none'}">${h ? `${h} h` : '—'}</div>
+          ${grades ? gradeCell(mod.code, grades) : ''}
         </div>`;
     }).join('');
+  }
+
+  function gradeCell(code, grades) {
+    const g = grades.byModule[code];
+    if (!g) return '<div class="module-grade is-none">—</div>';
+    return `<button type="button" class="module-grade" onclick="openModuleGrades('${code}')" aria-label="Notas de ${escapeHTML(MODULES[code].name)}: ${escapeHTML(g.grade)}">
+      <span class="grade-label">Nota </span>${escapeHTML(g.grade)}<svg class="icon" aria-hidden="true"><use href="#i-right"/></svg></button>`;
   }
 
   // --- DIÁLOGO ---
