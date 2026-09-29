@@ -349,7 +349,7 @@
 
   // --- Avisos del campus en segundo plano (MoodleWatch.java) ---
   // A Android se le manda qué avisar (tareas nuevas / cambios de fecha), el curso escolar, la
-  // asignatura de cada curso y, tras «Ver mis tareas», las tareas que ya se han visto, para que
+  // asignatura de cada curso y, tras «Ver tareas», las tareas que ya se han visto, para que
   // no las avise como nuevas.
   function moodleWatchOn() {
     const p = notifyPrefs();

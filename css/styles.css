@@ -1817,6 +1817,7 @@ tr.break-row td:first-child { background: var(--inset); padding-left: 8px; paddi
 .is-app .moodle-section { display: grid; }
 .moodle-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .moodle-actions [hidden] { display: none; }
+.moodle-logout { justify-self: end; margin-top: 8px; }
 .moodle-dialog { width: min(560px, calc(100vw - 32px)); }
 .moodle-dialog .dialog-head { align-items: flex-start; margin-bottom: 12px; }
 .moodle-list { list-style: none; margin: 0; padding: 0 8px 0 0; max-height: min(62dvh, 580px); overflow-y: auto; overscroll-behavior: contain; }
