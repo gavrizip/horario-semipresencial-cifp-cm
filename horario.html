@@ -50,6 +50,8 @@
   <symbol id="i-gear" viewBox="0 0 24 24"><path d="M10.3 3.5h3.4l.5 2.4 1.6.9 2.3-.8 1.7 2.9-1.8 1.6v1.9l1.8 1.6-1.7 2.9-2.3-.8-1.6.9-.5 2.4h-3.4l-.5-2.4-1.6-.9-2.3.8-1.7-2.9 1.8-1.6v-1.9L4.2 8.9l1.7-2.9 2.3.8 1.6-.9Z"/><circle cx="12" cy="12" r="2.8"/></symbol>
   <symbol id="i-sync" viewBox="0 0 24 24"><path d="M4.5 12a7.5 7.5 0 0 1 12.9-5.2"/><path d="M17.5 3.5V7H14"/><path d="M19.5 12a7.5 7.5 0 0 1-12.9 5.2"/><path d="M6.5 20.5V17H10"/></symbol>
   <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15Z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8.5" r="3.5"/><path d="M2.5 19.5c0-3.4 2.9-5.8 6.5-5.8s6.5 2.4 6.5 5.8"/><path d="M15.5 5.3a3.5 3.5 0 0 1 0 6.4"/><path d="M18 14.2c2 .8 3.5 2.7 3.5 5.3"/></symbol>
+  <symbol id="i-contrast" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17Z" fill="currentColor" stroke="none"/></symbol>
   <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z"/></symbol>
 </svg>
 
@@ -226,7 +228,7 @@
   </div>
 
   <section class="drawer-section">
-    <h4 class="drawer-label" id="groupLabel">Grupo</h4>
+    <h4 class="drawer-label" id="groupLabel"><svg class="icon"><use href="#i-users"/></svg>Grupo</h4>
     <div class="segmented" role="group" aria-labelledby="groupLabel" data-active="A">
       <span class="segmented-thumb" aria-hidden="true"></span>
       <button class="segmented-btn is-active" id="btnGroupA" onclick="switchGroup('A')" aria-pressed="true">Grupo A</button>
@@ -235,7 +237,7 @@
   </section>
 
   <section class="drawer-section">
-    <h4 class="drawer-label" id="themeLabel">Tema</h4>
+    <h4 class="drawer-label" id="themeLabel"><svg class="icon"><use href="#i-contrast"/></svg>Tema</h4>
     <div class="segmented" id="themeSwitch" role="group" aria-labelledby="themeLabel" data-active="dark">
       <span class="segmented-thumb" aria-hidden="true"></span>
       <button class="segmented-btn" id="btnThemeDark" onclick="setTheme('dark', this)"><svg class="icon"><use href="#i-moon"/></svg>Noche</button>
@@ -253,9 +255,9 @@
       <button type="button" class="btn btn-primary" id="moodleConnectBtn" onclick="moodleConnect()">Conectar</button>
       <button type="button" class="btn btn-primary" id="moodleSyncBtn" onclick="moodleSync()" hidden>Ver tareas</button>
       <button type="button" class="btn btn-ghost moodle-sync" id="moodleWatchBtn" onclick="moodleWatchNow()" hidden><svg class="icon" aria-hidden="true"><use href="#i-sync"/></svg><span>Sincronizar</span></button>
+      <!-- Desconectar, en rojo y en su propia fila: borra el acceso al campus guardado en el móvil -->
+      <button type="button" class="btn btn-danger moodle-logout" id="moodleLogoutBtn" onclick="moodleDisconnect()" hidden>Desconectar</button>
     </div>
-    <!-- Desconectar, aparte y en rojo: borra el acceso al campus guardado en el móvil -->
-    <button type="button" class="btn btn-danger moodle-logout" id="moodleLogoutBtn" onclick="moodleDisconnect()" hidden>Desconectar</button>
   </section>
 
   <!-- Notificaciones: qué avisa la app y cuándo (solo en la app de Android) -->
