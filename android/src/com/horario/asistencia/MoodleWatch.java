@@ -58,6 +58,8 @@ final class MoodleWatch {
             JSONObject s = new JSONObject(json);
             SharedPreferences.Editor e = prefs(c).edit()
                 .putBoolean("enabled", s.optBoolean("enabled"))
+                .putBoolean("notifyNew", s.optBoolean("notifyNew", true))
+                .putBoolean("notifyMoved", s.optBoolean("notifyMoved", true))
                 .putLong("from", s.optLong("from"))
                 .putLong("to", s.optLong("to"))
                 .putString("map", s.optJSONObject("map") != null ? s.getJSONObject("map").toString() : "{}");
@@ -134,6 +136,9 @@ final class MoodleWatch {
 
             List<String[]> changes = CampusDiff.diff(snapshot(c), now, System.currentTimeMillis() / 1000);
             p.edit().putString("snapshot", new JSONObject(now).toString()).apply();
+            // Solo lo que se ha pedido en Notificaciones (la foto se actualiza igual)
+            boolean wantNew = p.getBoolean("notifyNew", true), wantMoved = p.getBoolean("notifyMoved", true);
+            changes.removeIf(ch -> CampusDiff.NEW.equals(ch[0]) ? !wantNew : !wantMoved);
             if (!changes.isEmpty()) notify(c, changes, now, info, courseName);
             return changes.size();
         } catch (Exception e) {

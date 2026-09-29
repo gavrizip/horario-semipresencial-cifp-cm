@@ -279,9 +279,9 @@
     document.getElementById('moodleConnectBtn').hidden = connected;
     document.getElementById('moodleSyncBtn').hidden = !connected;
     document.getElementById('moodleLogoutBtn').hidden = !connected;
-    document.getElementById('moodleWatchRow').hidden = !connected;
-    document.getElementById('moodleWatchToggle').checked = moodleWatchOn();
+    document.getElementById('moodleWatchBtn').hidden = !connected;
     syncWatchBtn();
+    renderNotifySettings();
     renderGradesBar();
   }
 
@@ -310,26 +310,76 @@
     };
   }
 
+  // --- Notificaciones (menú) ---
+  // localStorage['horario_notify'] = { exams, tasks, repeat, hour, days, campusNew, campusMoved }:
+  // qué avisa la app y cuándo. Los recordatorios se filtran en syncReminders() y los del campus
+  // los aplica Java (MoodleWatch). Sonido y vibración son cosa de los ajustes de Android.
+  const NOTIFY_DEFAULTS = { exams: true, tasks: true, repeat: true, hour: 10, days: [3], campusNew: true, campusMoved: true };
+
+  function notifyPrefs() {
+    let p = {};
+    try { p = JSON.parse(localStorage.getItem('horario_notify')) || {}; } catch {}
+    // Antes solo existía un interruptor para el campus
+    try { if (!('campusNew' in p) && localStorage.getItem('horario_moodle_watch') === '0') p.campusNew = p.campusMoved = false; } catch {}
+    return { ...NOTIFY_DEFAULTS, ...p };
+  }
+
+  function saveNotifyPrefs(p) {
+    try { localStorage.setItem('horario_notify', JSON.stringify(p)); } catch {}
+    syncReminders();
+    moodleWatchPush();
+    renderNotifySettings();
+  }
+
+  function setNotifyPref(input) {
+    const p = notifyPrefs();
+    p[input.dataset.pref] = input.checked;
+    saveNotifyPrefs(p);
+  }
+
+  function setNotifyHour(value) {
+    const p = notifyPrefs();
+    p.hour = Number(value);
+    saveNotifyPrefs(p);
+  }
+
+  // Al menos un día: desmarcar el último no se permite
+  function setNotifyDays(input) {
+    const days = [...document.querySelectorAll('input[name="notifyDefault"]:checked')].map(i => Number(i.value));
+    if (!days.length) { input.checked = true; showToast('Deja al menos un día de antelación'); return; }
+    const p = notifyPrefs();
+    p.days = days.sort((a, b) => b - a);
+    saveNotifyPrefs(p);
+  }
+
+  function renderNotifySettings() {
+    if (!window.AndroidApp) return;
+    const p = notifyPrefs();
+    document.querySelectorAll('.notify-section [data-pref]').forEach(i => { i.checked = !!p[i.dataset.pref]; });
+    document.querySelector('.notify-section [data-pref="repeat"]').disabled = !p.tasks;
+    document.getElementById('notifyHour').value = p.hour;
+    document.querySelectorAll('input[name="notifyDefault"]').forEach(i => { i.checked = p.days.includes(Number(i.value)); });
+    document.getElementById('notifyCampus').hidden = !campusConnected();
+    document.getElementById('notifyBlocked').hidden = !(AndroidApp.notificationsEnabled && !AndroidApp.notificationsEnabled());
+    syncWatchBtn();
+  }
+
   // --- Avisos del campus en segundo plano (MoodleWatch.java) ---
-  // Activados salvo que se apaguen (localStorage['horario_moodle_watch'] = '0'). A Android se le
-  // manda el curso escolar, la asignatura de cada curso y, tras «Ver mis tareas», las tareas que
-  // ya se han visto, para que no las avise como nuevas.
+  // A Android se le manda qué avisar (tareas nuevas / cambios de fecha), el curso escolar, la
+  // asignatura de cada curso y, tras «Ver mis tareas», las tareas que ya se han visto, para que
+  // no las avise como nuevas.
   function moodleWatchOn() {
-    try { return localStorage.getItem('horario_moodle_watch') !== '0'; } catch { return true; }
+    const p = notifyPrefs();
+    return p.campusNew || p.campusMoved;
   }
 
   function moodleWatchPush() {
     if (!window.AndroidApp || !AndroidApp.moodleWatchState) return;
     const map = Object.fromEntries(Object.entries(loadCourseMap()).map(([id, m]) => [id, m.module]));
-    const state = { enabled: moodleWatchOn(), ...schoolRange(), map };
+    const p = notifyPrefs();
+    const state = { enabled: moodleWatchOn(), notifyNew: p.campusNew, notifyMoved: p.campusMoved, ...schoolRange(), map };
     if (moodleData) state.seen = Object.fromEntries(moodleData.assigns.filter(a => a.duedate).map(a => [a.id, a.duedate]));
     AndroidApp.moodleWatchState(JSON.stringify(state));
-  }
-
-  function setMoodleWatch(on) {
-    try { localStorage.setItem('horario_moodle_watch', on ? '1' : '0'); } catch {}
-    moodleWatchPush();
-    syncWatchBtn();
   }
 
   // «Sincronizar» solo tiene sentido con los avisos activados (es la misma comprobación)
@@ -540,7 +590,7 @@
     const schedule = getSchedule();
     const slot = idx !== -1 && code && schedule[idx] ? schedule[idx].indexOf(code) : -1;
     const s = moodleState(a);
-    const rec = { ...(old ? old.ev : { notify: true, notifyDays: [3], id: newRecordId() }),
+    const rec = { ...(old ? old.ev : { notify: true, notifyDays: notifyPrefs().days, id: newRecordId() }),
       type: 'task', text: a.name, title: a.name, moodle: a.id,
       status: s.done || (old && old.ev.status === 'done') ? 'done' : 'pending' };
     if (s.grade !== undefined) rec.grade = s.grade;
@@ -883,14 +933,13 @@
   // --- AVISOS (app de Android) ---
   // La web calcula los avisos y se los pasa a Android, que los programa y los guarda
   // para reprogramarlos tras reiniciar. Las tareas repiten cada día hasta que se entregan.
-  const REMINDER_HOUR = 10;
-
   function newRecordId() {
     return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
   }
 
   function syncReminders() {
     if (!window.AndroidApp || !AndroidApp.syncReminders) return;
+    const pref = notifyPrefs();
     let assigned = false;
     const list = [];
     Object.entries(userEvents).forEach(([dateIdx, events]) => {
@@ -901,6 +950,7 @@
         if (!ev.id) { ev.id = newRecordId(); assigned = true; }
         if (!ev.notify || !ev.notifyDays || !ev.notifyDays.length) return;
         if (ev.type === 'task' && ev.status === 'done') return;
+        if (!pref[ev.type === 'exam' ? 'exams' : 'tasks']) return;
         const slot = TIME_SLOTS.find(t => t.key === ev.slot);
         const start = slot ? slotBounds(slot).start : '18:15';
         const [hh, mm] = start.split(':').map(Number);
@@ -909,7 +959,7 @@
         const times = ev.notifyDays.map(d => {
           const t = realDate(cd);
           t.setDate(t.getDate() - d);
-          t.setHours(REMINDER_HOUR, 0, 0, 0);
+          t.setHours(pref.hour, 0, 0, 0);
           return t.getTime();
         });
         list.push({
@@ -920,22 +970,22 @@
           when: `miércoles ${cd.date}, ${start}`,
           due: due.getTime(),
           times,
-          hour: REMINDER_HOUR,
-          repeat: ev.type === 'task'
+          hour: pref.hour,
+          repeat: ev.type === 'task' && pref.repeat
         });
       });
     });
     Object.entries(personalEvents).forEach(([iso, events]) => events.forEach(ev => {
-      if (ev.type !== 'task' || !ev.notify || !ev.notifyDays || !ev.notifyDays.length || ev.status === 'done') return;
+      if (ev.type !== 'task' || !pref.tasks || !ev.notify || !ev.notifyDays || !ev.notifyDays.length || ev.status === 'done') return;
       const due = isoDate(iso);
       due.setHours(23, 59, 0, 0);
       const times = ev.notifyDays.map(d => {
         const t = isoDate(iso);
         t.setDate(t.getDate() - d);
-        t.setHours(REMINDER_HOUR, 0, 0, 0);
+        t.setHours(pref.hour, 0, 0, 0);
         return t.getTime();
       });
-      list.push({ id: ev.id, kind: 'task', code: ev.module || '', what: ev.title || ev.text, when: isoLong(iso), due: due.getTime(), times, hour: REMINDER_HOUR, repeat: true });
+      list.push({ id: ev.id, kind: 'task', code: ev.module || '', what: ev.title || ev.text, when: isoLong(iso), due: due.getTime(), times, hour: pref.hour, repeat: pref.repeat });
     }));
     if (assigned) localStorage.setItem('academic_events_dark', JSON.stringify(userEvents));
     AndroidApp.syncReminders(JSON.stringify(list));
@@ -1043,6 +1093,7 @@
 
   // --- Menú lateral (grupo, tema y ayuda) ---
   function openMenu() {
+    renderNotifySettings();
     const menu = document.getElementById('menuDrawer');
     if (!menu.open) menu.showModal();
   }
@@ -2619,6 +2670,11 @@
       form.querySelector(`input[name="taskStatus"][value="${ev && ev.status === 'done' ? 'done' : 'pending'}"]`).checked = true;
     } else {
       set('noteText', ev ? ev.text : '');
+    }
+    // Nuevos: los días de antelación elegidos en Notificaciones
+    if (!ev && kind !== 'note') {
+      const days = notifyPrefs().days;
+      form.querySelectorAll('input[name="notifyDays"]').forEach(i => { i.checked = days.includes(Number(i.value)); });
     }
     // Registros anteriores a los avisos no tienen el campo: se abren con «No»
     if (ev && kind !== 'note') {

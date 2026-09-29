@@ -115,6 +115,8 @@ public class MainActivity extends Activity {
     protected void onResume() {
         super.onResume();
         applyNativeActions();
+        // Al volver de los ajustes de Android, el menú refleja si las notificaciones están permitidas
+        if (web != null) web.evaluateJavascript("window.renderNotifySettings && renderNotifySettings()", null);
     }
 
     static void applyNativeActions() {
@@ -246,6 +248,19 @@ public class MainActivity extends Activity {
             MoodleWatch.clear(getApplicationContext());
             Moodle.clear(getApplicationContext());
             runOnUiThread(() -> CookieManager.getInstance().removeAllCookies(null));
+        }
+
+        /** ¿Deja Android mostrar notificaciones de la app? (el usuario puede bloquearlas en Ajustes) */
+        @JavascriptInterface
+        public boolean notificationsEnabled() {
+            return getSystemService(android.app.NotificationManager.class).areNotificationsEnabled();
+        }
+
+        /** Ajustes de notificaciones de la app en Android: permitirlas, sonido y vibración de cada canal. */
+        @JavascriptInterface
+        public void openNotificationSettings() {
+            runOnUiThread(() -> startActivity(new android.content.Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                .putExtra(android.provider.Settings.EXTRA_APP_PACKAGE, getPackageName())));
         }
 
         /** Estado de los avisos del campus (activado, curso escolar, asignaturas, tareas vistas). */

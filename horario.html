@@ -49,6 +49,7 @@
   <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.1a4.3 4.3 0 0 1 7.5 2.7C19.5 15.4 12 20 12 20Z"/></symbol>
   <symbol id="i-gear" viewBox="0 0 24 24"><path d="M10.3 3.5h3.4l.5 2.4 1.6.9 2.3-.8 1.7 2.9-1.8 1.6v1.9l1.8 1.6-1.7 2.9-2.3-.8-1.6.9-.5 2.4h-3.4l-.5-2.4-1.6-.9-2.3.8-1.7-2.9 1.8-1.6v-1.9L4.2 8.9l1.7-2.9 2.3.8 1.6-.9Z"/><circle cx="12" cy="12" r="2.8"/></symbol>
   <symbol id="i-sync" viewBox="0 0 24 24"><path d="M4.5 12a7.5 7.5 0 0 1 12.9-5.2"/><path d="M17.5 3.5V7H14"/><path d="M19.5 12a7.5 7.5 0 0 1-12.9 5.2"/><path d="M6.5 20.5V17H10"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15Z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></symbol>
   <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z"/></symbol>
 </svg>
 
@@ -251,13 +252,56 @@
     <div class="moodle-actions">
       <button type="button" class="btn btn-primary" id="moodleConnectBtn" onclick="moodleConnect()">Conectar</button>
       <button type="button" class="btn btn-primary" id="moodleSyncBtn" onclick="moodleSync()" hidden>Ver mis tareas</button>
+      <button type="button" class="btn btn-ghost moodle-sync" id="moodleWatchBtn" onclick="moodleWatchNow()" hidden><svg class="icon" aria-hidden="true"><use href="#i-sync"/></svg><span>Sincronizar</span></button>
       <button type="button" class="btn btn-ghost" id="moodleLogoutBtn" onclick="moodleDisconnect()" hidden>Desconectar</button>
     </div>
-    <div class="moodle-watch" id="moodleWatchRow" hidden>
-      <label class="moodle-watch-toggle"><input type="checkbox" id="moodleWatchToggle" onchange="setMoodleWatch(this.checked)" checked>
-        <span>Avisarme de tareas nuevas y cambios de fecha</span></label>
-      <button type="button" class="btn btn-ghost moodle-sync" id="moodleWatchBtn" onclick="moodleWatchNow()"><svg class="icon" aria-hidden="true"><use href="#i-sync"/></svg><span>Sincronizar</span></button>
+  </section>
+
+  <!-- Notificaciones: qué avisa la app y cuándo (solo en la app de Android) -->
+  <section class="drawer-section notify-section">
+    <h4 class="drawer-label"><svg class="icon"><use href="#i-bell"/></svg>Notificaciones</h4>
+    <div class="notify-blocked" id="notifyBlocked" hidden>
+      <p>Android tiene bloqueadas las notificaciones de Horario: no te llegará ningún aviso.</p>
+      <button type="button" class="btn btn-primary" onclick="AndroidApp.openNotificationSettings()">Permitirlas</button>
     </div>
+
+    <fieldset class="notify-group">
+      <legend>Recordatorios</legend>
+      <label class="switch-row"><span>Exámenes</span><input type="checkbox" role="switch" data-pref="exams" onchange="setNotifyPref(this)"></label>
+      <label class="switch-row"><span>Entregas de tareas</span><input type="checkbox" role="switch" data-pref="tasks" onchange="setNotifyPref(this)"></label>
+      <label class="switch-row is-sub"><span>Repetir cada día hasta entregarla</span><input type="checkbox" role="switch" data-pref="repeat" onchange="setNotifyPref(this)"></label>
+      <label class="notify-row"><span>Hora del aviso</span>
+        <select class="notify-select" id="notifyHour" onchange="setNotifyHour(this.value)">
+          <option value="7">7:00</option>
+          <option value="8">8:00</option>
+          <option value="9">9:00</option>
+          <option value="10">10:00</option>
+          <option value="11">11:00</option>
+          <option value="12">12:00</option>
+          <option value="13">13:00</option>
+          <option value="14">14:00</option>
+          <option value="15">15:00</option>
+          <option value="16">16:00</option>
+          <option value="17">17:00</option>
+          <option value="18">18:00</option>
+          <option value="19">19:00</option>
+          <option value="20">20:00</option>
+          <option value="21">21:00</option>
+          <option value="22">22:00</option>
+        </select></label>
+      <div class="notify-days-pref" role="group" aria-labelledby="notifyDaysPrefLabel">
+        <span class="notify-row-label" id="notifyDaysPrefLabel">Días de antelación en los nuevos</span>
+        <div class="day-chips"><label class="day-chip"><input type="checkbox" name="notifyDefault" value="1" onchange="setNotifyDays(this)"><span>1</span></label><label class="day-chip"><input type="checkbox" name="notifyDefault" value="2" onchange="setNotifyDays(this)"><span>2</span></label><label class="day-chip"><input type="checkbox" name="notifyDefault" value="3" onchange="setNotifyDays(this)"><span>3</span></label><label class="day-chip"><input type="checkbox" name="notifyDefault" value="5" onchange="setNotifyDays(this)"><span>5</span></label><label class="day-chip"><input type="checkbox" name="notifyDefault" value="7" onchange="setNotifyDays(this)"><span>7</span></label><label class="day-chip"><input type="checkbox" name="notifyDefault" value="14" onchange="setNotifyDays(this)"><span>14</span></label></div>
+      </div>
+    </fieldset>
+
+    <fieldset class="notify-group" id="notifyCampus" hidden>
+      <legend>Campus</legend>
+      <label class="switch-row"><span>Tareas nuevas</span><input type="checkbox" role="switch" data-pref="campusNew" onchange="setNotifyPref(this)"></label>
+      <label class="switch-row"><span>Cambios de fecha de entrega</span><input type="checkbox" role="switch" data-pref="campusMoved" onchange="setNotifyPref(this)"></label>
+    </fieldset>
+
+    <button type="button" class="btn btn-ghost notify-system" onclick="AndroidApp.openNotificationSettings()"><svg class="icon" aria-hidden="true"><use href="#i-gear"/></svg>Sonido y vibración</button>
   </section>
 
   <section class="drawer-section">

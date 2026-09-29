@@ -1126,13 +1126,47 @@ tr.break-row td:first-child { background: var(--inset); padding-left: 8px; paddi
 .grade-item.is-total { border-top-color: var(--line-strong); }
 .grade-item.is-total .grade-name { font-weight: 600; }
 /* Avisos del campus en el menú */
-.moodle-watch { display: grid; gap: 6px; }
-.moodle-watch[hidden] { display: none; }
-.moodle-watch-toggle { display: flex; align-items: center; gap: 10px; font-size: 0.875rem; color: var(--text-2); cursor: pointer; }
-.moodle-watch-toggle input { width: 18px; height: 18px; margin: 0; accent-color: var(--accent); flex: none; }
+/* ---------- Notificaciones (menú) ---------- */
+.notify-section { display: none; }
+.is-app .notify-section { display: grid; }
+.notify-group { display: grid; gap: 2px; margin: 0; padding: 0; border: none; min-width: 0; }
+.notify-group[hidden] { display: none; }
+.notify-group + .notify-group { margin-top: 10px; }
+.notify-group legend { padding: 0; margin-bottom: 4px; font-size: 0.75rem; font-weight: 550; color: var(--text-3); }
+/* Interruptor: texto a la izquierda, pastilla a la derecha, como en los ajustes del móvil */
+.switch-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 42px; font-size: 0.875rem; color: var(--text); cursor: pointer; }
+.switch-row.is-sub { padding-left: 14px; color: var(--text-2); }
+.switch-row:has(input:disabled) { color: var(--text-3); cursor: default; }
+.switch-row input {
+  appearance: none; position: relative; flex: none; margin: 0;
+  width: 42px; height: 24px; border-radius: 999px;
+  background: var(--bar-track); border: 1px solid var(--line-strong);
+  cursor: pointer; transition: background-color var(--t) var(--ease-out), border-color var(--t) var(--ease-out);
+}
+.switch-row input::after {
+  content: ''; position: absolute; top: 2px; left: 2px;
+  width: 18px; height: 18px; border-radius: 50%;
+  background: var(--text-2); box-shadow: 0 1px 2px rgb(0 0 0 / 0.25);
+  transition: transform 220ms var(--ease-out), background-color var(--t) var(--ease-out);
+}
+.switch-row input:checked { background: var(--accent); border-color: var(--accent); }
+.switch-row input:checked::after { transform: translateX(18px); background: var(--accent-ink); }
+.switch-row input:disabled { opacity: 0.45; cursor: default; }
+.switch-row input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.notify-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 46px; font-size: 0.875rem; color: var(--text); }
+.notify-row .notify-select { width: 104px; font-family: var(--mono); }
+.notify-days-pref { display: grid; gap: 8px; padding: 6px 0 2px; --c: var(--accent); }
+.notify-row-label { font-size: 0.875rem; color: var(--text); }
+.notify-days-pref .day-chip { height: 36px; }
+.notify-blocked { display: grid; gap: 10px; padding: 12px; border: 1px solid color-mix(in oklch, var(--risk) 45%, transparent); border-radius: var(--r); background: color-mix(in oklch, var(--risk) 10%, transparent); font-size: 0.8125rem; line-height: 1.45; color: var(--text); }
+.notify-blocked[hidden] { display: none; }
+.notify-blocked p { margin: 0; }
+.notify-blocked .btn { justify-self: start; }
+.notify-system { justify-self: start; margin-top: 6px; }
+.notify-system .icon { width: 16px; height: 16px; }
+
 /* «Sincronizar»: el icono gira mientras comprueba y al acabar se vuelve una ✓ verde */
-.moodle-watch { gap: 12px; }
-.moodle-sync { justify-self: start; min-width: 148px; justify-content: center; }
+.moodle-sync { min-width: 140px; justify-content: center; }
 .moodle-sync .icon { width: 16px; height: 16px; flex: none; }
 .moodle-sync:disabled:not(.is-loading) { opacity: 0.45; cursor: not-allowed; }
 .moodle-sync.is-loading { cursor: progress; color: var(--text); border-color: color-mix(in oklch, var(--accent) 45%, var(--line-strong)); }
@@ -1811,14 +1845,15 @@ tr.break-row td:first-child { background: var(--inset); padding-left: 8px; paddi
 .moodle-task.is-course .moodle-map { margin-top: 10px; }
 /* La misma ventana sirve para preguntar las asignaturas y para la lista de pendientes */
 #moodleDialog[data-mode="resolve"] .moodle-list-only, #moodleDialog:not([data-mode="resolve"]) .moodle-resolve-only { display: none; }
-.moodle-map {
+.moodle-map, .notify-select {
   width: 100%; height: 40px; padding: 0 32px 0 12px;
   background: var(--inset) var(--select-arrow) no-repeat right 12px center;
   border: 1px solid var(--line-strong); border-radius: var(--r);
   font-size: 0.875rem; appearance: none; outline: none;
   transition: border-color var(--t) var(--ease-out);
 }
-.moodle-map:focus { border-color: var(--accent); }
+.moodle-map:focus, .notify-select:focus { border-color: var(--accent); }
+.notify-select option { background: var(--surface-2); color: var(--text); }
 .moodle-map[aria-invalid="true"] { border-color: var(--absence); }
 .moodle-map option { background: var(--surface-2); color: var(--text); }
 #moodleResolveError { margin-top: 10px; }
