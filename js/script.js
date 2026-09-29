@@ -386,9 +386,9 @@
     const map = loadCourseMap();
     document.getElementById('moodleDialog').dataset.mode = 'resolve';
     document.getElementById('moodleTitle').textContent = all ? 'Asignaturas del campus' : 'Cursos nuevos del campus';
-    document.getElementById('moodleMeta').textContent = all
+    document.getElementById('moodleMeta').innerHTML = all
       ? 'A qué asignatura de la app corresponde cada curso.'
-      : `${courses.length === 1 ? 'Un curso no se ha podido' : `${courses.length} cursos no se han podido`} relacionar solo. Elige su asignatura; se recordará.`;
+      : 'Se han encontrado nuevas asignaturas.<br>Selecciona las asignaturas correspondientes.';
     document.getElementById('moodleList').innerHTML = courses.map(c => {
       const saved = map[c.id];
       const current = saved ? (saved.module === null ? 'none' : MODULES[saved.module] ? saved.module : '') : '';
@@ -490,7 +490,7 @@
   // Tareas del campus pendientes de entrega (ni enviadas ni calificadas), por fecha de entrega.
   // Las que ya añadiste se ponen al día (entrega, nota, fecha) cada vez que se abre la lista.
   function renderMoodleList() {
-    const { site, assigns } = moodleData;
+    const { assigns } = moodleData;
     const added = moodleAdded();
     let changed = false;
     assigns.forEach(a => {
@@ -506,7 +506,7 @@
     document.getElementById('moodleDialog').dataset.mode = 'list';
     document.getElementById('moodleTitle').textContent = 'Pendientes en el campus';
     document.getElementById('moodleMeta').textContent =
-      `${site.fullname} · ${pending.length} ${pending.length === 1 ? 'tarea pendiente' : 'tareas pendientes'} de entrega`;
+      `${pending.length} ${pending.length === 1 ? 'tarea pendiente' : 'tareas pendientes'} de entrega`;
     renderMoodleRows();
     const dialog = document.getElementById('moodleDialog');
     dialog.classList.remove('is-closing');
