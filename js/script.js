@@ -274,8 +274,14 @@
     const connected = AndroidApp.moodleConnected();
     let user = null;
     try { user = localStorage.getItem('horario_moodle_user'); } catch {}
-    document.getElementById('moodleStatus').textContent = message
-      || (connected ? `Conectado${user ? ' como ' + user : ''}.` : 'Conecta tu cuenta de Medusa para traer tus tareas del campus.');
+    // Estado junto al título; debajo, solo mensajes (cargando, errores) o la invitación a conectar
+    const state = document.getElementById('moodleState');
+    state.classList.toggle('is-on', connected);
+    document.getElementById('moodleStateText').textContent = connected ? 'Conectado' : 'Sin conectar';
+    state.title = connected && user ? `Conectado como ${user}` : '';
+    const status = document.getElementById('moodleStatus');
+    status.textContent = message || (connected ? '' : 'Conecta tu cuenta de Medusa para traer tus tareas del campus.');
+    status.hidden = !status.textContent;
     document.getElementById('moodleConnectBtn').hidden = connected;
     document.getElementById('moodleSyncBtn').hidden = !connected;
     document.getElementById('moodleLogoutBtn').hidden = !connected;
@@ -372,7 +378,22 @@
   }
 
   // «Sincronizar»: el icono gira mientras Java comprueba el campus
-  // Estados del botón: Sincronizar → Sincronizando… (gira) → Sincronizado (verde) → Sincronizar
+  // Pone el texto de «Sincronizar» y, si no cabe en el botón (que nunca cambia de tamaño), reduce
+  // su letra de medio en medio punto hasta que quepa
+  function setSyncLabel(text) {
+    const btn = document.getElementById('moodleWatchBtn');
+    const label = btn.querySelector('span');
+    label.textContent = text;
+    label.style.fontSize = '';
+    if (!btn.offsetWidth) return;
+    let size = parseFloat(getComputedStyle(label).fontSize);
+    while (btn.scrollWidth > btn.clientWidth && size > 9) {
+      size -= 0.5;
+      label.style.fontSize = size + 'px';
+    }
+  }
+
+  // Estados del botón: Sincronizar → Sincronizando (gira) → Sincronizado (verde) → Sincronizar
   let watchStarted = 0;
   let watchDoneTimer = 0;
   function moodleWatchNow() {
@@ -384,7 +405,7 @@
     btn.classList.add('is-loading');
     btn.setAttribute('aria-busy', 'true');
     btn.disabled = true;
-    btn.querySelector('span').textContent = 'Sincronizando';
+    setSyncLabel('Sincronizando');
     watchStarted = performance.now();
     AndroidApp.moodleWatchNow();
   }
@@ -395,10 +416,9 @@
   function moodleWatchDone(n) {
     setTimeout(() => {
       const btn = document.getElementById('moodleWatchBtn');
-      const label = btn.querySelector('span');
       btn.classList.remove('is-loading');
       btn.removeAttribute('aria-busy');
-      label.textContent = n >= 0 ? 'Sincronizado' : 'Sincronizar';
+      setSyncLabel(n >= 0 ? 'Sincronizado' : 'Sincronizar');
       syncWatchBtn();
       if (n >= 0) {
         btn.classList.add('is-done');
@@ -406,8 +426,8 @@
         watchDoneTimer = setTimeout(() => {
           btn.classList.remove('is-done');
           btn.querySelector('use').setAttribute('href', '#i-sync');
-          label.textContent = 'Sincronizar';
-        }, 1400);
+          setSyncLabel('Sincronizar');
+        }, 2400);
       }
       showToast(n < 0 ? 'No se ha podido sincronizar con el campus' : n ? `${n} ${n === 1 ? 'novedad' : 'novedades'}: mira las notificaciones` : 'Sin novedades en el campus');
     }, Math.max(0, 700 - (performance.now() - watchStarted)));
@@ -1089,6 +1109,8 @@
     renderNotifySettings();
     const menu = document.getElementById('menuDrawer');
     if (!menu.open) menu.showModal();
+    const sync = document.getElementById('moodleWatchBtn');
+    if (!sync.hidden) setSyncLabel(sync.querySelector('span').textContent);
   }
 
   function closeMenu() {

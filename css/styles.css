@@ -992,6 +992,19 @@ html.table-full #matrixTable { min-width: 0; }
 .drawer-section { display: grid; gap: 10px; padding: 18px 0; border-top: 1px solid var(--line); }
 .drawer-section:last-child { padding-bottom: 0; }
 .drawer .dialog-head { margin-bottom: 4px; }
+/* Estado de la cuenta del campus, a la derecha del título */
+.campus-state {
+  margin-left: auto; display: inline-flex; align-items: center; gap: 6px;
+  padding: 3px 9px 3px 8px; border-radius: 999px;
+  border: 1px solid var(--line-strong);
+  font-size: 0.75rem; font-weight: 600; letter-spacing: 0; color: var(--text-3);
+  transition: color var(--t) var(--ease-out), border-color var(--t) var(--ease-out), background-color var(--t) var(--ease-out);
+}
+.campus-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-3); flex: none; }
+.campus-state.is-on { color: var(--done); border-color: color-mix(in oklch, var(--done) 40%, transparent); background: color-mix(in oklch, var(--done) 10%, transparent); }
+.campus-state.is-on .campus-dot { background: var(--done); box-shadow: 0 0 0 3px color-mix(in oklch, var(--done) 22%, transparent); }
+#moodleStatus[hidden] { display: none; }
+
 /* Título de cada sección: el nivel más fuerte del menú después de «Menú» */
 .drawer-label {
   display: flex; align-items: center; gap: 10px;
@@ -1822,8 +1835,11 @@ tr.break-row td:first-child { background: var(--inset); padding-left: 8px; paddi
    la derecha, alineado con «Sincronizar» */
 /* Columnas iguales mientras quepan; si un texto no cabe (letra grande del móvil, «Sincronizando…»),
    su columna crece lo justo en vez de recortarlo. Altura como los botones de Grupo y Tema. */
-.moodle-actions { display: grid; grid-template-columns: repeat(2, minmax(min-content, 1fr)); gap: 8px; }
-.moodle-actions .btn { width: 100%; height: 34px; padding: 0 10px; gap: 6px; justify-content: center; font-size: 0.8125rem; }
+.moodle-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.moodle-actions .btn { width: 100%; height: 34px; padding: 0 10px; gap: 6px; justify-content: center; font-size: 0.8125rem; overflow: hidden; }
+/* Los botones nunca cambian de tamaño: si el texto de «Sincronizar» no cabe (pantalla estrecha o
+   letra grande), fitSyncLabel() lo reduce lo justo en vez de ensanchar el botón */
+.moodle-sync span { white-space: nowrap; }
 .moodle-actions [hidden] { display: none; }
 #moodleConnectBtn { grid-column: 1 / -1; }
 .moodle-logout { grid-column: 2; margin-top: 10px; }

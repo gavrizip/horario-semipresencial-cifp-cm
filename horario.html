@@ -249,7 +249,8 @@
 
   <!-- Campus (Moodle): solo en la app de Android, que es quien habla con el campus -->
   <section class="drawer-section moodle-section">
-    <h4 class="drawer-label"><svg class="icon"><use href="#i-task"/></svg>Campus</h4>
+    <h4 class="drawer-label"><svg class="icon"><use href="#i-task"/></svg>Campus
+      <span class="campus-state" id="moodleState" role="status"><span class="campus-dot" aria-hidden="true"></span><span id="moodleStateText">Sin conectar</span></span></h4>
     <p class="field-help" id="moodleStatus">Conecta tu cuenta de Medusa para traer tus tareas del campus.</p>
     <div class="moodle-actions">
       <button type="button" class="btn btn-primary" id="moodleConnectBtn" onclick="moodleConnect()">Conectar</button>
