@@ -250,6 +250,32 @@ public class MainActivity extends Activity {
             runOnUiThread(() -> CookieManager.getInstance().removeAllCookies(null));
         }
 
+        /** TEMPORAL: lanza al momento una notificación de ejemplo de cada tipo (barra de pruebas). */
+        @JavascriptInterface
+        public void testNotification(String kind) {
+            runOnUiThread(MainActivity.this::askNotificationPermission);
+            android.content.Context c = getApplicationContext();
+            long now = System.currentTimeMillis(), day = 24 * 60 * 60 * 1000L;
+            try {
+                switch (kind) {
+                    case "exam":
+                        Reminders.show(c, new JSONObject().put("id", "test-exam").put("kind", "exam").put("code", "IMW")
+                            .put("what", "Temas 1 a 3").put("when", "miércoles 14 Oct, 18:15").put("due", now + 3 * day));
+                        break;
+                    case "task":
+                        Reminders.show(c, new JSONObject().put("id", "test-task").put("kind", "task").put("code", "SRD")
+                            .put("what", "Práctica DNS").put("when", "miércoles 21 Oct, 20:00").put("due", now + day));
+                        break;
+                    case "personal":
+                        Reminders.show(c, new JSONObject().put("id", "test-personal").put("kind", "task").put("code", "")
+                            .put("what", "Entregar el proyecto").put("when", "viernes 23 de octubre").put("due", now));
+                        break;
+                    default:
+                        MoodleWatch.testNotify(c, kind);
+                }
+            } catch (Exception ignored) {}
+        }
+
         /** ¿Deja Android mostrar notificaciones de la app? (el usuario puede bloquearlas en Ajustes) */
         @JavascriptInterface
         public boolean notificationsEnabled() {
