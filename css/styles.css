@@ -1157,10 +1157,13 @@ tr.break-row td:first-child { background: var(--inset); padding-left: 8px; paddi
 .module-status { --count: 3; }
 .module-status[data-active="convalidada"] { --index: 1; }
 .module-status[data-active="desistida"] { --index: 2; }
-.module-status .segmented-btn { position: relative; display: grid; place-items: center; height: 34px; padding: 0 4px; font-size: min(0.8125rem, 3.7vw); cursor: pointer; }
-.module-status .segmented-btn input { position: absolute; opacity: 0; pointer-events: none; }
-.module-status .segmented-btn:has(input:checked) { color: var(--text); }
-.module-status .segmented-btn:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: -2px; }
+/* Segmentado con radios dentro (Estado de la asignatura, Estado de la tarea): la pastilla sigue al marcado */
+.seg-radio .segmented-btn { position: relative; display: grid; place-items: center; height: 34px; padding: 0 4px; font-size: min(0.8125rem, 3.7vw); cursor: pointer; }
+.seg-radio .segmented-btn input { position: absolute; opacity: 0; pointer-events: none; }
+.seg-radio .segmented-btn:has(input:checked) { color: var(--text); }
+.seg-radio .segmented-btn:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: -2px; }
+.seg-radio:has(> label:nth-of-type(2) > input:checked) { --index: 1; }
+.seg-radio:has(> label:nth-of-type(3) > input:checked) { --index: 2; }
 .status-field { margin-bottom: 10px; }
 /* Restablecer: botón neutro en la esquina inferior izquierda, con icono de deshacer */
 .module-reset { gap: 4px; }
@@ -1186,8 +1189,8 @@ tr.break-row td:first-child { background: var(--inset); padding-left: 8px; paddi
 .info-reveal .field-help { margin: 0; padding-bottom: 10px; }
 
 /* Pie: los tres botones siempre en una fila; letra y relleno se ajustan al ancho (también con la letra del sistema grande) */
-.module-dialog .dialog-actions { flex-wrap: nowrap; gap: 6px; }
-.module-dialog .dialog-actions .btn { flex: none; padding: 0 clamp(8px, 2.6vw, 12px); font-size: min(0.8125rem, 3.5vw); white-space: nowrap; }
+:is(.module-dialog, #slotDialog) .dialog-actions { flex-wrap: nowrap; gap: 6px; }
+:is(.module-dialog, #slotDialog) .dialog-actions .btn { flex: none; padding: 0 clamp(8px, 2.6vw, 12px); font-size: min(0.8125rem, 3.5vw); white-space: nowrap; }
 @media (max-width: 720px) { .dialog.module-dialog { padding: 20px; } }
 .module-grade {
   justify-self: end; display: inline-flex; align-items: center; gap: 4px;
@@ -1485,7 +1488,7 @@ tr.break-row td:first-child { background: var(--inset); padding-left: 8px; paddi
 .field-help { font-size: 0.75rem; color: var(--text-3); }
 .field-error { font-size: 0.8125rem; color: var(--absence); }
 
-.field select, .field textarea, .field input:not([type="radio"]) {
+.field select, .field textarea, .field input:not([type="radio"], [type="checkbox"]) {
   width: 100%;
   padding: 8px 12px;
   background: var(--inset);
@@ -1501,8 +1504,8 @@ tr.break-row td:first-child { background: var(--inset); padding-left: 8px; paddi
 .field select option { background: var(--surface-2); color: var(--text); }
 .field textarea { resize: vertical; min-height: 84px; line-height: 1.45; }
 .field textarea::placeholder { color: var(--text-3); }
-.field select:hover, .field textarea:hover, .field input:not([type="radio"]):hover { border-color: color-mix(in oklch, var(--line-strong) 60%, var(--text-3)); }
-.field select:focus, .field textarea:focus, .field input:not([type="radio"]):focus { border-color: var(--accent); }
+.field select:hover, .field textarea:hover, .field input:not([type="radio"], [type="checkbox"]):hover { border-color: color-mix(in oklch, var(--line-strong) 60%, var(--text-3)); }
+.field select:focus, .field textarea:focus, .field input:not([type="radio"], [type="checkbox"]):focus { border-color: var(--accent); }
 .field textarea[aria-invalid="true"], .field input[aria-invalid="true"] { border-color: var(--absence); }
 
 .type-picker { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
@@ -1661,7 +1664,7 @@ tr.break-row td:first-child { background: var(--inset); padding-left: 8px; paddi
   .segmented-thumb, .tab-indicator, .bar-fill { transition-duration: 1ms; }
   /* Sin giro: el icono de los botones con carga late despacio mientras trabaja */
   .sync-btn.is-loading .icon { animation: sync-pulse 1.2s ease-in-out infinite !important; animation-duration: 1.2s !important; }
-  .btn:active, .icon-btn:active, .segmented-btn:active, .tab:active, .month-day.is-class:active, .type-option:active { transform: none; }
+  .btn:active, .icon-btn:active, .segmented-btn:active, .tab:active, .month-day.is-class:active, .type-option:active, .choice-chip:active, .day-chip:active { transform: none; }
   .view.is-shown, .dialog[open], .drawer[open] { animation: fade-in 120ms linear !important; }
   td .chip:hover, th:hover button.th-inner { transform: none; }
 }
@@ -1889,14 +1892,13 @@ tr.break-row td:first-child { background: var(--inset); padding-left: 8px; paddi
 .input-suffix { position: relative; display: flex; align-items: center; }
 .input-suffix input { padding-right: 48px; font-family: var(--mono); }
 .input-suffix span { position: absolute; right: 12px; font-size: 0.8125rem; color: var(--text-3); pointer-events: none; }
-.field input:not([type="radio"]) { height: 38px; }
+.field input:not([type="radio"], [type="checkbox"]) { height: 38px; }
 .field input[type="date"] { font-family: var(--mono); }
 .field input::placeholder { color: var(--text-3); }
 .field input[type="number"] { appearance: textfield; -moz-appearance: textfield; }
 .field input[type="number"]::-webkit-inner-spin-button,
 .field input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 
-.type-picker.two { grid-template-columns: 1fr 1fr; }
 
 /* Aviso: solo en la app de Android y para examen o tarea */
 .notify-fields { display: none; }
@@ -1970,16 +1972,17 @@ tr.break-row td:first-child { background: var(--inset); padding-left: 8px; paddi
 #moodleResolveError { margin-top: 10px; }
 .is-app #slotDialog[data-kind="exam"] .notify-fields,
 .is-app #slotDialog[data-kind="task"] .notify-fields { display: block; }
-.type-option[data-type="yes"] { --c: var(--accent); }
-.type-option[data-type="no"] { --c: var(--text-3); }
-.notify-days { margin-top: 12px; }
-.notify-fields:has(input[name="notify"][value="no"]:checked) .notify-days { display: none; }
+/* «Notificar»: interruptor; apagado esconde días y hora */
+.notify-switch { min-height: 36px; }
+.notify-fields:has(#notifyOn:not(:checked)) .notify-days { display: none; }
+.notify-days { margin-top: 4px; }
 .notify-days .field-help { margin-bottom: 8px; }
 /* Hora del aviso, debajo de los días */
 .notify-hour-field { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 12px; }
 .notify-hour-field .field-help { margin: 0; }
 .field .notify-hour-field select { width: 104px; font-family: var(--mono); }
-.day-chips { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; }
+/* Días de antelación: casillas (varias a la vez), rellenas en ámbar y con ✓ en la esquina al marcarlas */
+.day-chips { display: grid; grid-template-columns: repeat(auto-fill, minmax(44px, 1fr)); gap: 6px; }
 .day-chip {
   position: relative;
   display: grid; place-items: center;
@@ -1993,10 +1996,36 @@ tr.break-row td:first-child { background: var(--inset); padding-left: 8px; paddi
 }
 .day-chip input { position: absolute; opacity: 0; pointer-events: none; }
 .day-chip:active { transform: scale(0.95); }
-.day-chip:has(input:checked) { color: var(--text); border-color: var(--c); background: color-mix(in oklch, var(--c) 18%, transparent); }
+.day-chip[hidden] { display: none; }
+.day-chip:hover { border-color: color-mix(in oklch, var(--line-strong) 60%, var(--text-3)); color: var(--text); }
+.day-chip:has(input:checked) { color: var(--accent-ink); border-color: var(--accent); background: var(--accent); }
 .day-chip:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
-.type-option[data-type="pending"] { --c: var(--accent); }
-.type-option[data-type="done"] { --c: var(--ok); }
+.day-tick {
+  position: absolute; top: 4px; right: 4px; width: 10px; height: 10px; stroke-width: 3.2;
+  opacity: 0; transform: scale(0.4);
+  transition: opacity var(--t-fast) var(--ease-out), transform 220ms var(--ease-out);
+}
+.day-chip:has(input:checked) .day-tick { opacity: 1; transform: none; }
+/* «+»: otro número de días; se convierte en un campo del mismo tamaño */
+.day-add { background: none; border-style: dashed; color: var(--text-3); }
+.day-add .icon { width: 16px; height: 16px; }
+.field .day-chips .day-custom { width: 100%; height: 40px; padding: 0 4px; text-align: center; font-family: var(--mono); font-size: 0.875rem; font-weight: 600; background: var(--inset); border-color: var(--accent); color: var(--text); cursor: text; }
+.field .day-chips .day-custom::placeholder { font-family: var(--font); font-weight: 400; font-size: 0.75rem; color: var(--text-3); }
+/* Tipo de examen: píldoras de opción única (se desmarcan pulsándolas otra vez) */
+.choice-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.choice-chip {
+  position: relative; display: inline-flex; align-items: center;
+  height: 32px; padding: 0 12px;
+  border: 1px solid var(--line-strong); border-radius: 999px;
+  font-size: 0.8125rem; font-weight: 550; color: var(--text-2);
+  cursor: pointer;
+  transition: background-color var(--t) var(--ease-out), border-color var(--t) var(--ease-out), color var(--t) var(--ease-out), transform var(--t-fast) var(--ease-out);
+}
+.choice-chip input { position: absolute; opacity: 0; pointer-events: none; }
+.choice-chip:hover { color: var(--text); }
+.choice-chip:active { transform: scale(0.96); }
+.choice-chip:has(input:checked) { color: var(--accent-text); border-color: var(--accent); background: color-mix(in oklch, var(--accent) 14%, transparent); }
+.choice-chip:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 .dialog-actions .spacer { flex: 1; }
 .btn-danger { color: var(--absence); border: 1px solid color-mix(in oklch, var(--absence) 45%, transparent); }

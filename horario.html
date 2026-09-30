@@ -323,11 +323,21 @@
           <p class="slot-dialog-meta" id="slotDialogMeta"></p>
         </div>
       </div>
-      <button type="button" class="icon-btn" onclick="closeSlotDialog()" aria-label="Cerrar"><svg class="icon"><use href="#i-x"/></svg></button>
     </div>
 
     <!-- EXAMEN -->
     <div class="kind-fields" data-kind="exam">
+      <!-- Tipo de prueba: opcional; pulsar otra vez el marcado lo quita -->
+      <fieldset class="field">
+        <legend class="field-label">Tipo</legend>
+        <div class="choice-chips">
+          <label class="choice-chip" onpointerdown="chipDown(this)"><input type="radio" name="examType" value="parcial" onclick="chipClick(this)"><span>Parcial</span></label>
+          <label class="choice-chip" onpointerdown="chipDown(this)"><input type="radio" name="examType" value="final" onclick="chipClick(this)"><span>Final</span></label>
+          <label class="choice-chip" onpointerdown="chipDown(this)"><input type="radio" name="examType" value="recuperacion" onclick="chipClick(this)"><span>Recuperación</span></label>
+          <label class="choice-chip" onpointerdown="chipDown(this)"><input type="radio" name="examType" value="test" onclick="chipClick(this)"><span>Test</span></label>
+          <label class="choice-chip" onpointerdown="chipDown(this)"><input type="radio" name="examType" value="practico" onclick="chipClick(this)"><span>Práctico</span></label>
+        </div>
+      </fieldset>
       <div class="field">
         <label class="field-label" for="examTopics">Temas que entran</label>
         <textarea id="examTopics" rows="3" placeholder="Ej.: temas 1 a 3, prácticas de VLAN y subredes"></textarea>
@@ -342,7 +352,6 @@
         <div class="field">
           <label class="field-label" for="examGrade">Nota obtenida</label>
           <div class="input-suffix"><input type="number" id="examGrade" min="0" max="10" step="0.01" inputmode="decimal" placeholder="—"><span>/ 10</span></div>
-          <p class="field-help">Déjala vacía hasta que la sepas.</p>
           <p class="field-error" data-error="examGrade" hidden>Entre 0 y 10.</p>
         </div>
       </div>
@@ -373,35 +382,26 @@
       </div>
       <fieldset class="field">
         <legend class="field-label">Estado</legend>
-        <div class="type-picker two">
-          <label class="type-option" data-type="pending"><input type="radio" name="taskStatus" value="pending" checked><span>Pendiente</span></label>
-          <label class="type-option" data-type="done"><input type="radio" name="taskStatus" value="done"><span data-class="Entregada" data-personal="Hecha">Entregada</span></label>
+        <div class="segmented seg-radio" role="radiogroup" aria-label="Estado de la tarea">
+          <span class="segmented-thumb" aria-hidden="true"></span>
+          <label class="segmented-btn"><input type="radio" name="taskStatus" value="pending" checked>Pendiente</label>
+          <label class="segmented-btn"><input type="radio" name="taskStatus" value="done"><span data-class="Entregada" data-personal="Hecha">Entregada</span></label>
         </div>
       </fieldset>
     </div>
 
     <!-- AVISO (solo examen y tarea, solo en la app de Android) -->
-    <fieldset class="field notify-fields">
-      <legend class="field-label">¿Notificar?</legend>
-      <div class="type-picker two">
-        <label class="type-option" data-type="yes"><input type="radio" name="notify" value="yes" checked><span>Sí</span></label>
-        <label class="type-option" data-type="no"><input type="radio" name="notify" value="no"><span>No</span></label>
-      </div>
+    <div class="field notify-fields">
+      <label class="switch-row notify-switch"><span class="field-label">Notificar</span><input type="checkbox" role="switch" id="notifyOn" checked></label>
       <div class="notify-days" role="group" aria-labelledby="notifyDaysLabel">
-        <p class="field-help" id="notifyDaysLabel">Avisar estos días antes (puedes marcar varios):</p>
-        <div class="day-chips">
-          <label class="day-chip"><input type="checkbox" name="notifyDays" value="1"><span>1</span></label>
-          <label class="day-chip"><input type="checkbox" name="notifyDays" value="2"><span>2</span></label>
-          <label class="day-chip"><input type="checkbox" name="notifyDays" value="3" checked><span>3</span></label>
-          <label class="day-chip"><input type="checkbox" name="notifyDays" value="5"><span>5</span></label>
-          <label class="day-chip"><input type="checkbox" name="notifyDays" value="7"><span>7</span></label>
-          <label class="day-chip"><input type="checkbox" name="notifyDays" value="14"><span>14</span></label>
-        </div>
-        <p class="field-error" data-error="notifyDays" hidden>Marca al menos un día, o elige «No».</p>
-        <label class="notify-hour-field"><span class="field-help">A esta hora:</span>
+        <p class="field-help" id="notifyDaysLabel">Días de antelación</p>
+        <!-- Chips de días (renderDayChips) y «+» para escribir otro número -->
+        <div class="day-chips" id="dayChips"></div>
+        <p class="field-error" data-error="notifyDays" hidden>Marca al menos un día, o desactiva «Notificar».</p>
+        <label class="notify-hour-field"><span class="field-help">A esta hora</span>
           <select name="notifyHour" id="notifyHour"><option value="7">7:00</option><option value="8">8:00</option><option value="9">9:00</option><option value="10" selected>10:00</option><option value="11">11:00</option><option value="12">12:00</option><option value="13">13:00</option><option value="14">14:00</option><option value="15">15:00</option><option value="16">16:00</option><option value="17">17:00</option><option value="18">18:00</option><option value="19">19:00</option><option value="20">20:00</option><option value="21">21:00</option><option value="22">22:00</option></select></label>
       </div>
-    </fieldset>
+    </div>
 
     <!-- NOTA -->
     <div class="kind-fields" data-kind="note">
@@ -485,7 +485,7 @@
       <legend class="field-label">Estado<button type="button" class="info-btn" aria-expanded="false" aria-controls="moduleStatusHelp" onclick="toggleInfo(this)" aria-label="Qué significa cada estado" title="Qué significa cada estado"><svg class="icon"><use href="#i-info"/></svg></button></legend>
       <div class="info-reveal" id="moduleStatusHelp"><div><p class="field-help">Si seleccionas «Convalidada» o «Desistida», la asignatura no se mostrará en el horario, tampoco en el registro de asistencia y las notificaciones.</p><p class="field-help">Los datos se conservarán y se podrá reactivar seleccionando el estado «Cursando».</p></div></div>
       <!-- Control segmentado, como Grupo y Tema: la pastilla neutra marca el estado -->
-      <div class="segmented module-status" id="moduleStatus" data-active="active" role="radiogroup" aria-label="Estado de la asignatura">
+      <div class="segmented seg-radio module-status" id="moduleStatus" data-active="active" role="radiogroup" aria-label="Estado de la asignatura">
         <span class="segmented-thumb" aria-hidden="true"></span>
         <label class="segmented-btn"><input type="radio" name="moduleStatus" value="active" checked onchange="syncStatusSeg()">Cursando</label>
         <label class="segmented-btn"><input type="radio" name="moduleStatus" value="convalidada" onchange="syncStatusSeg()">Convalidada</label>

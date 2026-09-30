@@ -1035,7 +1035,7 @@
           id: ev.id,
           kind: ev.type,
           code: ev.module,
-          what: ev.type === 'task' ? (ev.title || ev.text) : (ev.topics || ev.text),
+          what: ev.type === 'task' ? (ev.title || ev.text) : [EXAM_TYPES[ev.examType] && EXAM_TYPES[ev.examType].chip, ev.topics || ev.text].filter(Boolean).join(' · '),
           when: `miércoles ${cd.date}, ${start}`,
           due: due.getTime(),
           times,
@@ -1636,7 +1636,7 @@
           <li class="record is-editable is-personal${isNew}" data-type="${ev.type}" style="--i:${i++}">
             <div class="record-when">${recordDate(isoShort(iso))}${ev.module && MODULES[ev.module] ? chip(ev.module) : '<span class="personal-tag">Personal</span>'}</div>
             <div class="record-body" onclick="openPersonalDialog('${ev.type}', '${iso}', ${evIdx})" onkeydown="if(event.key==='Enter'){this.click()}" tabindex="0" role="button" title="Editar">
-              <div class="record-head"><span class="record-meta">${recordMeta(EVENT_TYPES[ev.type].label)}${status ? `<span class="record-status">— <span data-status="${ev.status || 'pending'}">${status}</span></span>` : ''}</span></div>
+              <div class="record-head"><span class="record-meta">${recordMeta(recordLabel(ev))}${status ? `<span class="record-status">— <span data-status="${ev.status || 'pending'}">${status}</span></span>` : ''}</span></div>
               <div class="record-text">${escapeHTML(ev.text)}</div>
               ${ev.type === 'task' && ev.desc ? `<div class="record-detail">${escapeHTML(ev.desc)}</div>` : ''}
               ${recordExtra(ev) ? `<div class="record-detail">${recordExtra(ev)}</div>` : ''}
@@ -1672,7 +1672,7 @@
           <li class="record${isNew}${editable ? ' is-editable' : ''}" data-type="${ev.type}" style="--i:${i++}">
             <div class="record-when">${recordDate(d)}${ev.module && MODULES[ev.module] ? chip(ev.module) : ''}</div>
             <div class="record-body"${open}>
-              <div class="record-head"><span class="record-meta">${recordMeta(EVENT_TYPES[ev.type].label)}${status ? `<span class="record-status">— <span data-status="${ev.type === 'task' ? ev.status || 'pending' : 'graded'}">${status}</span></span>` : ''}</span></div>
+              <div class="record-head"><span class="record-meta">${recordMeta(recordLabel(ev))}${status ? `<span class="record-status">— <span data-status="${ev.type === 'task' ? ev.status || 'pending' : 'graded'}">${status}</span></span>` : ''}</span></div>
               <div class="record-text">${ev.type === 'absence' && Number.isInteger(ev.slot) ? sessionsLabel(1) : escapeHTML(ev.text)}</div>
               ${detail ? `<div class="record-detail">${detail}</div>` : ''}
             </div>
@@ -1796,7 +1796,7 @@
       </div>` : `
       <div class="day-record" data-type="${ev.type}">
         <span class="record-mark" aria-hidden="true"></span>
-        <span class="type">${EVENT_TYPES[ev.type].label}</span>
+        <span class="type">${recordLabel(ev)}</span>
         ${ev.module && MODULES[ev.module] ? chip(ev.module) : ''}
         <span>${escapeHTML(ev.text)}</span>
       </div>`).join('');
@@ -2312,6 +2312,19 @@
   }
 
   // --- EXAMEN / TAREA / NOTA POR HORA ---
+  // Tipo de prueba de un examen (opcional): chip corto en el diálogo y nombre completo en las listas
+  const EXAM_TYPES = {
+    parcial: { chip: 'Parcial', full: 'Examen parcial' },
+    final: { chip: 'Final', full: 'Examen final' },
+    recuperacion: { chip: 'Recuperación', full: 'Recuperación' },
+    test: { chip: 'Test', full: 'Test' },
+    practico: { chip: 'Práctico', full: 'Examen práctico' }
+  };
+  // «Examen parcial», «Test»… o el tipo de registro si no tiene
+  function recordLabel(ev) {
+    return ev.type === 'exam' && EXAM_TYPES[ev.examType] ? EXAM_TYPES[ev.examType].full : EVENT_TYPES[ev.type].label;
+  }
+
   const KIND_META = {
     exam: { title: 'Examen', key: 'e' },
     task: { title: 'Tarea', key: 't' },
@@ -2360,7 +2373,7 @@
         const body = ev.type === 'task' && ev.desc ? `${escapeHTML(ev.text)}<span class="tip-extra">${escapeHTML(ev.desc)}</span>` : escapeHTML(ev.text);
         const detail = recordDetail(ev);
         return `<div class="tip-item" data-type="${ev.type}">
-          <span class="tip-type">${EVENT_TYPES[ev.type].label}</span>
+          <span class="tip-type">${recordLabel(ev)}</span>
           <div class="tip-text">${body}</div>
           ${detail ? `<div class="tip-detail">${detail}</div>` : ''}
         </div>`;
@@ -2440,7 +2453,7 @@
     return `<div class="ctx-sep"></div><div class="ctx-label">${label}</div>` + recs.map(({ ev, index }) => {
       const detail = recordDetail(ev).replace(/<[^>]+>/g, '');
       return `<button type="button" class="ctx-item is-record" role="menuitem" data-kind="${ev.type}" data-action="edit" data-index="${index}">
-          ${icon(ev.type)}<span class="ctx-sub">${escapeHTML(ev.text)}<small>${ev.module ? ev.module + ' · ' : ''}${EVENT_TYPES[ev.type].label}${detail ? ' · ' + detail : ''}</small></span><span></span></button>`;
+          ${icon(ev.type)}<span class="ctx-sub">${escapeHTML(ev.text)}<small>${ev.module ? ev.module + ' · ' : ''}${recordLabel(ev)}${detail ? ' · ' + detail : ''}</small></span><span></span></button>`;
     }).join('');
   }
 
@@ -2732,6 +2745,8 @@
       set('examTopics', ev ? ev.topics : '');
       set('examWeight', ev ? ev.weight : '');
       set('examGrade', ev ? ev.grade : '');
+      const type = ev && form.querySelector(`input[name="examType"][value="${ev.examType}"]`);
+      if (type) type.checked = true;
     } else if (kind === 'task') {
       set('taskTitle', ev ? ev.title : '');
       set('taskDesc', ev ? ev.desc : '');
@@ -2741,12 +2756,11 @@
     } else {
       set('noteText', ev ? ev.text : '');
     }
-    // Registros anteriores a los avisos no tienen el campo: se abren con «No»
-    if (ev && kind !== 'note') {
-      form.querySelector(`input[name="notify"][value="${ev.notify ? 'yes' : 'no'}"]`).checked = true;
-      const days = ev.notify && ev.notifyDays ? ev.notifyDays : [3];
-      form.querySelectorAll('input[name="notifyDays"]').forEach(i => { i.checked = days.includes(Number(i.value)); });
-      document.getElementById('notifyHour').value = ev.notifyHour ?? REMINDER_HOUR;
+    // Registros anteriores a los avisos no tienen el campo: se abren con «Notificar» apagado
+    if (kind !== 'note') {
+      document.getElementById('notifyOn').checked = !ev || !!ev.notify;
+      renderDayChips(ev && ev.notify && ev.notifyDays ? ev.notifyDays : [3]);
+      if (ev) document.getElementById('notifyHour').value = ev.notifyHour ?? REMINDER_HOUR;
     }
 
     dialog.classList.remove('is-closing');
@@ -2846,6 +2860,47 @@
 
   function closeSlotDialog() { closeDialog('slotDialog'); }
 
+  // Chips de opción única (tipo de examen): pulsar el que ya está marcado lo desmarca
+  function chipDown(label) { label.control.wasChecked = label.control.checked; }
+  function chipClick(input) {
+    if (input.wasChecked) input.checked = false;
+    input.wasChecked = false;
+  }
+
+  // Días de antelación del aviso: los habituales más los que ya tenga el registro; «+» añade otro
+  const NOTIFY_PRESETS = [1, 2, 3, 7, 14];
+  function renderDayChips(days) {
+    const all = [...new Set([...NOTIFY_PRESETS, ...days])].sort((a, b) => a - b);
+    document.getElementById('dayChips').innerHTML = all.map(d => `<label class="day-chip"><input type="checkbox" name="notifyDays" value="${d}"${days.includes(d) ? ' checked' : ''} onchange="setFieldError('notifyDays', false)"><span>${d}</span><svg class="icon day-tick" aria-hidden="true"><use href="#i-check"/></svg></label>`).join('')
+      + `<button type="button" class="day-chip day-add" onclick="startCustomDay(this)" aria-label="Añadir otro número de días"><svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg></button>`
+      + `<input type="number" class="day-chip day-custom" min="1" max="90" step="1" inputmode="numeric" placeholder="días" aria-label="Días de antelación (1 a 90)" hidden onkeydown="customDayKey(event)" onblur="commitCustomDay(this)">`;
+  }
+  function startCustomDay(btn) {
+    const input = btn.nextElementSibling;
+    btn.hidden = true;
+    input.hidden = false;
+    input.value = '';
+    input.focus();
+  }
+  function customDayKey(e) {
+    if (e.key !== 'Enter' && e.key !== 'Escape') return;
+    e.preventDefault();   // ni envía el formulario ni cierra el diálogo
+    if (e.key === 'Escape') e.target.value = '';
+    commitCustomDay(e.target, e.key === 'Enter');
+  }
+  function commitCustomDay(input, focusChip) {
+    if (input.hidden) return;
+    input.hidden = true;
+    input.previousElementSibling.hidden = false;
+    const n = Number(input.value);
+    if (!Number.isInteger(n) || n < 1 || n > 90) return;
+    const days = [...document.querySelectorAll('input[name="notifyDays"]:checked')].map(i => Number(i.value));
+    if (!days.includes(n)) days.push(n);
+    renderDayChips(days);
+    setFieldError('notifyDays', false);
+    if (focusChip) document.querySelector(`input[name="notifyDays"][value="${n}"]`).focus();
+  }
+
   function closeDialog(id) {
     const dialog = document.getElementById(id);
     if (!dialog.open || dialog.classList.contains('is-closing')) return;
@@ -2878,6 +2933,8 @@
       if (Number.isNaN(weight)) errors.push('examWeight');
       if (Number.isNaN(grade)) errors.push('examGrade');
       rec = { type: 'exam', module, slot: key, text: topics, topics, weight, grade };
+      const type = document.querySelector('input[name="examType"]:checked');
+      if (type) rec.examType = type.value;
     } else if (kind === 'task') {
       const title = val('taskTitle');
       const weight = readNumber('taskWeight', 0, 100);
@@ -2899,7 +2956,7 @@
 
     // Aviso en la app de Android: días de antelación marcados (por defecto 3)
     if (kind !== 'note') {
-      const notify = document.querySelector('input[name="notify"]:checked').value === 'yes';
+      const notify = document.getElementById('notifyOn').checked;
       const days = [...document.querySelectorAll('input[name="notifyDays"]:checked')].map(i => Number(i.value)).sort((a, b) => b - a);
       if (notify && !days.length && document.documentElement.classList.contains('is-app')) errors.push('notifyDays');
       rec.notify = notify && days.length > 0;
