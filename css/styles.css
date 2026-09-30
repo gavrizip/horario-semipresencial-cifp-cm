@@ -1350,14 +1350,14 @@ tr.break-row td:first-child { background: var(--inset); padding-left: 8px; paddi
 .att-row[data-state="risk"] .att-margin { color: var(--risk); }
 
 /* Registros */
-.records { margin-top: 6px; max-height: calc(100dvh - 120px); overflow-y: auto; margin-right: -6px; padding-right: 6px; }
+.records { margin-top: 0; max-height: calc(100dvh - 120px); overflow-y: auto; margin-right: -6px; padding-right: 6px; }
 
 .record {
   display: grid;
   grid-template-columns: 66px minmax(0, 1fr) auto;
   gap: 10px;
   align-items: start;
-  padding: 10px 0;
+  padding: 16px 0;   /* aire entre el texto y las líneas de arriba y de abajo */
   border-top: 1px solid var(--line);
 }
 /* Mismo relleno en todas las filas: al filtrar, la que pasa a ser la primera no se desplaza */
