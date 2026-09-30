@@ -2869,6 +2869,15 @@
 
   function closeSlotDialog() { closeDialog('slotDialog'); }
 
+  // Barra de desplazamiento de las ventanas: aparece al desplazar y se desvanece tras 1 s quieta
+  document.addEventListener('scroll', e => {
+    const dialog = e.target instanceof Element && e.target.closest('dialog');
+    if (!dialog) return;
+    dialog.classList.add('is-scrolling');
+    clearTimeout(dialog.scrollIdle);
+    dialog.scrollIdle = setTimeout(() => dialog.classList.remove('is-scrolling'), 1000);
+  }, true);
+
   // Fecha y hora del registro que se edita: inicio de su clase, o el final del día si es personal
   function slotDue() {
     const e = slotEditing;
@@ -2907,7 +2916,7 @@
     const all = [...new Set([...NOTIFY_PRESETS, ...days])].sort((a, b) => a - b);
     document.getElementById('dayChips').innerHTML = all.map(d => `<label class="day-chip"><input type="checkbox" name="notifyDays" value="${d}"${days.includes(d) ? ' checked' : ''} onchange="setFieldError('notifyDays', false)"><span>${d}</span><svg class="icon day-tick" aria-hidden="true"><use href="#i-check"/></svg></label>`).join('')
       + `<button type="button" class="day-chip day-add" onclick="startCustomDay(this)" aria-label="Añadir otro número de días"><svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg></button>`
-      + `<input type="number" class="day-chip day-custom" min="1" max="90" step="1" inputmode="numeric" placeholder="días" aria-label="Días de antelación (1 a 90)" hidden onkeydown="customDayKey(event)" onblur="commitCustomDay(this)">`;
+      + `<input type="text" class="day-chip day-custom" inputmode="numeric" pattern="[0-9]*" maxlength="2" autocomplete="off" placeholder="Días" aria-label="Días de antelación (1 a 90)" hidden onkeydown="customDayKey(event)" onblur="commitCustomDay(this)">`;
   }
   function startCustomDay(btn) {
     const input = btn.nextElementSibling;

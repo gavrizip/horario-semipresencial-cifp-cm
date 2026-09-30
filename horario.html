@@ -390,7 +390,8 @@
     </div>
 
     <!-- AVISO (solo examen y tarea, solo en la app de Android) -->
-    <div class="field notify-fields">
+    <!-- Se pliega (animado) cuando deja de tener sentido: entregada, con nota o fecha pasada -->
+    <div class="field notify-fields"><div class="notify-inner">
       <label class="switch-row notify-switch"><span class="field-label">Notificar</span><input type="checkbox" role="switch" id="notifyOn" checked></label>
       <!-- Dos columnas: días de antelación (de dos en dos) a la izquierda y la hora a la derecha -->
       <div class="notify-days">
@@ -403,7 +404,7 @@
           <select name="notifyHour" id="notifyHour"><option value="7">7:00</option><option value="8">8:00</option><option value="9">9:00</option><option value="10" selected>10:00</option><option value="11">11:00</option><option value="12">12:00</option><option value="13">13:00</option><option value="14">14:00</option><option value="15">15:00</option><option value="16">16:00</option><option value="17">17:00</option><option value="18">18:00</option><option value="19">19:00</option><option value="20">20:00</option><option value="21">21:00</option><option value="22">22:00</option></select></label>
         <p class="field-error" data-error="notifyDays" hidden>Marca al menos un día, o desactiva «Notificar».</p>
       </div>
-    </div>
+    </div></div>
 
     <!-- NOTA -->
     <div class="kind-fields" data-kind="note">

@@ -192,6 +192,12 @@ html { -webkit-text-size-adjust: 100%; }
    desplaza, ni al arrastrar sobre el fondo ni al llegar al final de la ventana */
 html:has(dialog:modal) { overflow: hidden; }
 dialog { overscroll-behavior: contain; }
+/* Su barra de desplazamiento solo se ve mientras se desplaza: se desvanece tras 1 s quieta
+   (--sb es un color registrado para que la transición sea continua) */
+@property --sb { syntax: '<color>'; inherits: true; initial-value: transparent; }
+dialog { --sb: transparent; transition: --sb 360ms var(--ease-out); }
+dialog.is-scrolling { --sb: var(--line-strong); transition-duration: 120ms; }
+dialog, dialog * { scrollbar-color: var(--sb) transparent; }
 
 body {
   background: var(--bg);
@@ -1905,6 +1911,9 @@ tr.break-row td:first-child { background: var(--inset); padding-left: 8px; paddi
 .input-suffix { position: relative; display: flex; align-items: center; }
 .input-suffix input { padding-right: 48px; font-family: var(--mono); }
 .input-suffix span { position: absolute; right: 12px; font-size: 0.8125rem; color: var(--text-3); pointer-events: none; }
+/* Peso y nota: valor (y su ejemplo) en el centro de la caja, con la unidad a la derecha */
+#slotDialog .input-suffix input { padding-left: 44px; padding-right: 44px; text-align: center; }
+#slotDialog .input-suffix input::placeholder { text-align: center; }
 .field input:not([type="radio"], [type="checkbox"]) { height: 38px; }
 .field input[type="date"] { font-family: var(--mono); }
 .field input::placeholder { color: var(--text-3); }
@@ -1977,12 +1986,21 @@ tr.break-row td:first-child { background: var(--inset); padding-left: 8px; paddi
 .moodle-map[aria-invalid="true"] { border-color: var(--absence); }
 .moodle-map option { background: var(--surface-2); color: var(--text); }
 #moodleResolveError { margin-top: 10px; }
+/* Plegable: 1fr → 0fr con fundido (como la ayuda «i»), para retirarlo sin salto al marcar «Entregada» */
 .is-app #slotDialog[data-kind="exam"] .notify-fields,
-.is-app #slotDialog[data-kind="task"] .notify-fields { display: block; }
+.is-app #slotDialog[data-kind="task"] .notify-fields {
+  display: grid; grid-template-rows: 1fr;
+  transition: grid-template-rows 280ms var(--ease-out), opacity 220ms var(--ease-out), margin-bottom 280ms var(--ease-out), visibility 0s;
+}
+.notify-inner { min-height: 0; overflow: hidden; padding: 3px; margin: -3px; }   /* el margen deja ver los contornos de foco */
 /* Entregada, con nota o con la fecha ya pasada: sin «Notificar» (syncNotifyField) */
-.is-app #slotDialog.no-notify[data-kind] .notify-fields { display: none; }
+.is-app #slotDialog.no-notify[data-kind] .notify-fields {
+  grid-template-rows: 0fr; opacity: 0; margin-bottom: 0; visibility: hidden;
+  transition: grid-template-rows 280ms var(--ease-out), opacity 160ms var(--ease-out), margin-bottom 280ms var(--ease-out), visibility 0s linear 280ms;
+}
 /* «Notificar»: interruptor; apagado esconde días y hora */
-.notify-switch { min-height: 36px; }
+/* «Notificar» y su interruptor juntos, no en los extremos */
+.notify-switch { justify-content: flex-start; gap: 14px; width: fit-content; min-height: 36px; }
 .notify-fields:has(#notifyOn:not(:checked)) .notify-days { display: none; }
 .notify-days { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; gap: 8px 16px; margin-top: 4px; }
 .notify-days .field-help { margin-bottom: 8px; }
@@ -2019,8 +2037,8 @@ tr.break-row td:first-child { background: var(--inset); padding-left: 8px; paddi
 /* «+»: otro número de días; se convierte en un campo del mismo tamaño */
 .day-add { background: none; border-style: dashed; color: var(--text-3); }
 .day-add .icon { width: 16px; height: 16px; }
-.field .day-chips .day-custom { width: 100%; height: 40px; padding: 0 4px; text-align: center; font-family: var(--mono); font-size: 0.875rem; font-weight: 600; background: var(--inset); border-color: var(--accent); color: var(--text); cursor: text; }
-.field .day-chips .day-custom::placeholder { font-family: var(--font); font-weight: 400; font-size: 0.75rem; color: var(--text-3); }
+.field .day-chips .day-custom { width: 100%; height: 40px; padding: 0 4px; text-align: center; line-height: normal; font-family: var(--mono); font-size: 0.875rem; font-weight: 600; background: var(--inset); border-color: var(--accent); color: var(--text); cursor: text; }
+.field .day-chips .day-custom::placeholder { font-family: var(--font); font-weight: 450; color: var(--text-3); text-align: center; }
 /* Tipo de examen: píldoras de opción única (se desmarcan pulsándolas otra vez) */
 /* Los cuatro en una fila, repartiendo el ancho; la letra se ajusta al ancho (también con la letra del sistema grande) */
 .choice-chips { display: flex; gap: 6px; }
