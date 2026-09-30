@@ -59,18 +59,6 @@
 </svg>
 
 <div class="app">
-  <!-- TEMPORAL: barra de pruebas de notificaciones (solo en la app). Quitar este bloque, su CSS
-       (.test-bar) y AndroidApp.testNotification / MoodleWatch.testNotify al terminar. -->
-  <div class="test-bar" role="group" aria-label="Probar notificaciones">
-    <span class="test-bar-label">Probar</span>
-    <button type="button" onclick="AndroidApp.testNotification('exam')">Examen</button>
-    <button type="button" onclick="AndroidApp.testNotification('task')">Tarea</button>
-    <button type="button" onclick="AndroidApp.testNotification('personal')">Tarea personal</button>
-    <button type="button" onclick="AndroidApp.testNotification('campusNew')">Campus: nueva</button>
-    <button type="button" onclick="AndroidApp.testNotification('campusMoved')">Campus: fecha</button>
-    <button type="button" onclick="AndroidApp.testNotification('campusMany')">Campus: varias</button>
-  </div>
-
   <header class="topbar intro-1">
     <nav class="tabs" aria-label="Vistas">
       <button class="tab is-active" id="tabGrid" onclick="switchTab('grid')">Trimestre</button>

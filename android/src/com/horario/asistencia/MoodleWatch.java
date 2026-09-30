@@ -146,25 +146,6 @@ final class MoodleWatch {
         }
     }
 
-    /** TEMPORAL: notificación de prueba del campus (barra de pruebas de la página). */
-    static void testNotify(Context c, String kind) {
-        long now = System.currentTimeMillis() / 1000, day = 86400;
-        Map<String, Long> due = new HashMap<>();
-        Map<String, String[]> info = new HashMap<>();
-        Map<String, String> course = new HashMap<>();
-        course.put("1", "IMW");
-        course.put("2", "SRD");
-        due.put("t1", now + 3 * day);
-        info.put("t1", new String[]{"Práctica 3 · Apache virtual hosts", "1"});
-        due.put("t2", now + 7 * day);
-        info.put("t2", new String[]{"DNS con BIND9", "2"});
-        List<String[]> changes = new java.util.ArrayList<>();
-        if ("campusNew".equals(kind)) changes.add(new String[]{CampusDiff.NEW, "t1"});
-        else if ("campusMoved".equals(kind)) changes.add(new String[]{CampusDiff.MOVED, "t2"});
-        else { changes.add(new String[]{CampusDiff.NEW, "t1"}); changes.add(new String[]{CampusDiff.MOVED, "t2"}); }
-        notify(c, changes, due, info, course);
-    }
-
     private static String when(long sec) {
         return new SimpleDateFormat("EEE d MMM · HH:mm", new Locale("es", "ES")).format(new Date(sec * 1000)).replace(".", "");
     }

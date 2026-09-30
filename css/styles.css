@@ -2183,19 +2183,3 @@ tr.break-row td:first-child { background: var(--inset); padding-left: 8px; paddi
 .tip-extra { display: block; color: var(--text-2); margin-top: 2px; }
 .tip-detail { margin-top: 2px; font-size: 0.75rem; color: var(--text-2); }
 
-/* TEMPORAL: barra de pruebas de notificaciones (solo en la app) */
-.test-bar { display: none; }
-.is-app .test-bar {
-  display: flex; align-items: center; gap: 6px;
-  margin-bottom: 12px; padding: 6px 8px;
-  border: 1px dashed var(--line-strong); border-radius: var(--r);
-  overflow-x: auto; scrollbar-width: none;
-}
-.test-bar::-webkit-scrollbar { display: none; }
-.test-bar-label { flex: none; font-size: 0.6875rem; font-weight: 650; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-3); }
-.test-bar button {
-  flex: none; height: 28px; padding: 0 10px;
-  border: 1px solid var(--line-strong); border-radius: var(--r-sm); background: none;
-  font: inherit; font-size: 0.75rem; font-weight: 550; color: var(--text-2); cursor: pointer;
-}
-.test-bar button:active { transform: scale(0.97); }
