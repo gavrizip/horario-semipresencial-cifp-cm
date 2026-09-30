@@ -1911,9 +1911,20 @@ tr.break-row td:first-child { background: var(--inset); padding-left: 8px; paddi
 .input-suffix { position: relative; display: flex; align-items: center; }
 .input-suffix input { padding-right: 48px; font-family: var(--mono); }
 .input-suffix span { position: absolute; right: 12px; font-size: 0.8125rem; color: var(--text-3); pointer-events: none; }
-/* Peso y nota: valor (y su ejemplo) en el centro de la caja, con la unidad a la derecha */
-#slotDialog .input-suffix input { padding-left: 44px; padding-right: 44px; text-align: center; }
-#slotDialog .input-suffix input::placeholder { text-align: center; }
+/* Peso y nota: la caja es el <label>; dentro, el valor (de su ancho, fitUnitInput) y la unidad pegada,
+   todo centrado: «30%», «—/10». La unidad va en el gris de los ejemplos. */
+.unit-field {
+  display: flex; align-items: center; justify-content: center;
+  height: 38px; padding: 0 12px;
+  background: var(--inset); border: 1px solid var(--line-strong); border-radius: var(--r);
+  font-family: var(--mono); font-size: 0.875rem; cursor: text;
+  transition: border-color var(--t) var(--ease-out);
+}
+.unit-field:hover { border-color: color-mix(in oklch, var(--line-strong) 60%, var(--text-3)); }
+.unit-field:focus-within { border-color: var(--accent); }
+.unit-field:has(input[aria-invalid="true"]) { border-color: var(--absence); }
+.field .unit-field input { width: 3ch; min-width: 1ch; height: auto; padding: 0; border: none; background: none; text-align: right; font: inherit; }
+.unit-field span { color: var(--text-3); }
 .field input:not([type="radio"], [type="checkbox"]) { height: 38px; }
 .field input[type="date"] { font-family: var(--mono); }
 .field input::placeholder { color: var(--text-3); }
@@ -2009,8 +2020,20 @@ tr.break-row td:first-child { background: var(--inset); padding-left: 8px; paddi
 .notify-hour-field { display: block; }
 .notify-hour-field .field-help { display: block; }
 /* Hora escrita (centrada, como los días) y AM | PM debajo, a la altura de la segunda fila de días */
-.field .notify-hour-field .notify-time { width: 100%; height: 40px; padding: 0 8px; text-align: center; font-family: var(--mono); font-size: 0.9375rem; }
-.notify-hour-field .notify-time::placeholder { text-align: center; }
+/* Hora: dos casillas y los «:» fijos en el gris de los ejemplos, todo como una sola caja */
+.time-field {
+  display: flex; align-items: center; justify-content: center;
+  height: 40px; padding: 0 8px;
+  background: var(--inset); border: 1px solid var(--line-strong); border-radius: var(--r);
+  font-family: var(--mono); font-size: 0.9375rem; cursor: text;
+  transition: border-color var(--t) var(--ease-out);
+}
+.time-field:hover { border-color: color-mix(in oklch, var(--line-strong) 60%, var(--text-3)); }
+.time-field:focus-within { border-color: var(--accent); }
+.time-field:has(input[aria-invalid="true"]) { border-color: var(--absence); }
+.field .time-field input { width: 2.05ch; height: auto; padding: 0; border: none; background: none; font: inherit; }
+.field .time-field #notifyTime { text-align: right; }
+.time-sep { margin: 0 -0.15ch; color: var(--text-3); }   /* en monoespaciada los «:» traen aire de sobra */
 .ampm { margin-top: 6px; }
 .ampm.seg-radio .segmented-btn { height: 32px; font-family: var(--mono); }
 /* Días de antelación: casillas (varias a la vez), rellenas en ámbar y con ✓ en la esquina al marcarlas */

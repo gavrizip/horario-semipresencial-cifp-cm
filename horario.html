@@ -315,7 +315,7 @@
 <div class="chip-tip" id="chipTip" role="tooltip" hidden></div>
 
 <dialog class="dialog" id="slotDialog" aria-labelledby="slotDialogTitle">
-  <form id="slotForm" method="dialog" onsubmit="saveSlotRecord(event)" oninput="syncNotifyField()" onchange="syncNotifyField()" novalidate>
+  <form id="slotForm" method="dialog" onsubmit="saveSlotRecord(event)" oninput="onSlotInput(event)" onchange="syncNotifyField()" novalidate>
     <div class="dialog-head">
       <!-- Título con el icono del tipo a la derecha; asignatura y fecha debajo, a todo lo ancho -->
       <div class="slot-dialog-title">
@@ -345,12 +345,12 @@
       <div class="field-row">
         <div class="field">
           <label class="field-label" for="examWeight">Peso en la nota final</label>
-          <div class="input-suffix"><input type="number" id="examWeight" min="0" max="100" step="1" inputmode="decimal" placeholder="30"><span>%</span></div>
+          <label class="unit-field"><input type="number" id="examWeight" min="0" max="100" step="1" inputmode="decimal" placeholder="30"><span>%</span></label>
           <p class="field-error" data-error="examWeight" hidden>Entre 0 y 100.</p>
         </div>
         <div class="field">
           <label class="field-label" for="examGrade">Nota obtenida</label>
-          <div class="input-suffix"><input type="number" id="examGrade" min="0" max="10" step="0.01" inputmode="decimal" placeholder="—"><span>/ 10</span></div>
+          <label class="unit-field"><input type="number" id="examGrade" min="0" max="10" step="0.01" inputmode="decimal" placeholder="—"><span>/10</span></label>
           <p class="field-error" data-error="examGrade" hidden>Entre 0 y 10.</p>
         </div>
       </div>
@@ -370,12 +370,12 @@
       <div class="field-row">
         <div class="field">
           <label class="field-label" for="taskWeight">Peso en la nota final</label>
-          <div class="input-suffix"><input type="number" id="taskWeight" min="0" max="100" step="1" inputmode="decimal" placeholder="10"><span>%</span></div>
+          <label class="unit-field"><input type="number" id="taskWeight" min="0" max="100" step="1" inputmode="decimal" placeholder="10"><span>%</span></label>
           <p class="field-error" data-error="taskWeight" hidden>Entre 0 y 100.</p>
         </div>
         <div class="field">
           <label class="field-label" for="taskGrade">Nota obtenida</label>
-          <div class="input-suffix"><input type="number" id="taskGrade" min="0" max="10" step="0.01" inputmode="decimal" placeholder="—" oninput="if (this.value.trim()) document.querySelector('input[name=taskStatus][value=done]').checked = true"><span>/ 10</span></div>
+          <label class="unit-field"><input type="number" id="taskGrade" min="0" max="10" step="0.01" inputmode="decimal" placeholder="—" oninput="if (this.value.trim()) document.querySelector('input[name=taskStatus][value=done]').checked = true"><span>/10</span></label>
           <p class="field-error" data-error="taskGrade" hidden>Entre 0 y 10.</p>
         </div>
       </div>
@@ -403,7 +403,12 @@
         <!-- Hora escrita a mano (formato de 12 h) y, debajo, AM | PM -->
         <div class="notify-col notify-hour-field">
           <label class="field-help" for="notifyTime">A esta hora</label>
-          <input type="text" id="notifyTime" class="notify-time" inputmode="decimal" maxlength="5" autocomplete="off" placeholder="10:00" onblur="tidyNotifyTime(this)" oninput="setFieldError('notifyTime', false)">
+          <!-- Horas y minutos por separado: los «:» están siempre (en gris) y al escribir la hora se salta a los minutos -->
+          <div class="time-field" onpointerdown="timeFieldDown(event)" onfocusout="timeFieldOut(event)">
+            <input type="text" id="notifyTime" inputmode="numeric" maxlength="2" autocomplete="off" placeholder="10" aria-label="Hora del aviso" oninput="timeHourInput(this)">
+            <span class="time-sep" aria-hidden="true">:</span>
+            <input type="text" id="notifyMin" inputmode="numeric" maxlength="2" autocomplete="off" placeholder="00" aria-label="Minutos del aviso" oninput="timeMinInput(this)" onkeydown="timeMinKey(event)">
+          </div>
           <div class="segmented seg-radio ampm" role="radiogroup" aria-label="Antes o después del mediodía">
             <span class="segmented-thumb" aria-hidden="true"></span>
             <label class="segmented-btn"><input type="radio" name="notifyAmPm" value="am" checked>AM</label>

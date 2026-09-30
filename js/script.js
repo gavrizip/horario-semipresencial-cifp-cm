@@ -2771,6 +2771,7 @@
       setNotifyTime(ev ? ev.notifyHour ?? REMINDER_HOUR : REMINDER_HOUR, ev ? ev.notifyMinute ?? 0 : 0);
     }
 
+    dialog.querySelectorAll('.unit-field input').forEach(fitUnitInput);
     syncNotifyField();
     dialog.classList.remove('is-closing');
     dialog.showModal();
@@ -2869,6 +2870,15 @@
 
   function closeSlotDialog() { closeDialog('slotDialog'); }
 
+  // Peso y nota: la caja mide lo que su texto (o su ejemplo), para que «30%» y «—/10» vayan juntos y centrados
+  function fitUnitInput(input) {
+    input.style.width = `${Math.max(input.value.length, input.placeholder.length, 1) + 0.2}ch`;
+  }
+  function onSlotInput(e) {
+    if (e.target.closest('.unit-field')) fitUnitInput(e.target);
+    syncNotifyField();
+  }
+
   // Barra de desplazamiento de las ventanas: aparece al desplazar y se desvanece tras 1 s quieta
   document.addEventListener('scroll', e => {
     const dialog = e.target instanceof Element && e.target.closest('dialog');
@@ -2917,19 +2927,57 @@
   }
   const pad2 = n => String(n).padStart(2, '0');
   function setAmPm(pm) { document.querySelector(`input[name="notifyAmPm"][value="${pm ? 'pm' : 'am'}"]`).checked = true; }
+  // «9» y «3» → «9:03» (una sola cifra en los minutos se lee como 0x)
+  const clockText = () => `${document.getElementById('notifyTime').value}:${pad2(document.getElementById('notifyMin').value || 0)}`;
   function setNotifyTime(hour, minute) {
-    document.getElementById('notifyTime').value = `${hour % 12 || 12}:${pad2(minute)}`;
+    document.getElementById('notifyTime').value = hour % 12 || 12;
+    document.getElementById('notifyMin').value = pad2(minute);
     setAmPm(hour >= 12);
   }
-  // Al salir del campo se deja escrita como «9:30»
-  function tidyNotifyTime(input) {
-    const t = parseClock(input.value);
+  // Campo de hora en dos casillas con los «:» fijos. Horas: del 2 al 9 ya es la hora entera y
+  // se pasa a los minutos; con 0 o 1 se espera a la segunda cifra. Se puede pegar «9:30».
+  function timeHourInput(input) {
+    const min = document.getElementById('notifyMin');
+    const digits = input.value.replace(/\D/g, '');
+    setFieldError('notifyTime', false);
+    if (digits.length > 2) { input.value = digits.slice(0, -2); min.value = digits.slice(-2); min.focus(); return; }
+    input.value = digits;
+    if (digits.length === 2 || /^[2-9]$/.test(digits)) { min.focus(); min.select(); }
+  }
+  // Minutos: una cifra de 6 a 9 solo puede ser «0x»
+  function timeMinInput(input) {
+    const digits = input.value.replace(/\D/g, '');
+    input.value = /^[6-9]$/.test(digits) ? '0' + digits : digits;
+    setFieldError('notifyTime', false);
+  }
+  // Borrar con los minutos vacíos vuelve a las horas
+  function timeMinKey(e) {
+    if (e.key !== 'Backspace' || e.target.value) return;
+    e.preventDefault();
+    const hour = document.getElementById('notifyTime');
+    hour.focus();
+    hour.setSelectionRange(hour.value.length, hour.value.length);
+  }
+  // Pulsar en la caja (fuera de las casillas) lleva a las horas
+  function timeFieldDown(e) {
+    if (e.target.tagName === 'INPUT') return;
+    e.preventDefault();
+    document.getElementById('notifyTime').focus();
+  }
+  // Al salir de la caja se deja como «9:30» (y una hora de 24 h elige AM o PM)
+  function timeFieldOut(e) {
+    if (e.currentTarget.contains(e.relatedTarget)) return;
+    const hour = document.getElementById('notifyTime');
+    if (!hour.value) return;
+    const t = parseClock(clockText());
     if (!t) return;
-    input.value = `${t.h}:${pad2(t.min)}`;
+    hour.value = t.h;
+    document.getElementById('notifyMin').value = pad2(t.min);
     if (t.pm !== null) setAmPm(t.pm);
   }
   function readNotifyTime() {
-    const t = parseClock(document.getElementById('notifyTime').value);
+    if (!document.getElementById('notifyTime').value) return null;
+    const t = parseClock(clockText());
     if (!t) return null;
     const pm = t.pm ?? document.querySelector('input[name="notifyAmPm"]:checked').value === 'pm';
     return { hour: (t.h % 12) + (pm ? 12 : 0), minute: t.min };
