@@ -2322,8 +2322,7 @@
     parcial: { chip: 'Parcial', full: 'Examen parcial' },
     final: { chip: 'Final', full: 'Examen final' },
     recuperacion: { chip: 'Recuperación', full: 'Recuperación' },
-    test: { chip: 'Test', full: 'Test' },
-    practico: { chip: 'Práctico', full: 'Examen práctico' }
+    test: { chip: 'Test', full: 'Test' }
   };
   // «Examen parcial», «Test»… o el tipo de registro si no tiene
   function recordLabel(ev) {

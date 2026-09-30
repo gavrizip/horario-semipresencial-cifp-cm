@@ -317,12 +317,11 @@
 <dialog class="dialog" id="slotDialog" aria-labelledby="slotDialogTitle">
   <form id="slotForm" method="dialog" onsubmit="saveSlotRecord(event)" novalidate>
     <div class="dialog-head">
+      <!-- Título con el icono del tipo a la derecha; asignatura y fecha debajo, a todo lo ancho -->
       <div class="slot-dialog-title">
+        <h3 id="slotDialogTitle">Examen</h3>
         <span class="slot-dialog-kind" id="slotDialogKind" aria-hidden="true"></span>
-        <div>
-          <h3 id="slotDialogTitle">Examen</h3>
-          <p class="slot-dialog-meta" id="slotDialogMeta"></p>
-        </div>
+        <p class="slot-dialog-meta" id="slotDialogMeta"></p>
       </div>
     </div>
 
@@ -336,7 +335,6 @@
           <label class="choice-chip" onpointerdown="chipDown(this)"><input type="radio" name="examType" value="final" onclick="chipClick(this)"><span>Final</span></label>
           <label class="choice-chip" onpointerdown="chipDown(this)"><input type="radio" name="examType" value="recuperacion" onclick="chipClick(this)"><span>Recuperación</span></label>
           <label class="choice-chip" onpointerdown="chipDown(this)"><input type="radio" name="examType" value="test" onclick="chipClick(this)"><span>Test</span></label>
-          <label class="choice-chip" onpointerdown="chipDown(this)"><input type="radio" name="examType" value="practico" onclick="chipClick(this)"><span>Práctico</span></label>
         </div>
       </fieldset>
       <div class="field">
@@ -394,13 +392,16 @@
     <!-- AVISO (solo examen y tarea, solo en la app de Android) -->
     <div class="field notify-fields">
       <label class="switch-row notify-switch"><span class="field-label">Notificar</span><input type="checkbox" role="switch" id="notifyOn" checked></label>
-      <div class="notify-days" role="group" aria-labelledby="notifyDaysLabel">
-        <p class="field-help" id="notifyDaysLabel">Días de antelación</p>
-        <!-- Chips de días (renderDayChips) y «+» para escribir otro número -->
-        <div class="day-chips" id="dayChips"></div>
-        <p class="field-error" data-error="notifyDays" hidden>Marca al menos un día, o desactiva «Notificar».</p>
-        <label class="notify-hour-field"><span class="field-help">A esta hora</span>
+      <!-- Dos columnas: días de antelación (de dos en dos) a la izquierda y la hora a la derecha -->
+      <div class="notify-days">
+        <div class="notify-col" role="group" aria-labelledby="notifyDaysLabel">
+          <p class="field-help" id="notifyDaysLabel">Días de antelación</p>
+          <!-- Chips de días (renderDayChips) y «+» para escribir otro número -->
+          <div class="day-chips" id="dayChips"></div>
+        </div>
+        <label class="notify-col notify-hour-field"><span class="field-help">A esta hora</span>
           <select name="notifyHour" id="notifyHour"><option value="7">7:00</option><option value="8">8:00</option><option value="9">9:00</option><option value="10" selected>10:00</option><option value="11">11:00</option><option value="12">12:00</option><option value="13">13:00</option><option value="14">14:00</option><option value="15">15:00</option><option value="16">16:00</option><option value="17">17:00</option><option value="18">18:00</option><option value="19">19:00</option><option value="20">20:00</option><option value="21">21:00</option><option value="22">22:00</option></select></label>
+        <p class="field-error" data-error="notifyDays" hidden>Marca al menos un día, o desactiva «Notificar».</p>
       </div>
     </div>
 
