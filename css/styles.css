@@ -1145,6 +1145,24 @@ tr.break-row td:first-child { background: var(--inset); padding-left: 8px; paddi
 .module-dialog .type-option::before { content: none; }
 .module-dialog .type-option:hover { color: var(--ct); background: color-mix(in oklch, var(--c) 8%, transparent); }
 .module-dialog .type-option:has(input:checked) { color: var(--ct); font-weight: 650; border-color: var(--c); background: color-mix(in oklch, var(--c) 20%, transparent); }
+/* Botón «i» junto a una etiqueta: despliega su ayuda debajo (sin tapar nada) */
+.info-btn {
+  position: relative; display: inline-grid; place-items: center;
+  width: 22px; height: 22px; margin: -3px 0 -3px 6px; padding: 0;
+  border: none; border-radius: 50%; background: none;
+  color: var(--text-3); cursor: pointer; vertical-align: middle;
+  transition: color var(--t) var(--ease-out), transform var(--t-fast) var(--ease-out);
+}
+.info-btn::after { content: ''; position: absolute; inset: -11px; }   /* zona táctil de 44 px */
+.info-btn .icon { width: 16px; height: 16px; }
+.info-btn:hover, .info-btn[aria-expanded="true"] { color: var(--accent-text); }
+.info-btn:active { transform: scale(0.9); }
+.info-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.info-reveal { display: grid; grid-template-rows: 0fr; opacity: 0; transition: grid-template-rows 260ms var(--ease-out), opacity 200ms var(--ease-out); }
+.info-reveal > * { overflow: hidden; min-height: 0; }
+.info-reveal.is-open { grid-template-rows: 1fr; opacity: 1; }
+.info-reveal .field-help { margin: 0; padding-bottom: 10px; }
+
 /* Pie: tres botones que caben en el móvil; si no, bajan en vez de salirse */
 .module-dialog .dialog-actions { flex-wrap: wrap; row-gap: 8px; }
 .module-dialog .dialog-actions .btn { padding: 0 12px; font-size: 0.8125rem; }

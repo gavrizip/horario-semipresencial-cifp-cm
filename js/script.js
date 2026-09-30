@@ -3006,9 +3006,16 @@
     document.getElementById('moduleTeacher').placeholder = capitalize(mod.teacher);
     document.getElementById('moduleRoom').value = roomOf(code) || '';
     document.querySelector(`input[name="moduleStatus"][value="${statusOf(code) || 'active'}"]`).checked = true;
+    toggleInfo(document.querySelector('#moduleDialog .info-btn'), false);
     const dialog = document.getElementById('moduleDialog');
     dialog.classList.remove('is-closing');
     dialog.showModal();
+  }
+
+  // Botón «i»: despliega o pliega el texto de ayuda que controla (aria-controls)
+  function toggleInfo(btn, open = btn.getAttribute('aria-expanded') !== 'true') {
+    btn.setAttribute('aria-expanded', open);
+    document.getElementById(btn.getAttribute('aria-controls')).classList.toggle('is-open', open);
   }
 
   // Vuelve a lo que trae la app (docente y aula originales, cursándola)

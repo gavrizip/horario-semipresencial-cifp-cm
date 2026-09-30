@@ -479,13 +479,13 @@
       </div>
     </div>
     <fieldset class="field">
-      <legend class="field-label">Estado</legend>
+      <legend class="field-label">Estado<button type="button" class="info-btn" aria-expanded="false" aria-controls="moduleStatusHelp" onclick="toggleInfo(this)" aria-label="Qué significa cada estado" title="Qué significa cada estado"><svg class="icon"><use href="#i-info"/></svg></button></legend>
+      <div class="info-reveal" id="moduleStatusHelp"><p class="field-help">Convalidada o desistida: deja de salir en el horario, la asistencia y los avisos. Sus registros se conservan y puedes volver a «Cursando» cuando quieras.</p></div>
       <div class="type-picker">
         <label class="type-option" data-type="active"><input type="radio" name="moduleStatus" value="active" checked><span>Cursando</span></label>
         <label class="type-option" data-type="convalidada"><input type="radio" name="moduleStatus" value="convalidada"><span>Convalidada</span></label>
         <label class="type-option" data-type="desistida"><input type="radio" name="moduleStatus" value="desistida"><span>Desistida</span></label>
       </div>
-      <p class="field-help">Convalidada o desistida: deja de salir en el horario, la asistencia y los avisos. Sus registros se conservan y puedes volver a «Cursando» cuando quieras.</p>
     </fieldset>
     <div class="dialog-actions">
       <button type="button" class="btn btn-danger" onclick="resetModuleDialog()">Restablecer</button>
