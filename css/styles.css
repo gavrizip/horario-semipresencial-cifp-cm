@@ -1915,8 +1915,7 @@ tr.break-row td:first-child { background: var(--inset); padding-left: 8px; paddi
 .btn-primary.sync-btn.is-loading { color: var(--accent-ink); border-color: transparent; }
 .btn-primary.sync-btn.is-loading .icon { color: var(--accent-ink); }
 .moodle-actions [hidden] { display: none; }
-#moodleConnectBtn, #moodleSyncBtn { grid-column: 1 / -1; }
-.moodle-logout { grid-column: 2; margin-top: 10px; }
+#moodleConnectBtn { grid-column: 1 / -1; }
 .moodle-dialog { width: min(560px, calc(100vw - 32px)); }
 .moodle-dialog .dialog-head { align-items: flex-start; margin-bottom: 12px; }
 .moodle-list { list-style: none; margin: 0; padding: 0 8px 0 0; max-height: min(62dvh, 580px); overflow-y: auto; overscroll-behavior: contain; }

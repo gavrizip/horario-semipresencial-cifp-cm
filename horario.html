@@ -267,9 +267,9 @@
     <p class="field-help" id="moodleStatus">Conecta tu cuenta de Medusa para traer tus tareas del campus.</p>
     <div class="moodle-actions">
       <button type="button" class="btn btn-primary" id="moodleConnectBtn" onclick="moodleConnect()">Conectar</button>
-      <button type="button" class="btn btn-primary sync-btn is-quiet" id="moodleSyncBtn" onclick="moodleSync()" hidden><svg class="icon" aria-hidden="true"><use href="#i-sync"/></svg><span>Ver tareas</span></button>
-      <!-- Desconectar, en rojo y en su propia fila: borra el acceso al campus guardado en el móvil -->
+      <!-- Desconectar (rojo) a la izquierda y «Ver tareas» a la derecha: borra el acceso al campus guardado en el móvil -->
       <button type="button" class="btn btn-danger moodle-logout" id="moodleLogoutBtn" onclick="moodleDisconnect()" hidden>Desconectar</button>
+      <button type="button" class="btn btn-primary sync-btn is-quiet" id="moodleSyncBtn" onclick="moodleSync()" hidden><svg class="icon" aria-hidden="true"><use href="#i-sync"/></svg><span>Ver tareas</span></button>
     </div>
   </section>
 
