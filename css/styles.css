@@ -188,6 +188,10 @@
 * { margin: 0; padding: 0; }
 
 html { -webkit-text-size-adjust: 100%; }
+/* Con una ventana abierta (diálogo o menú lateral) solo se mueve ella: la página de detrás no se
+   desplaza, ni al arrastrar sobre el fondo ni al llegar al final de la ventana */
+html:has(dialog:modal) { overflow: hidden; }
+dialog { overscroll-behavior: contain; }
 
 body {
   background: var(--bg);

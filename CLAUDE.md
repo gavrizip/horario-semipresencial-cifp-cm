@@ -62,3 +62,4 @@ The Registros panel lists the events of the current range (the table's sub-tab r
 - Entrance animation plays once per page load: an inline `<head>` script adds `html.is-intro` (skipped under `prefers-reduced-motion`), CSS keys the intro keyframes off it, and `init()` removes it after 1.5s. Content is visible by default if JS fails.
 - Re-renders replace `innerHTML`, so state-change animations are re-triggered with `replay(el, 'is-swapping')`. Attendance bars keep their previous `--p` for one frame so width changes animate via `transform: scaleX`.
 - The add-record form is a native `<dialog>`; close through `closeAddModal()` so the exit animation runs.
+- While any modal `<dialog>` is open (dialogs and the side menu) the page behind can't scroll: `html:has(dialog:modal) { overflow: hidden }`, and every `dialog` has `overscroll-behavior: contain` so reaching its end doesn't chain the swipe to the page.
