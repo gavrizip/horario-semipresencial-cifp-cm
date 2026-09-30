@@ -180,6 +180,8 @@
       <section class="panel">
         <div class="panel-head">
           <h3>Registros</h3>
+          <!-- Campus: trae las tareas pendientes (solo en la app con la cuenta conectada) -->
+          <button type="button" class="btn btn-ghost sync-btn panel-sync" id="moodleSyncBtn" onclick="moodleSync()" data-labels="Sincronizar|Sincronizando|Sincronizado" hidden><svg class="icon" aria-hidden="true"><use href="#i-sync"/></svg><span>Sincronizar</span></button>
         </div>
         <div class="record-filters" role="group" aria-label="Filtrar registros">
           <button type="button" class="record-filter" data-type="exam" aria-pressed="false" onclick="setRecordFilter('exam')"><svg class="icon"><use href="#i-exam"/></svg>Exámenes</button>
@@ -264,12 +266,11 @@
   <section class="drawer-section moodle-section">
     <h4 class="drawer-label"><svg class="icon"><use href="#i-task"/></svg>Campus
       <span class="campus-state" id="moodleState" role="status"><span class="campus-dot" aria-hidden="true"></span><span id="moodleStateText">Sin conectar</span></span></h4>
-    <p class="field-help" id="moodleStatus">Conecta tu cuenta de Medusa para traer tus tareas del campus.</p>
+    <p class="field-help" id="moodleStatus">Vincula tu cuenta de Medusa para sincronizar tus tareas y actividades del campus.</p>
     <div class="moodle-actions">
       <button type="button" class="btn btn-primary" id="moodleConnectBtn" onclick="moodleConnect()">Conectar</button>
-      <!-- Desconectar (rojo) a la izquierda y «Ver tareas» a la derecha: borra el acceso al campus guardado en el móvil -->
+      <!-- Desconectar (rojo): borra el acceso al campus guardado en el móvil -->
       <button type="button" class="btn btn-danger moodle-logout" id="moodleLogoutBtn" onclick="moodleDisconnect()" hidden>Desconectar</button>
-      <button type="button" class="btn btn-primary sync-btn is-quiet" id="moodleSyncBtn" onclick="moodleSync()" hidden><svg class="icon" aria-hidden="true"><use href="#i-sync"/></svg><span>Ver tareas</span></button>
     </div>
   </section>
 

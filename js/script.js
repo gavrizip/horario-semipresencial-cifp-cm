@@ -313,10 +313,12 @@
     document.getElementById('moodleStateText').textContent = connected ? 'Conectado' : 'Sin conectar';
     state.title = connected && user ? `Conectado como ${user}` : '';
     const status = document.getElementById('moodleStatus');
-    status.textContent = message || (connected ? '' : 'Conecta tu cuenta de Medusa para traer tus tareas del campus.');
+    status.textContent = message || (connected ? '' : 'Vincula tu cuenta de Medusa para sincronizar tus tareas y actividades del campus.');
     status.hidden = !status.textContent;
     document.getElementById('moodleConnectBtn').hidden = connected;
-    document.getElementById('moodleSyncBtn').hidden = !connected;
+    const sync = document.getElementById('moodleSyncBtn');
+    sync.hidden = !connected;
+    if (connected) fixBtnWidth(sync);
     document.getElementById('moodleLogoutBtn').hidden = !connected;
     renderNotifySettings();
     renderGradesBar();
@@ -385,7 +387,7 @@
 
   // --- Avisos del campus en segundo plano (MoodleWatch.java) ---
   // A Android se le manda qué avisar (tareas nuevas / cambios de fecha), el curso escolar, la
-  // asignatura de cada curso y, tras «Ver tareas», las tareas que ya se han visto, para que
+  // asignatura de cada curso y, tras «Sincronizar», las tareas que ya se han visto, para que
   // no las avise como nuevas.
   function moodleWatchOn() {
     const p = notifyPrefs();
@@ -401,7 +403,7 @@
     AndroidApp.moodleWatchState(JSON.stringify(state));
   }
 
-  // --- Botones con estados de carga («Ver tareas», «Actualizar» de Módulos) ---
+  // --- Botones con estados de carga («Sincronizar» de Registros, «Actualizar» de Módulos) ---
   // Normal → trabajando (el icono gira, al menos 700 ms para que no parezca un parpadeo) → hecho
   // (verde con ✓ durante 2,4 s) → normal. Nunca cambian de tamaño: fuera de la rejilla del campus
   // el ancho se fija al del primer texto (el más largo), y si un texto no cabe se reduce su letra.
@@ -462,7 +464,7 @@
   async function moodleSync() {
     const btn = document.getElementById('moodleSyncBtn');
     if (btn.classList.contains('is-loading')) return;
-    btnBusy(btn, 'Comprobando…');
+    btnBusy(btn, 'Sincronizando');
     let ok = false;
     try {
       const site = await moodleCall('core_webservice_get_site_info');
@@ -490,9 +492,12 @@
       renderMoodleStatus();
       ok = true;
     } catch (e) {
-      renderMoodleStatus(e.code === 'invalidtoken' ? 'La sesión del campus ha caducado: vuelve a conectar.' : e.message);
+      // El botón está en Registros, fuera del menú: el error sale también como aviso
+      const msg = e.code === 'invalidtoken' ? 'La sesión del campus ha caducado: vuelve a conectar.' : e.message;
+      renderMoodleStatus(msg);
+      showToast(msg);
     } finally {
-      btnDone(btn, false, '', 'Ver tareas');
+      btnDone(btn, ok, 'Sincronizado', 'Sincronizar');
     }
   }
 
@@ -808,7 +813,7 @@
     const courses = Object.entries(loadCourseMap())
       .map(([id, m]) => ({ id: Number(id), fullname: m.fullname, shortname: m.shortname }))
       .sort((a, b) => a.fullname.localeCompare(b.fullname, 'es'));
-    if (!courses.length) { showToast('Aún no hay cursos del campus: pulsa «Actualizar» o «Ver tareas»'); return; }
+    if (!courses.length) { showToast('Aún no hay cursos del campus: pulsa «Actualizar» o «Sincronizar»'); return; }
     renderCourseResolver(courses, true, () => { closeDialog('moodleDialog'); renderModulesList(); });
   }
 
