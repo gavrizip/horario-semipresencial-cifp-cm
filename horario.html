@@ -160,6 +160,7 @@
           <!-- Notas del campus: solo en la app con la cuenta conectada -->
           <div class="grades-bar" id="gradesBar" hidden>
             <button type="button" class="btn btn-ghost sync-btn" id="gradesRefreshBtn" onclick="moodleGrades()" data-labels="Actualizar|Actualizando|Actualizado" aria-label="Actualizar las notas del campus" title="Actualizar las notas del campus"><svg class="icon" aria-hidden="true"><use href="#i-sync"/></svg><span>Actualizar</span></button>
+            <button type="button" class="text-link grades-settings" onclick="openCampusCourses()" title="Relacionar los cursos del campus con las asignaturas"><svg class="icon" aria-hidden="true"><use href="#i-gear"/></svg>Ajustes</button>
           </div>
         </div>
         <div class="modules-list" id="modulesGridList"></div>
@@ -447,15 +448,14 @@
       <h3 id="moodleTitle">Pendientes en el campus</h3>
       <p class="slot-dialog-meta" id="moodleMeta"></p>
     </div>
-    <button type="button" class="icon-btn" onclick="closeDialog('moodleDialog')" aria-label="Cerrar"><svg class="icon"><use href="#i-x"/></svg></button>
   </div>
   <ul class="moodle-list" id="moodleList"></ul>
   <p class="field-error" id="moodleResolveError" hidden>Elige una asignatura (o «Ninguna asignatura») para cada curso.</p>
   <div class="dialog-actions">
-    <button type="button" class="btn btn-ghost moodle-list-only" onclick="renderCourseResolver(moodleData.courses, true, renderMoodleList)">Cambiar asignaturas</button>
     <span class="spacer"></span>
-    <button type="button" class="btn btn-ghost moodle-list-only" onclick="closeDialog('moodleDialog')">Cerrar</button>
-    <button type="button" class="btn btn-primary moodle-resolve-only" onclick="saveCourseResolver()">Continuar</button>
+    <button type="button" class="btn btn-ghost moodle-list-only" id="moodleCloseBtn" onclick="closeDialog('moodleDialog')">Cerrar</button>
+    <button type="button" class="btn btn-ghost moodle-resolve-only" onclick="closeDialog('moodleDialog')">Cancelar</button>
+    <button type="button" class="btn btn-primary moodle-resolve-only" id="moodleResolveBtn" onclick="saveCourseResolver()">Continuar</button>
   </div>
 </dialog>
 

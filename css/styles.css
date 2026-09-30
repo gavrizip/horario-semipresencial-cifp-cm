@@ -1097,7 +1097,13 @@ tr.break-row td:first-child { background: var(--inset); padding-left: 8px; paddi
 .modules-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
 .modules-head h2 { min-width: 0; }
 /* Notas del campus: estado y botón junto al título */
-.grades-bar { display: flex; flex: none; margin-left: auto; }
+/* «Actualizar» (pequeño) y, debajo, «Ajustes» del campus */
+.grades-bar { display: flex; flex: none; flex-direction: column; align-items: flex-end; gap: 4px; margin-left: auto; }
+#gradesRefreshBtn { height: 30px; padding: 0 10px; gap: 6px; font-size: 0.75rem; }
+#gradesRefreshBtn .icon { width: 14px; height: 14px; }
+.grades-settings { display: inline-flex; align-items: center; gap: 5px; padding: 2px 0; font-size: 0.75rem; text-decoration: none; }
+.grades-settings .icon { width: 13px; height: 13px; }
+.grades-settings:hover { text-decoration: underline; }
 .grades-bar[hidden] { display: none; }
 
 /* Divisoria entre el título y la lista, algo más gruesa que las de las filas */
@@ -1930,6 +1936,12 @@ tr.break-row td:first-child { background: var(--inset); padding-left: 8px; paddi
 .moodle-due.is-late { color: var(--risk); }
 .moodle-add { flex: none; height: 34px; padding: 0 14px; font-size: 0.8125rem; }
 .moodle-task.is-leaving { animation: record-out 180ms var(--ease-in) forwards; }
+/* Nada que añadir: un ✓ y una frase, en lugar de subtítulo + cuerpo */
+.moodle-empty { display: grid; justify-items: center; gap: 12px; padding: 18px 0 6px; text-align: center; }
+.moodle-empty .empty-ic { display: grid; place-items: center; width: 52px; height: 52px; border-radius: 50%; color: var(--done); background: color-mix(in oklch, var(--done) 14%, transparent); animation: sync-done 360ms var(--ease-out); }
+.moodle-empty .empty-ic .icon { width: 26px; height: 26px; stroke-width: 2.2; }
+.moodle-empty p { margin: 0; max-width: 30ch; font-size: 0.9375rem; line-height: 1.45; color: var(--text); }
+#moodleMeta:empty { display: none; }
 .moodle-add .icon { width: 16px; height: 16px; }
 /* Curso por relacionar: nombre y nombre corto juntos; el selector debajo, a todo lo ancho */
 .moodle-task.is-course { gap: 2px; }

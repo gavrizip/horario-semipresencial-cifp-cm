@@ -575,6 +575,7 @@
     resolving = { courses, next };
     const map = loadCourseMap();
     document.getElementById('moodleDialog').dataset.mode = 'resolve';
+    document.getElementById('moodleResolveBtn').textContent = all ? 'Guardar' : 'Continuar';
     document.getElementById('moodleTitle').textContent = all ? 'Asignaturas del campus' : 'Cursos nuevos del campus';
     document.getElementById('moodleMeta').textContent = all
       ? 'A qué asignatura de la app corresponde cada curso.'
@@ -718,9 +719,13 @@
       return `${wd} ${d.getDate()} ${mon} · ${d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}`;
     };
     const pending = pendingAssigns();
+    // Con tareas: título + cuántas. Sin nada que añadir: título + un mensaje con su ✓, y «Cerrar»
+    // pasa a ser la acción principal (con tareas, lo principal es «Añadir tarea»)
     document.getElementById('moodleMeta').textContent = pending.length
-      ? `${pending.length} ${pending.length === 1 ? 'tarea pendiente' : 'tareas pendientes'} de entrega`
-      : 'Nada pendiente por añadir';
+      ? `${pending.length} ${pending.length === 1 ? 'tarea pendiente' : 'tareas pendientes'} de entrega` : '';
+    const close = document.getElementById('moodleCloseBtn');
+    close.classList.toggle('btn-primary', !pending.length);
+    close.classList.toggle('btn-ghost', !!pending.length);
     const anyPending = assigns.some(a => !moodleState(a).done);
     document.getElementById('moodleList').innerHTML = pending.map(a => {
       const course = courses.find(c => c.id === a.courseid);
@@ -736,7 +741,8 @@
             ${btn}
           </div>
         </li>`;
-    }).join('') || `<li class="att-empty">${anyPending ? 'Todas tus tareas pendientes del campus ya están en el horario.' : 'No tienes tareas pendientes de entrega en el campus.'}</li>`;
+    }).join('') || `<li class="moodle-empty"><span class="empty-ic" aria-hidden="true"><svg class="icon"><use href="#i-check"/></svg></span>
+        <p>${anyPending ? 'No hay tareas nuevas para añadir a tu horario.' : 'No tienes tareas pendientes de entrega en el campus.'}</p></li>`;
   }
 
   function addMoodleTask(id, btn) {
@@ -815,6 +821,16 @@
       btnDone(btn, false, '', 'Actualizar');
       renderGradesBar(e.code === 'invalidtoken' ? 'La sesión del campus ha caducado: vuelve a conectar.' : e.message);
     }
+  }
+
+  // «Ajustes» de Módulos: relacionar los cursos del campus con las asignaturas de la app. Usa los
+  // cursos ya conocidos (guardados con su nombre), así que funciona sin volver a pedirlos.
+  function openCampusCourses() {
+    const courses = Object.entries(loadCourseMap())
+      .map(([id, m]) => ({ id: Number(id), fullname: m.fullname, shortname: m.shortname }))
+      .sort((a, b) => a.fullname.localeCompare(b.fullname, 'es'));
+    if (!courses.length) { showToast('Aún no hay cursos del campus: pulsa «Actualizar» o «Ver tareas»'); return; }
+    renderCourseResolver(courses, true, () => { closeDialog('moodleDialog'); renderModulesList(); });
   }
 
   // Detalle de una asignatura: cada calificación del libro de notas y el total
