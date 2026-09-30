@@ -1907,6 +1907,10 @@ tr.break-row td:first-child { background: var(--inset); padding-left: 8px; paddi
    letra grande), fitSyncLabel() lo reduce lo justo en vez de ensanchar el botón */
 .sync-btn { justify-content: center; }
 .sync-btn span { white-space: nowrap; }
+/* «Ver tareas»: el icono solo aparece mientras comprueba; al ser ámbar, su carga va en tinta oscura */
+.sync-btn.is-quiet:not(.is-loading) .icon { display: none; }
+.btn-primary.sync-btn.is-loading { color: var(--accent-ink); border-color: transparent; }
+.btn-primary.sync-btn.is-loading .icon { color: var(--accent-ink); }
 .moodle-actions [hidden] { display: none; }
 #moodleConnectBtn { grid-column: 1 / -1; }
 .moodle-logout { grid-column: 2; margin-top: 10px; }
@@ -1925,7 +1929,7 @@ tr.break-row td:first-child { background: var(--inset); padding-left: 8px; paddi
 .moodle-add { margin-left: auto; }
 .moodle-due.is-late { color: var(--risk); }
 .moodle-add { flex: none; height: 34px; padding: 0 14px; font-size: 0.8125rem; }
-.moodle-add.is-added { color: var(--done); border-color: color-mix(in oklch, var(--done) 40%, transparent); opacity: 1; }
+.moodle-task.is-leaving { animation: record-out 180ms var(--ease-in) forwards; }
 .moodle-add .icon { width: 16px; height: 16px; }
 /* Curso por relacionar: nombre y nombre corto juntos; el selector debajo, a todo lo ancho */
 .moodle-task.is-course { gap: 2px; }

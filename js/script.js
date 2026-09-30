@@ -484,8 +484,9 @@
 
   async function moodleSync() {
     const btn = document.getElementById('moodleSyncBtn');
-    btn.disabled = true;
-    renderMoodleStatus('Leyendo tus tareas del campus…');
+    if (btn.classList.contains('is-loading')) return;
+    btnBusy(btn, 'Comprobando…');
+    let ok = false;
     try {
       const site = await moodleCall('core_webservice_get_site_info');
       try { localStorage.setItem('horario_moodle_user', site.fullname); } catch {}
@@ -510,10 +511,11 @@
       else renderMoodleList();
       moodleWatchPush();
       renderMoodleStatus();
+      ok = true;
     } catch (e) {
       renderMoodleStatus(e.code === 'invalidtoken' ? 'La sesión del campus ha caducado: vuelve a conectar.' : e.message);
     } finally {
-      btn.disabled = false;
+      btnDone(btn, false, '', 'Ver tareas');
     }
   }
 
@@ -690,21 +692,23 @@
     });
     if (changed) saveData();
 
-    const pending = assigns.filter(a => !moodleState(a).done)
-      .sort((x, y) => (x.duedate || Infinity) - (y.duedate || Infinity));
     document.getElementById('moodleDialog').dataset.mode = 'list';
     document.getElementById('moodleTitle').textContent = 'Pendientes en el campus';
-    document.getElementById('moodleMeta').textContent =
-      `${pending.length} ${pending.length === 1 ? 'tarea pendiente' : 'tareas pendientes'} de entrega`;
     renderMoodleRows();
     const dialog = document.getElementById('moodleDialog');
     dialog.classList.remove('is-closing');
     if (!dialog.open) dialog.showModal();
   }
 
+  // Tareas del campus sin entregar ni calificar que aún no se han añadido a la app
+  function pendingAssigns() {
+    const added = moodleAdded();
+    return moodleData.assigns.filter(a => !moodleState(a).done && !added[a.id])
+      .sort((x, y) => (x.duedate || Infinity) - (y.duedate || Infinity));
+  }
+
   function renderMoodleRows() {
     const { courses, assigns } = moodleData;
-    const added = moodleAdded();
     const now = Date.now() / 1000;
     // «lun 5 oct · 12:00»: corto para que quepa junto al botón en el móvil
     const fmt = ts => {
@@ -713,17 +717,16 @@
       const mon = d.toLocaleDateString('es-ES', { month: 'short' }).replace('.', '').slice(0, 3);
       return `${wd} ${d.getDate()} ${mon} · ${d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}`;
     };
-    const pending = assigns.filter(a => !moodleState(a).done)
-      .sort((x, y) => (x.duedate || Infinity) - (y.duedate || Infinity));
+    const pending = pendingAssigns();
+    document.getElementById('moodleMeta').textContent = pending.length
+      ? `${pending.length} ${pending.length === 1 ? 'tarea pendiente' : 'tareas pendientes'} de entrega`
+      : 'Nada pendiente por añadir';
+    const anyPending = assigns.some(a => !moodleState(a).done);
     document.getElementById('moodleList').innerHTML = pending.map(a => {
       const course = courses.find(c => c.id === a.courseid);
       const code = moduleOf(a.courseid);
       const late = a.duedate && a.duedate < now;
-      const btn = !a.duedate
-        ? ''
-        : added[a.id]
-          ? '<button type="button" class="btn btn-ghost moodle-add is-added" disabled><svg class="icon"><use href="#i-check"/></svg>Añadida</button>'
-          : `<button type="button" class="btn btn-primary moodle-add" onclick="addMoodleTask(${a.id})">Añadir tarea</button>`;
+      const btn = a.duedate ? `<button type="button" class="btn btn-primary moodle-add" onclick="addMoodleTask(${a.id}, this)">Añadir tarea</button>` : '';
       return `
         <li class="moodle-task">
           <div class="moodle-subject">${code ? chip(code) : ''}<span>${escapeHTML(code ? MODULES[code].name : course.fullname)}</span></div>
@@ -733,15 +736,22 @@
             ${btn}
           </div>
         </li>`;
-    }).join('') || '<li class="att-empty">No tienes tareas pendientes de entrega en el campus.</li>';
+    }).join('') || `<li class="att-empty">${anyPending ? 'Todas tus tareas pendientes del campus ya están en el horario.' : 'No tienes tareas pendientes de entrega en el campus.'}</li>`;
   }
 
-  function addMoodleTask(id) {
+  function addMoodleTask(id, btn) {
     const a = moodleData && moodleData.assigns.find(x => x.id === id);
     if (!a) return;
     const day = placeMoodleTask(a, moodleAdded()[a.id]);
     saveData();
-    renderMoodleRows();
+    // La fila se desvanece y la lista se rehace sin ella
+    const row = btn && btn.closest('.moodle-task');
+    if (row && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      btn.disabled = true;
+      row.classList.add('is-leaving');
+      row.addEventListener('animationend', renderMoodleRows, { once: true });
+      setTimeout(renderMoodleRows, 250);   // por si la animación no llega a terminar
+    } else renderMoodleRows();
     showToast(`Tarea añadida · ${/^\d+$/.test(day) ? CALENDAR_DATES[day].date : isoShort(day).date}`);
   }
 
