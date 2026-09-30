@@ -1021,7 +1021,9 @@
         if (ev.type !== 'exam' && ev.type !== 'task') return;
         if (!ev.id) { ev.id = newRecordId(); assigned = true; }
         if (!ev.notify || !ev.notifyDays || !ev.notifyDays.length) return;
+        // Entregada, con nota o ya pasada: no hay nada que recordar
         if (ev.type === 'task' && ev.status === 'done') return;
+        if (ev.grade !== undefined && ev.grade !== null) return;
         if (!pref[ev.type === 'exam' ? 'exams' : 'tasks']) return;
         if (ev.module && statusOf(ev.module)) return;
         const slot = TIME_SLOTS.find(t => t.key === ev.slot);
@@ -1029,6 +1031,7 @@
         const [hh, mm] = start.split(':').map(Number);
         const due = realDate(cd);
         due.setHours(hh, mm, 0, 0);
+        if (due < Date.now()) return;
         const hour = ev.notifyHour ?? REMINDER_HOUR;
         const times = ev.notifyDays.map(d => {
           const t = realDate(cd);
@@ -1052,6 +1055,7 @@
       if (ev.type !== 'task' || !pref.tasks || (ev.module && statusOf(ev.module)) || !ev.notify || !ev.notifyDays || !ev.notifyDays.length || ev.status === 'done') return;
       const due = isoDate(iso);
       due.setHours(23, 59, 0, 0);
+      if (due < Date.now() || (ev.grade !== undefined && ev.grade !== null)) return;
       const hour = ev.notifyHour ?? REMINDER_HOUR;
       const times = ev.notifyDays.map(d => {
         const t = isoDate(iso);
@@ -2767,6 +2771,7 @@
       if (ev) document.getElementById('notifyHour').value = ev.notifyHour ?? REMINDER_HOUR;
     }
 
+    syncNotifyField();
     dialog.classList.remove('is-closing');
     dialog.showModal();
     const firstField = { exam: 'examTopics', task: 'taskTitle', note: 'noteText' }[kind];
@@ -2863,6 +2868,31 @@
   }
 
   function closeSlotDialog() { closeDialog('slotDialog'); }
+
+  // Fecha y hora del registro que se edita: inicio de su clase, o el final del día si es personal
+  function slotDue() {
+    const e = slotEditing;
+    if (e.personal) { const d = isoDate(e.iso); d.setHours(23, 59, 0, 0); return d.getTime(); }
+    const slot = TIME_SLOTS.find(t => t.key === e.key);
+    const [hh, mm] = (slot ? slotBounds(slot).start : '18:15').split(':').map(Number);
+    const d = realDate(CALENDAR_DATES[e.dateIdx]);
+    d.setHours(hh, mm, 0, 0);
+    return d.getTime();
+  }
+
+  // «Notificar» solo tiene sentido si aún hay algo que recordar: se quita si la tarea está
+  // entregada, si ya tiene nota o si la fecha ya pasó (se vuelve a mirar mientras se edita)
+  function notifyApplies() {
+    const { kind } = slotEditing;
+    if (kind !== 'exam' && kind !== 'task') return false;
+    if (document.getElementById(kind === 'exam' ? 'examGrade' : 'taskGrade').value.trim()) return false;
+    if (kind === 'task' && document.querySelector('input[name="taskStatus"]:checked').value === 'done') return false;
+    return slotDue() > Date.now();
+  }
+  function syncNotifyField() {
+    if (!slotEditing) return;
+    document.getElementById('slotDialog').classList.toggle('no-notify', !notifyApplies());
+  }
 
   // Chips de opción única (tipo de examen): pulsar el que ya está marcado lo desmarca
   function chipDown(label) { label.control.wasChecked = label.control.checked; }
@@ -2962,7 +2992,7 @@
     if (kind !== 'note') {
       const notify = document.getElementById('notifyOn').checked;
       const days = [...document.querySelectorAll('input[name="notifyDays"]:checked')].map(i => Number(i.value)).sort((a, b) => b - a);
-      if (notify && !days.length && document.documentElement.classList.contains('is-app')) errors.push('notifyDays');
+      if (notify && !days.length && notifyApplies() && document.documentElement.classList.contains('is-app')) errors.push('notifyDays');
       rec.notify = notify && days.length > 0;
       rec.notifyDays = days;
       rec.notifyHour = Number(document.getElementById('notifyHour').value);

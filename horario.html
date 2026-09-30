@@ -315,7 +315,7 @@
 <div class="chip-tip" id="chipTip" role="tooltip" hidden></div>
 
 <dialog class="dialog" id="slotDialog" aria-labelledby="slotDialogTitle">
-  <form id="slotForm" method="dialog" onsubmit="saveSlotRecord(event)" novalidate>
+  <form id="slotForm" method="dialog" onsubmit="saveSlotRecord(event)" oninput="syncNotifyField()" onchange="syncNotifyField()" novalidate>
     <div class="dialog-head">
       <!-- Título con el icono del tipo a la derecha; asignatura y fecha debajo, a todo lo ancho -->
       <div class="slot-dialog-title">

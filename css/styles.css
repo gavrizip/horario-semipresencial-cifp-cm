@@ -1972,6 +1972,8 @@ tr.break-row td:first-child { background: var(--inset); padding-left: 8px; paddi
 #moodleResolveError { margin-top: 10px; }
 .is-app #slotDialog[data-kind="exam"] .notify-fields,
 .is-app #slotDialog[data-kind="task"] .notify-fields { display: block; }
+/* Entregada, con nota o con la fecha ya pasada: sin «Notificar» (syncNotifyField) */
+.is-app #slotDialog.no-notify[data-kind] .notify-fields { display: none; }
 /* «Notificar»: interruptor; apagado esconde días y hora */
 .notify-switch { min-height: 36px; }
 .notify-fields:has(#notifyOn:not(:checked)) .notify-days { display: none; }
