@@ -318,8 +318,6 @@
     document.getElementById('moodleConnectBtn').hidden = connected;
     document.getElementById('moodleSyncBtn').hidden = !connected;
     document.getElementById('moodleLogoutBtn').hidden = !connected;
-    document.getElementById('moodleWatchBtn').hidden = !connected;
-    syncWatchBtn();
     renderNotifySettings();
     renderGradesBar();
   }
@@ -383,7 +381,6 @@
     document.querySelectorAll('.notify-section [data-pref]').forEach(i => { i.checked = !!p[i.dataset.pref]; });
     document.getElementById('notifyCampus').hidden = !campusConnected();
     document.getElementById('notifyBlocked').hidden = !(AndroidApp.notificationsEnabled && !AndroidApp.notificationsEnabled());
-    syncWatchBtn();
   }
 
   // --- Avisos del campus en segundo plano (MoodleWatch.java) ---
@@ -404,13 +401,7 @@
     AndroidApp.moodleWatchState(JSON.stringify(state));
   }
 
-  // «Sincronizar» solo tiene sentido con los avisos activados (es la misma comprobación)
-  function syncWatchBtn() {
-    const btn = document.getElementById('moodleWatchBtn');
-    if (!btn.classList.contains('is-loading')) btn.disabled = !moodleWatchOn();
-  }
-
-  // --- Botones con estados de carga («Sincronizar», «Actualizar» de Módulos) ---
+  // --- Botones con estados de carga («Ver tareas», «Actualizar» de Módulos) ---
   // Normal → trabajando (el icono gira, al menos 700 ms para que no parezca un parpadeo) → hecho
   // (verde con ✓ durante 2,4 s) → normal. Nunca cambian de tamaño: fuera de la rejilla del campus
   // el ancho se fija al del primer texto (el más largo), y si un texto no cabe se reduce su letra.
@@ -466,20 +457,6 @@
         setBtnLabel(btn, idleText);
       }, 2400);
     }, Math.max(0, 700 - (performance.now() - (btn.started || 0))));
-  }
-
-  // «Sincronizar»: Sincronizando (gira) → Sincronizado (verde) → Sincronizar
-  function moodleWatchNow() {
-    const btn = document.getElementById('moodleWatchBtn');
-    if (btn.classList.contains('is-loading')) return;
-    btnBusy(btn, 'Sincronizando');
-    AndroidApp.moodleWatchNow();
-  }
-
-  // Respuesta de Java: nº de novedades avisadas, o -1 si no se pudo
-  function moodleWatchDone(n) {
-    btnDone(document.getElementById('moodleWatchBtn'), n >= 0, 'Sincronizado', 'Sincronizar', syncWatchBtn);
-    showToast(n < 0 ? 'No se ha podido sincronizar con el campus' : n ? `${n} ${n === 1 ? 'novedad' : 'novedades'}: mira las notificaciones` : 'Sin novedades en el campus');
   }
 
   async function moodleSync() {
@@ -1189,8 +1166,6 @@
     renderNotifySettings();
     const menu = document.getElementById('menuDrawer');
     if (!menu.open) menu.showModal();
-    const sync = document.getElementById('moodleWatchBtn');
-    if (!sync.hidden) setBtnLabel(sync, sync.querySelector('span').textContent);
   }
 
   function closeMenu() {

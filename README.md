@@ -20,7 +20,7 @@ Se conecta con la cuenta de Medusa (el inicio de sesión se hace en la propia p�
 - **Ver tareas**: lista las tareas del curso 2026-27 que siguen pendientes de entrega, con su asignatura y fecha; «Añadir tarea» la mete en el horario (en su clase si la entrega cae un miércoles con clase de esa asignatura; si no, como tarea personal de ese día). Las añadidas se ponen al día solas: entrega, nota y cambios de fecha.
 - **Asignaturas**: cada curso del campus se relaciona con su asignatura una sola vez. Los que llevan el código en el nombre corto (`782NNS-IMW-2026_27`) se relacionan solos; por los demás se pregunta, y se puede cambiar en «Cambiar asignaturas».
 - **Notas**: columna «Nota campus» en Módulos, con el detalle de cada calificación.
-- **Avisos**: cada ~3 horas, aunque la app esté cerrada, avisa de tareas nuevas y de cambios de fecha de entrega. «Sincronizar» lo comprueba al momento.
+- **Avisos**: cada ~3 horas, aunque la app esté cerrada, avisa de tareas nuevas y de cambios de fecha de entrega.
 - El estado de la conexión se ve junto al título de la sección.
 
 ### Notificaciones (menú lateral, solo en la app)

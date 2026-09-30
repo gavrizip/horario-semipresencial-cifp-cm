@@ -296,15 +296,6 @@ public class MainActivity extends Activity {
             if (json.contains("\"enabled\":true")) runOnUiThread(MainActivity.this::askNotificationPermission);
         }
 
-        /** «Comprobar ahora»: la misma comprobación que en segundo plano; responde moodleWatchDone(n). */
-        @JavascriptInterface
-        public void moodleWatchNow() {
-            new Thread(() -> {
-                int n = MoodleWatch.check(getApplicationContext());
-                runOnUiThread(() -> web.evaluateJavascript("window.moodleWatchDone && moodleWatchDone(" + n + ")", null));
-            }).start();
-        }
-
         /** Llamada a la API en segundo plano; la respuesta vuelve con moodleResult(id, json). */
         @JavascriptInterface
         public void moodleCall(String id, String fn, String argsJson) {
