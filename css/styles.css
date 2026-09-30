@@ -1131,9 +1131,24 @@ tr.break-row td:first-child { background: var(--inset); padding-left: 8px; paddi
 .module-dialog { width: min(460px, calc(100vw - 32px)); }
 .module-dialog-title { display: flex; align-items: center; gap: 12px; min-width: 0; }
 .module-dialog-title h3 { line-height: 1.25; }
-.type-option[data-type="active"] { --c: var(--ok); }
-.type-option[data-type="convalidada"] { --c: var(--accent); }
-.type-option[data-type="desistida"] { --c: var(--absence); }
+/* Estado: sin punto; cada opción va de su color (texto y borde) y la elegida se rellena de él.
+   --c es el tono del borde y el relleno; --ct, el del texto (legible en día y noche) */
+.module-dialog .type-option[data-type="active"] { --c: var(--done); --ct: var(--done); }
+.module-dialog .type-option[data-type="convalidada"] { --c: var(--accent); --ct: var(--accent-text); }
+.module-dialog .type-option[data-type="desistida"] { --c: var(--absence); --ct: var(--absence); }
+.module-dialog .type-option {
+  gap: 0; padding: 0 6px; min-width: 0;
+  /* También limitado por el ancho de la pantalla: con letra grande, «Convalidada» sigue cabiendo */
+  font-size: min(0.8125rem, 3.7vw); white-space: nowrap;
+  color: var(--ct); border-color: color-mix(in oklch, var(--c) 40%, transparent);
+}
+.module-dialog .type-option::before { content: none; }
+.module-dialog .type-option:hover { color: var(--ct); background: color-mix(in oklch, var(--c) 8%, transparent); }
+.module-dialog .type-option:has(input:checked) { color: var(--ct); font-weight: 650; border-color: var(--c); background: color-mix(in oklch, var(--c) 20%, transparent); }
+/* Pie: tres botones que caben en el móvil; si no, bajan en vez de salirse */
+.module-dialog .dialog-actions { flex-wrap: wrap; row-gap: 8px; }
+.module-dialog .dialog-actions .btn { padding: 0 12px; font-size: 0.8125rem; }
+@media (max-width: 720px) { .dialog.module-dialog { padding: 20px; } }
 .module-grade {
   justify-self: end; display: inline-flex; align-items: center; gap: 4px;
   min-height: 32px; padding: 0 6px 0 10px;
