@@ -677,7 +677,6 @@
     if (changed) saveData();
 
     document.getElementById('moodleDialog').dataset.mode = 'list';
-    document.getElementById('moodleTitle').textContent = 'Pendientes en el campus';
     renderMoodleRows();
     const dialog = document.getElementById('moodleDialog');
     dialog.classList.remove('is-closing');
@@ -706,6 +705,7 @@
     // pasa a ser la acción principal (con tareas, lo principal es «Añadir tarea»)
     document.getElementById('moodleMeta').textContent = pending.length
       ? `${pending.length} ${pending.length === 1 ? 'tarea pendiente' : 'tareas pendientes'} de entrega` : '';
+    document.getElementById('moodleTitle').textContent = pending.length ? 'Pendientes en el campus' : 'Nada nuevo por aquí…';
     document.getElementById('moodleDialog').toggleAttribute('data-empty', !pending.length);
     const close = document.getElementById('moodleCloseBtn');
     close.classList.toggle('btn-primary', !pending.length);
@@ -726,7 +726,7 @@
           </div>
         </li>`;
     }).join('') || `<li class="moodle-empty"><span class="empty-ic" aria-hidden="true"><svg class="icon" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5" pathLength="1"/></svg></span>
-        <p>${anyPending ? '<span>No hay tareas nuevas</span> <span>para añadir a tu horario.</span>' : '<span>No tienes tareas pendientes</span> <span>de entrega en el campus.</span>'}</p></li>`;
+        <p>${anyPending ? '<span>No hay tareas nuevas</span> <span>para añadir a tu horario</span>' : '<span>No tienes tareas pendientes</span> <span>de entrega en el campus</span>'}</p></li>`;
   }
 
   function addMoodleTask(id, btn) {
