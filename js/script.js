@@ -410,7 +410,7 @@
     if (!btn.classList.contains('is-loading')) btn.disabled = !moodleWatchOn();
   }
 
-  // --- Botones con estados de carga («Sincronizar», «Actualizar notas») ---
+  // --- Botones con estados de carga («Sincronizar», «Actualizar» de Módulos) ---
   // Normal → trabajando (el icono gira, al menos 700 ms para que no parezca un parpadeo) → hecho
   // (verde con ✓ durante 2,4 s) → normal. Nunca cambian de tamaño: fuera de la rejilla del campus
   // el ancho se fija al del primer texto (el más largo), y si un texto no cabe se reduce su letra.
@@ -426,9 +426,19 @@
     }
   }
 
+  // Fuera de la rejilla del campus, el ancho se fija al del más largo de sus textos (data-labels)
+  function fixBtnWidth(btn) {
+    if (!btn.dataset.labels || btn.style.minWidth || !btn.offsetWidth) return;
+    const label = btn.querySelector('span'), current = label.textContent;
+    let max = 0;
+    btn.dataset.labels.split('|').forEach(t => { label.textContent = t; max = Math.max(max, btn.offsetWidth); });
+    label.textContent = current;
+    btn.style.minWidth = max + 'px';
+  }
+
   function btnBusy(btn, text) {
     clearTimeout(btn.doneTimer);
-    if (!btn.closest('.moodle-actions') && btn.offsetWidth) btn.style.minWidth = btn.offsetWidth + 'px';
+    fixBtnWidth(btn);
     btn.classList.remove('is-done');
     btn.querySelector('use').setAttribute('href', '#i-sync');
     btn.classList.add('is-loading');
@@ -746,9 +756,11 @@
     try { return JSON.parse(localStorage.getItem('horario_moodle_grades')); } catch { return null; }
   }
 
-  // «Actualizar notas» solo con la cuenta conectada; los errores salen como aviso
+  // «Actualizar» solo con la cuenta conectada; los errores salen como aviso
   function renderGradesBar(message) {
-    document.getElementById('gradesBar').hidden = !campusConnected();
+    const bar = document.getElementById('gradesBar');
+    bar.hidden = !campusConnected();
+    if (!bar.hidden) fixBtnWidth(document.getElementById('gradesRefreshBtn'));
     if (message) showToast(message);
   }
 
@@ -782,15 +794,15 @@
         moodleWatchPush();
         renderModulesList();
         renderGradesBar();
-        btnDone(btn, true, 'Actualizadas', 'Actualizar notas');
+        btnDone(btn, true, 'Actualizado', 'Actualizar');
       };
       // Si hay que preguntar asignaturas, el botón deja de girar mientras se contesta
       if (ask.length) {
-        btnDone(btn, false, '', 'Actualizar notas');
+        btnDone(btn, false, '', 'Actualizar');
         renderCourseResolver(ask, false, () => { btnBusy(btn, 'Actualizando'); finish(); });
       } else finish();
     } catch (e) {
-      btnDone(btn, false, '', 'Actualizar notas');
+      btnDone(btn, false, '', 'Actualizar');
       renderGradesBar(e.code === 'invalidtoken' ? 'La sesión del campus ha caducado: vuelve a conectar.' : e.message);
     }
   }
@@ -1119,6 +1131,7 @@
     if (tab === 'grid' && matrixScroll !== null) wrap.scrollLeft = matrixScroll;
 
     if (tab === 'modules' && campusConnected()) {
+      fixBtnWidth(document.getElementById('gradesRefreshBtn'));
       const cache = loadGrades();
       if (!cache || Date.now() - cache.at > GRADES_MAX_AGE) moodleGrades();
       else renderGradesBar();
@@ -2953,16 +2966,8 @@
     schedule.forEach(day => (day || []).forEach(m => { if (m) hours[m] = (hours[m] || 0) + 1; }));
 
     // Cabecera una sola vez; las filas llevan solo los valores
-    const head = `
-      <div class="module-row is-head" aria-hidden="true">
-        <div class="module-th is-module">Módulo</div>
-        <div class="module-th">Docente</div>
-        <div class="module-th">Aula</div>
-        <div class="module-th is-hours">Horas presenciales</div>
-        ${grades ? '<div class="module-th is-hours is-grade">Nota campus</div>' : ''}
-        <div class="module-th is-more" aria-hidden="true"></div>
-      </div>`;
-    container.innerHTML = head + Object.values(MODULES).map(mod => {
+    // Sin cabecera de columnas: cada dato se entiende solo (nombre, docente – aula, «14 h», nota)
+    container.innerHTML = Object.values(MODULES).map(mod => {
       const code = mod.code;
       const dim = filterModule && filterModule !== code ? ' is-dimmed' : '';
       const status = statusOf(code);
