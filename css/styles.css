@@ -1162,7 +1162,9 @@ tr.break-row td:first-child { background: var(--inset); padding-left: 8px; paddi
 .module-status .segmented-btn:has(input:checked) { color: var(--text); }
 .module-status .segmented-btn:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: -2px; }
 .status-field { margin-bottom: 10px; }
-/* Restablecer: enlace de texto discreto, fuera de la fila de guardar */
+/* Restablecer: botón neutro en la esquina inferior izquierda, con icono de deshacer */
+.module-reset { gap: 5px; }
+.module-reset .icon { width: 15px; height: 15px; }
 .text-link { padding: 4px 0; border: none; background: none; font: inherit; font-size: 0.8125rem; color: var(--text-3); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line-strong); cursor: pointer; }
 .text-link:hover { color: var(--text-2); }
 /* Botón «i» junto a una etiqueta: despliega su ayuda debajo (sin tapar nada) */
@@ -1184,8 +1186,8 @@ tr.break-row td:first-child { background: var(--inset); padding-left: 8px; paddi
 .info-reveal .field-help { margin: 0; padding-bottom: 10px; }
 
 /* Pie: tres botones que caben en el móvil; si no, bajan en vez de salirse */
-.module-dialog .dialog-actions { flex-wrap: wrap; row-gap: 8px; }
-.module-dialog .dialog-actions .btn { padding: 0 12px; font-size: 0.8125rem; }
+.module-dialog .dialog-actions { flex-wrap: wrap; gap: 8px 6px; }
+.module-dialog .dialog-actions .btn { padding: 0 10px; font-size: 0.8125rem; }
 @media (max-width: 720px) { .dialog.module-dialog { padding: 20px; } }
 .module-grade {
   justify-self: end; display: inline-flex; align-items: center; gap: 4px;
