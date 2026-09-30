@@ -2531,12 +2531,28 @@
     return showMenu(el, e, { mode: 'day', dateIdx, blocks }, html, `Opciones del ${cd.date}`);
   }
 
-  // Día sin clase de la vista Mes: tareas y notas personales (sin asignatura)
+  // Asignaturas en su periodo de clases en una fecha (de su primera a su última clase en el
+  // horario del grupo, sin las convalidadas ni desistidas). Solo a ellas se les puede poner una
+  // tarea o una nota de clase en un día sin clase, aunque ese día aún no haya llegado.
+  function modulesOn(iso) {
+    const t = isoDate(iso).getTime();
+    const span = {};
+    getSchedule().forEach((day, i) => (day || []).forEach(code => {
+      if (!code) return;
+      const d = realDate(CALENDAR_DATES[i]).getTime();
+      span[code] = span[code] ? [span[code][0], d] : [d, d];
+    }));
+    return Object.keys(span).filter(code => span[code][0] <= t && t <= span[code][1]);
+  }
+
+  // Día sin clase de la vista Mes: tareas (siempre de una asignatura en curso) y notas
   function openPersonalMenu(el, e) {
     const iso = el.dataset.iso;
     const recs = (personalEvents[iso] || []).map((ev, index) => ({ ev, index }));
     let html = `<div class="ctx-head"><span class="num">${capitalize(isoLong(iso))}</span></div>`;
-    html += menuItem('task', 'Añadir tarea') + menuItem('note', 'Añadir nota') + recordItems(recs, 'En este día');
+    const taskItem = modulesOn(iso).length ? menuItem('task', 'Añadir tarea')
+      : menuItem('task', 'Añadir tarea', 'disabled aria-disabled="true" title="Ese día no hay ninguna asignatura en curso"');
+    html += taskItem + menuItem('note', 'Añadir nota') + recordItems(recs, 'En este día');
     return showMenu(el, e, { mode: 'personal', iso }, html, `Tareas y notas del ${isoLong(iso)}`);
   }
 
@@ -2726,17 +2742,38 @@
     showRecordDialog(kind, ev, `${chip(moduleCode)}${MODULES[moduleCode].name}<span class="when">Miércoles ${cd.date} · ${start}–${end}</span>`, false);
   }
 
-  // Tarea o nota personal de un día sin clase: sin asignatura, peso ni nota
+  // Tarea o nota de un día sin clase. La tarea es de una asignatura en curso ese día (con peso y
+  // nota); la nota puede ser personal o de clase. Se guardan en personalEvents, con `module` si lo tienen.
   function openPersonalDialog(kind, iso, index) {
     const ev = index !== null ? personalEvents[iso][index] : null;
-    slotEditing = { kind, iso, index, personal: true };
-    showRecordDialog(kind, ev, `<span class="personal-tag">Personal</span><span class="when">${capitalize(isoLong(iso))}</span>`, true);
+    const mods = modulesOn(iso);
+    // La asignatura que ya tenga el registro se ofrece siempre (p. ej. una tarea del campus)
+    if (ev && ev.module && MODULES[ev.module] && !mods.includes(ev.module)) mods.push(ev.module);
+    slotEditing = { kind, iso, index, personal: true, mods };
+    // Solo una tarea antigua sin asignatura en un día sin ninguna en curso se sigue viendo como personal
+    const personalLook = kind === 'task' && !mods.length;
+    showRecordDialog(kind, ev, `<span class="when">${capitalize(isoLong(iso))}</span>`, personalLook);
+    renderDayOwner(kind, ev, mods);
+  }
+
+  // Selector de asignatura (y, en las notas, «Personal | Clase») del diálogo de un día sin clase
+  function renderDayOwner(kind, ev, mods) {
+    const seg = document.getElementById('moduleSeg');
+    const selected = ev && ev.module ? ev.module : mods.length === 1 ? mods[0] : null;
+    seg.style.setProperty('--count', Math.max(mods.length, 1));
+    seg.innerHTML = `<span class="segmented-thumb" aria-hidden="true"></span>` + mods.map(code =>
+      `<label class="segmented-btn" title="${MODULES[code].name}" style="--c: ${MODULES[code].color}"><input type="radio" name="recModule" value="${code}"${code === selected ? ' checked' : ''} onchange="setFieldError('moduleSeg', false)">${code}</label>`).join('');
+    const cls = document.getElementById('ownerClass');
+    cls.disabled = !mods.length;
+    document.querySelector(`input[name="noteOwner"][value="${kind === 'note' && ev && ev.module ? 'class' : 'personal'}"]`).checked = true;
+    document.getElementById('slotDialog').classList.toggle('no-modules', !mods.length);
   }
 
   function showRecordDialog(kind, ev, metaHtml, personal) {
     const dialog = document.getElementById('slotDialog');
     const form = document.getElementById('slotForm');
     dialog.classList.toggle('is-personal', personal);
+    dialog.classList.toggle('is-freeday', !!(slotEditing && slotEditing.personal));
     // Textos que cambian en las tareas personales («Detalles», «Hecha»)
     dialog.querySelectorAll('[data-personal]').forEach(el => { el.textContent = personal ? el.dataset.personal : el.dataset.class; });
     form.reset();
@@ -3096,17 +3133,26 @@
     const day = slotEditing.personal ? slotEditing.iso : dateIdx;
     rec.id = (index !== null && store[day][index].id) || newRecordId();
     if (slotEditing.byDay) rec.byDay = true;
-    if (slotEditing.personal) { delete rec.module; delete rec.slot; delete rec.weight; delete rec.grade; }
-    // Las tareas del campus conservan su id de Moodle (y su asignatura si son personales)
-    const prevRec = index !== null ? store[day][index] : null;
-    if (prevRec && prevRec.moodle) {
-      rec.moodle = prevRec.moodle;
-      if (slotEditing.personal && prevRec.module) rec.module = prevRec.module;
+    if (slotEditing.personal) {
+      // Día sin clase: la asignatura elegida (obligatoria en las tareas; en las notas, si son de «Clase»)
+      delete rec.module; delete rec.slot;
+      const wantsModule = kind === 'task' || (kind === 'note' && document.getElementById('ownerClass').checked);
+      const picked = document.querySelector('input[name="recModule"]:checked');
+      if (wantsModule && slotEditing.mods.length) {
+        if (picked) rec.module = picked.value;
+        else errors.push('moduleSeg');
+      }
+      if (!rec.module) { delete rec.weight; delete rec.grade; }
     }
+    // Las tareas del campus conservan su id de Moodle
+    const prevRec = index !== null ? store[day][index] : null;
+    if (prevRec && prevRec.moodle) rec.moodle = prevRec.moodle;
 
-    ['examTopics', 'examWeight', 'examGrade', 'taskTitle', 'taskWeight', 'taskGrade', 'noteText', 'notifyDays', 'notifyTime'].forEach(id => setFieldError(id, errors.includes(id)));
+    ['moduleSeg', 'examTopics', 'examWeight', 'examGrade', 'taskTitle', 'taskWeight', 'taskGrade', 'noteText', 'notifyDays', 'notifyTime'].forEach(id => setFieldError(id, errors.includes(id)));
     if (errors.length) {
-      const first = document.getElementById(errors[0]) || document.querySelector('input[name="notifyDays"]');
+      errors.sort((a, b) => (b === 'moduleSeg') - (a === 'moduleSeg'));   // la asignatura va arriba del todo
+      const first = errors[0] === 'moduleSeg' ? document.querySelector('#moduleSeg input')
+        : document.getElementById(errors[0]) || document.querySelector('input[name="notifyDays"]');
       first.focus();
       return;
     }

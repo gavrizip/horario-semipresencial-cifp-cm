@@ -325,6 +325,22 @@
       </div>
     </div>
 
+    <!-- Día sin clase (vista Mes): de qué asignatura es. Las tareas siempre tienen asignatura; las
+         notas pueden ser «Personal» o de «Clase». Solo se ofrecen las asignaturas que están en su
+         periodo de clases en esa fecha (modulesOn) -->
+    <div class="field day-owner">
+      <div class="segmented seg-radio owner-seg" role="radiogroup" aria-label="Tipo de nota">
+        <span class="segmented-thumb" aria-hidden="true"></span>
+        <label class="segmented-btn"><input type="radio" name="noteOwner" value="personal" checked>Personal</label>
+        <label class="segmented-btn"><input type="radio" name="noteOwner" value="class" id="ownerClass">Clase</label>
+      </div>
+      <div class="module-pick"><div class="module-pick-inner">
+        <p class="field-label" id="moduleSegLabel">Asignatura</p>
+        <div class="segmented seg-radio module-seg" id="moduleSeg" role="radiogroup" aria-labelledby="moduleSegLabel"></div>
+        <p class="field-error" data-error="moduleSeg" hidden>Elige de qué asignatura es.</p>
+      </div></div>
+    </div>
+
     <!-- EXAMEN -->
     <div class="kind-fields" data-kind="exam">
       <!-- Tipo de prueba: opcional; pulsar otra vez el marcado lo quita -->
