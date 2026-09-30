@@ -1487,7 +1487,11 @@ tr.break-row td:first-child { background: var(--inset); padding-left: 8px; paddi
 .dialog-head .icon-btn { border: none; width: 32px; height: 32px; }
 
 .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; min-width: 0; }
-.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+/* Dos campos cortos lado a lado (también en el móvil); con subgrid, las cajas quedan a la misma
+   altura aunque una etiqueta ocupe dos líneas */
+.field-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: auto auto auto; column-gap: 12px; }
+.field-row > .field { display: grid; grid-row: span 3; grid-template-rows: subgrid; row-gap: 6px; align-content: start; }
+.field-row > .field > .field-label { align-self: end; }
 .field-label { font-size: 0.8125rem; font-weight: 550; color: var(--text-2); }
 .field-help { font-size: 0.75rem; color: var(--text-3); }
 .field-error { font-size: 0.8125rem; color: var(--absence); }
@@ -1645,7 +1649,6 @@ tr.break-row td:first-child { background: var(--inset); padding-left: 8px; paddi
   .slot-count { display: block; margin-top: 2px; color: var(--text-3); }
   .slot { gap: 12px; }
   .slot-time { font-size: 1.0625rem; }
-  .field-row { grid-template-columns: 1fr; gap: 0; }
   .segmented-wide { width: 100%; }
   .grid-toolbar .segmented-wide { flex: 1; width: auto; min-width: 0; }
   .segmented-wide .segmented-btn { padding: 0 6px; font-size: 0.75rem; }
