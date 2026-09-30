@@ -2534,6 +2534,10 @@
   // Asignaturas en su periodo de clases en una fecha (de su primera a su última clase en el
   // horario del grupo, sin las convalidadas ni desistidas). Solo a ellas se les puede poner una
   // tarea o una nota de clase en un día sin clase, aunque ese día aún no haya llegado.
+  // Excepciones al fin del periodo que sale del horario: IMW tiene una clase el 16 de junio,
+  // pero la asignatura termina el 11 de noviembre
+  const MODULE_PERIOD_END = { IMW: '2026-11-11' };
+
   function modulesOn(iso) {
     const t = isoDate(iso).getTime();
     const span = {};
@@ -2542,6 +2546,9 @@
       const d = realDate(CALENDAR_DATES[i]).getTime();
       span[code] = span[code] ? [span[code][0], d] : [d, d];
     }));
+    Object.entries(MODULE_PERIOD_END).forEach(([code, end]) => {
+      if (span[code]) span[code][1] = Math.min(span[code][1], isoDate(end).getTime());
+    });
     return Object.keys(span).filter(code => span[code][0] <= t && t <= span[code][1]);
   }
 
