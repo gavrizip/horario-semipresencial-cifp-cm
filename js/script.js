@@ -1036,7 +1036,7 @@
         const times = ev.notifyDays.map(d => {
           const t = realDate(cd);
           t.setDate(t.getDate() - d);
-          t.setHours(hour, 0, 0, 0);
+          t.setHours(hour, ev.notifyMinute ?? 0, 0, 0);
           return t.getTime();
         });
         list.push({
@@ -1060,7 +1060,7 @@
       const times = ev.notifyDays.map(d => {
         const t = isoDate(iso);
         t.setDate(t.getDate() - d);
-        t.setHours(hour, 0, 0, 0);
+        t.setHours(hour, ev.notifyMinute ?? 0, 0, 0);
         return t.getTime();
       });
       list.push({ id: ev.id, kind: 'task', code: ev.module || '', what: ev.title || ev.text, when: isoLong(iso), due: due.getTime(), times, hour });
@@ -2768,7 +2768,7 @@
     if (kind !== 'note') {
       document.getElementById('notifyOn').checked = !ev || !!ev.notify;
       renderDayChips(ev && ev.notify && ev.notifyDays ? ev.notifyDays : [3]);
-      if (ev) document.getElementById('notifyHour').value = ev.notifyHour ?? REMINDER_HOUR;
+      setNotifyTime(ev ? ev.notifyHour ?? REMINDER_HOUR : REMINDER_HOUR, ev ? ev.notifyMinute ?? 0 : 0);
     }
 
     syncNotifyField();
@@ -2903,6 +2903,38 @@
     document.getElementById('slotDialog').classList.toggle('no-notify', !notifyApplies());
   }
 
+  // Hora del aviso escrita a mano en formato de 12 h: «9», «930», «9:30», «9.30»… Las horas 0 y
+  // 13–23 (formato de 24 h) también valen y eligen AM o PM solas. Devuelve { h (1–12), min, pm | null }.
+  function parseClock(raw) {
+    const m = raw.trim().replace(/[.,h]/g, ':').match(/^(\d{1,2})(?::?(\d{2}))?$/);
+    if (!m) return null;
+    let h = Number(m[1]);
+    const min = m[2] ? Number(m[2]) : 0;
+    if (h > 23 || min > 59) return null;
+    let pm = null;
+    if (h === 0) { h = 12; pm = false; } else if (h > 12) { h -= 12; pm = true; }
+    return { h, min, pm };
+  }
+  const pad2 = n => String(n).padStart(2, '0');
+  function setAmPm(pm) { document.querySelector(`input[name="notifyAmPm"][value="${pm ? 'pm' : 'am'}"]`).checked = true; }
+  function setNotifyTime(hour, minute) {
+    document.getElementById('notifyTime').value = `${hour % 12 || 12}:${pad2(minute)}`;
+    setAmPm(hour >= 12);
+  }
+  // Al salir del campo se deja escrita como «9:30»
+  function tidyNotifyTime(input) {
+    const t = parseClock(input.value);
+    if (!t) return;
+    input.value = `${t.h}:${pad2(t.min)}`;
+    if (t.pm !== null) setAmPm(t.pm);
+  }
+  function readNotifyTime() {
+    const t = parseClock(document.getElementById('notifyTime').value);
+    if (!t) return null;
+    const pm = t.pm ?? document.querySelector('input[name="notifyAmPm"]:checked').value === 'pm';
+    return { hour: (t.h % 12) + (pm ? 12 : 0), minute: t.min };
+  }
+
   // Chips de opción única (tipo de examen): pulsar el que ya está marcado lo desmarca
   function chipDown(label) { label.control.wasChecked = label.control.checked; }
   function chipClick(input) {
@@ -3001,10 +3033,16 @@
     if (kind !== 'note') {
       const notify = document.getElementById('notifyOn').checked;
       const days = [...document.querySelectorAll('input[name="notifyDays"]:checked')].map(i => Number(i.value)).sort((a, b) => b - a);
-      if (notify && !days.length && notifyApplies() && document.documentElement.classList.contains('is-app')) errors.push('notifyDays');
+      const asks = notify && notifyApplies() && document.documentElement.classList.contains('is-app');
+      if (asks && !days.length) errors.push('notifyDays');
+      const time = readNotifyTime();
+      if (asks && !time) errors.push('notifyTime');
+      // Si la hora no vale y no se pide (sección oculta), se conserva la que tenía
+      const old = index !== null ? (slotEditing.personal ? personalEvents[slotEditing.iso] : userEvents[dateIdx])[index] : null;
       rec.notify = notify && days.length > 0;
       rec.notifyDays = days;
-      rec.notifyHour = Number(document.getElementById('notifyHour').value);
+      rec.notifyHour = time ? time.hour : old?.notifyHour ?? REMINDER_HOUR;
+      rec.notifyMinute = time ? time.minute : old?.notifyMinute ?? 0;
     }
     const store = slotEditing.personal ? personalEvents : userEvents;
     const day = slotEditing.personal ? slotEditing.iso : dateIdx;
@@ -3018,7 +3056,7 @@
       if (slotEditing.personal && prevRec.module) rec.module = prevRec.module;
     }
 
-    ['examTopics', 'examWeight', 'examGrade', 'taskTitle', 'taskWeight', 'taskGrade', 'noteText', 'notifyDays'].forEach(id => setFieldError(id, errors.includes(id)));
+    ['examTopics', 'examWeight', 'examGrade', 'taskTitle', 'taskWeight', 'taskGrade', 'noteText', 'notifyDays', 'notifyTime'].forEach(id => setFieldError(id, errors.includes(id)));
     if (errors.length) {
       const first = document.getElementById(errors[0]) || document.querySelector('input[name="notifyDays"]');
       first.focus();

@@ -400,9 +400,18 @@
           <!-- Chips de días (renderDayChips) y «+» para escribir otro número -->
           <div class="day-chips" id="dayChips"></div>
         </div>
-        <label class="notify-col notify-hour-field"><span class="field-help">A esta hora</span>
-          <select name="notifyHour" id="notifyHour"><option value="7">7:00</option><option value="8">8:00</option><option value="9">9:00</option><option value="10" selected>10:00</option><option value="11">11:00</option><option value="12">12:00</option><option value="13">13:00</option><option value="14">14:00</option><option value="15">15:00</option><option value="16">16:00</option><option value="17">17:00</option><option value="18">18:00</option><option value="19">19:00</option><option value="20">20:00</option><option value="21">21:00</option><option value="22">22:00</option></select></label>
+        <!-- Hora escrita a mano (formato de 12 h) y, debajo, AM | PM -->
+        <div class="notify-col notify-hour-field">
+          <label class="field-help" for="notifyTime">A esta hora</label>
+          <input type="text" id="notifyTime" class="notify-time" inputmode="decimal" maxlength="5" autocomplete="off" placeholder="10:00" onblur="tidyNotifyTime(this)" oninput="setFieldError('notifyTime', false)">
+          <div class="segmented seg-radio ampm" role="radiogroup" aria-label="Antes o después del mediodía">
+            <span class="segmented-thumb" aria-hidden="true"></span>
+            <label class="segmented-btn"><input type="radio" name="notifyAmPm" value="am" checked>AM</label>
+            <label class="segmented-btn"><input type="radio" name="notifyAmPm" value="pm">PM</label>
+          </div>
+        </div>
         <p class="field-error" data-error="notifyDays" hidden>Marca al menos un día, o desactiva «Notificar».</p>
+        <p class="field-error" data-error="notifyTime" hidden>Escribe una hora válida, como 9:30.</p>
       </div>
     </div></div>
 

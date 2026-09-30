@@ -2008,7 +2008,11 @@ tr.break-row td:first-child { background: var(--inset); padding-left: 8px; paddi
 /* Hora del aviso, debajo de los días */
 .notify-hour-field { display: block; }
 .notify-hour-field .field-help { display: block; }
-.field .notify-hour-field select { width: 100%; height: 40px; font-family: var(--mono); }
+/* Hora escrita (centrada, como los días) y AM | PM debajo, a la altura de la segunda fila de días */
+.field .notify-hour-field .notify-time { width: 100%; height: 40px; padding: 0 8px; text-align: center; font-family: var(--mono); font-size: 0.9375rem; }
+.notify-hour-field .notify-time::placeholder { text-align: center; }
+.ampm { margin-top: 6px; }
+.ampm.seg-radio .segmented-btn { height: 32px; font-family: var(--mono); }
 /* Días de antelación: casillas (varias a la vez), rellenas en ámbar y con ✓ en la esquina al marcarlas */
 .day-chips { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
 .day-chip {
