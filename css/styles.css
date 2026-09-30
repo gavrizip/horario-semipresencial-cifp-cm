@@ -1093,13 +1093,13 @@ tr.break-row td:first-child { background: var(--inset); padding-left: 8px; paddi
 
 /* ---------- MÓDULOS ---------- */
 
-/* Título y «Actualizar» en la misma línea; si el título no cabe, se parte él, no el botón */
-.modules-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
-.modules-head h2 { min-width: 0; }
+/* Sin título: solo «Ajustes» y «Actualizar», a la derecha; sin campus (web) la cabecera no se ve */
+.modules-head { display: flex; justify-content: flex-end; margin-bottom: 14px; }
+.modules-head:has(.grades-bar[hidden]) { display: none; }
 /* Notas del campus: estado y botón junto al título */
 /* «Actualizar» (pequeño) y, debajo, «Ajustes» del campus */
-/* «Actualizar» y «Ajustes»: dos botones pequeños iguales, uno sobre otro y del mismo ancho */
-.grades-bar { display: flex; flex: none; flex-direction: column; align-items: stretch; gap: 6px; margin-left: auto; }
+/* «Ajustes» y «Actualizar»: dos botones pequeños, uno al lado del otro */
+.grades-bar { display: flex; flex: none; align-items: center; gap: 8px; }
 .grades-bar .btn { height: 30px; padding: 0 10px; gap: 6px; justify-content: center; font-size: 0.75rem; }
 .grades-bar .btn .icon { width: 14px; height: 14px; }
 .grades-bar[hidden] { display: none; }

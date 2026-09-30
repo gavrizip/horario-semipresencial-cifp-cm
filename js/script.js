@@ -3012,6 +3012,10 @@
     syncStatusSeg();
     document.querySelectorAll('#moduleDialog .info-value').forEach(stopEditField);
     toggleInfo(document.querySelector('#moduleDialog .info-btn'), false);
+    const reset = document.querySelector('#moduleDialog .module-reset');
+    clearTimeout(reset.doneTimer);
+    reset.classList.remove('is-done');
+    reset.querySelector('use').setAttribute('href', '#i-undo');
     const dialog = document.getElementById('moduleDialog');
     dialog.classList.remove('is-closing');
     dialog.showModal();
@@ -3030,6 +3034,20 @@
     document.getElementById('moduleRoom').value = mod.presencial === '-' ? '' : mod.presencial;
     document.querySelector('input[name="moduleStatus"][value="active"]').checked = true;
     syncStatusSeg();
+    flashDone(document.querySelector('#moduleDialog .module-reset'), 'i-undo');
+  }
+
+  // Confirmación breve en un botón: verde con ✓ (el mismo salto que «Actualizado») y vuelta a su icono
+  function flashDone(btn, icon) {
+    clearTimeout(btn.doneTimer);
+    btn.classList.remove('is-done');
+    void btn.offsetWidth;   // reinicia la animación si se pulsa seguido
+    btn.classList.add('is-done');
+    btn.querySelector('use').setAttribute('href', '#i-check');
+    btn.doneTimer = setTimeout(() => {
+      btn.classList.remove('is-done');
+      btn.querySelector('use').setAttribute('href', '#' + icon);
+    }, 2400);
   }
 
   // La pastilla del control segmentado sigue al estado elegido
