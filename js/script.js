@@ -741,8 +741,8 @@
             ${btn}
           </div>
         </li>`;
-    }).join('') || `<li class="moodle-empty"><span class="empty-ic" aria-hidden="true"><svg class="icon"><use href="#i-check"/></svg></span>
-        <p>${anyPending ? 'No hay tareas nuevas para añadir a tu horario.' : 'No tienes tareas pendientes de entrega en el campus.'}</p></li>`;
+    }).join('') || `<li class="moodle-empty"><span class="empty-ic" aria-hidden="true"><svg class="icon" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5" pathLength="1"/></svg></span>
+        <p>${anyPending ? '<span>No hay tareas nuevas</span> <span>para añadir a tu horario.</span>' : '<span>No tienes tareas pendientes</span> <span>de entrega en el campus.</span>'}</p></li>`;
   }
 
   function addMoodleTask(id, btn) {
