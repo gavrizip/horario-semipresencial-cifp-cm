@@ -53,6 +53,7 @@
   <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8.5" r="3.5"/><path d="M2.5 19.5c0-3.4 2.9-5.8 6.5-5.8s6.5 2.4 6.5 5.8"/><path d="M15.5 5.3a3.5 3.5 0 0 1 0 6.4"/><path d="M18 14.2c2 .8 3.5 2.7 3.5 5.3"/></symbol>
   <symbol id="i-contrast" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17Z" fill="currentColor" stroke="none"/></symbol>
   <symbol id="i-more" viewBox="0 0 24 24"><circle cx="5.5" cy="12" r="1.4" fill="currentColor"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/><circle cx="18.5" cy="12" r="1.4" fill="currentColor"/></symbol>
+  <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M15.2 5.3 18.7 8.8"/><path d="M4.5 19.5 5.3 15.7 16 5a1.8 1.8 0 0 1 2.5 0l.5.5a1.8 1.8 0 0 1 0 2.5L8.3 18.7Z"/></symbol>
   <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z"/></symbol>
 </svg>
 
@@ -468,27 +469,32 @@
       </div>
       <button type="button" class="icon-btn" onclick="closeDialog('moduleDialog')" aria-label="Cerrar"><svg class="icon"><use href="#i-x"/></svg></button>
     </div>
-    <div class="field-row">
-      <div class="field">
-        <label class="field-label" for="moduleTeacher">Docente</label>
-        <input type="text" id="moduleTeacher" autocomplete="off" maxlength="60">
+    <!-- Docente y aula: se leen como datos; el lápiz los vuelve editables -->
+    <div class="info-rows">
+      <div class="info-row">
+        <label class="info-label" for="moduleTeacher">Docente</label>
+        <input type="text" class="info-value" id="moduleTeacher" autocomplete="off" maxlength="60" readonly onblur="stopEditField(this)">
+        <button type="button" class="edit-btn" onclick="editField('moduleTeacher')" aria-label="Cambiar el docente" title="Cambiar el docente"><svg class="icon"><use href="#i-pencil"/></svg></button>
       </div>
-      <div class="field">
-        <label class="field-label" for="moduleRoom">Aula</label>
-        <input type="text" id="moduleRoom" autocomplete="off" maxlength="40" placeholder="Sin aula">
+      <div class="info-row">
+        <label class="info-label" for="moduleRoom">Aula</label>
+        <input type="text" class="info-value" id="moduleRoom" autocomplete="off" maxlength="40" placeholder="Sin aula" readonly onblur="stopEditField(this)">
+        <button type="button" class="edit-btn" onclick="editField('moduleRoom')" aria-label="Cambiar el aula" title="Cambiar el aula"><svg class="icon"><use href="#i-pencil"/></svg></button>
       </div>
     </div>
-    <fieldset class="field">
+    <fieldset class="field status-field">
       <legend class="field-label">Estado<button type="button" class="info-btn" aria-expanded="false" aria-controls="moduleStatusHelp" onclick="toggleInfo(this)" aria-label="Qué significa cada estado" title="Qué significa cada estado"><svg class="icon"><use href="#i-info"/></svg></button></legend>
       <div class="info-reveal" id="moduleStatusHelp"><p class="field-help">Convalidada o desistida: deja de salir en el horario, la asistencia y los avisos. Sus registros se conservan y puedes volver a «Cursando» cuando quieras.</p></div>
-      <div class="type-picker">
-        <label class="type-option" data-type="active"><input type="radio" name="moduleStatus" value="active" checked><span>Cursando</span></label>
-        <label class="type-option" data-type="convalidada"><input type="radio" name="moduleStatus" value="convalidada"><span>Convalidada</span></label>
-        <label class="type-option" data-type="desistida"><input type="radio" name="moduleStatus" value="desistida"><span>Desistida</span></label>
+      <!-- Control segmentado, como Grupo y Tema: la pastilla neutra marca el estado -->
+      <div class="segmented module-status" id="moduleStatus" data-active="active" role="radiogroup" aria-label="Estado de la asignatura">
+        <span class="segmented-thumb" aria-hidden="true"></span>
+        <label class="segmented-btn"><input type="radio" name="moduleStatus" value="active" checked onchange="syncStatusSeg()">Cursando</label>
+        <label class="segmented-btn"><input type="radio" name="moduleStatus" value="convalidada" onchange="syncStatusSeg()">Convalidada</label>
+        <label class="segmented-btn"><input type="radio" name="moduleStatus" value="desistida" onchange="syncStatusSeg()">Desistida</label>
       </div>
     </fieldset>
+    <button type="button" class="text-link module-reset" onclick="resetModuleDialog()">Restablecer los datos originales</button>
     <div class="dialog-actions">
-      <button type="button" class="btn btn-danger" onclick="resetModuleDialog()">Restablecer</button>
       <span class="spacer"></span>
       <button type="button" class="btn btn-ghost" onclick="closeDialog('moduleDialog')">Cancelar</button>
       <button type="submit" class="btn btn-primary">Guardar</button>

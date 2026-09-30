@@ -1131,20 +1131,36 @@ tr.break-row td:first-child { background: var(--inset); padding-left: 8px; paddi
 .module-dialog { width: min(460px, calc(100vw - 32px)); }
 .module-dialog-title { display: flex; align-items: center; gap: 12px; min-width: 0; }
 .module-dialog-title h3 { line-height: 1.25; }
-/* Estado: sin punto; cada opción va de su color (texto y borde) y la elegida se rellena de él.
-   --c es el tono del borde y el relleno; --ct, el del texto (legible en día y noche) */
-.module-dialog .type-option[data-type="active"] { --c: var(--done); --ct: var(--done); }
-.module-dialog .type-option[data-type="convalidada"] { --c: var(--accent); --ct: var(--accent-text); }
-.module-dialog .type-option[data-type="desistida"] { --c: var(--absence); --ct: var(--absence); }
-.module-dialog .type-option {
-  gap: 0; padding: 0 6px; min-width: 0;
-  /* También limitado por el ancho de la pantalla: con letra grande, «Convalidada» sigue cabiendo */
-  font-size: min(0.8125rem, 3.7vw); white-space: nowrap;
-  color: var(--ct); border-color: color-mix(in oklch, var(--c) 40%, transparent);
+/* Docente y aula: filas de datos (etiqueta · valor · lápiz), sin caja hasta que se editan */
+.info-rows { display: grid; margin-bottom: 18px; border-top: 1px solid var(--line); }
+.info-row { display: grid; grid-template-columns: 76px minmax(0, 1fr) 36px; align-items: center; gap: 8px; min-height: 48px; border-bottom: 1px solid var(--line); }
+.info-label { font-size: 0.8125rem; font-weight: 550; color: var(--text-3); }
+.info-value {
+  width: 100%; min-width: 0; height: 36px; padding: 0 10px; margin-left: -10px;
+  border: 1px solid transparent; border-radius: var(--r); background: transparent;
+  font: inherit; font-size: 0.9375rem; color: var(--text); outline: none;
+  text-overflow: ellipsis;
+  transition: border-color var(--t) var(--ease-out), background-color var(--t) var(--ease-out);
 }
-.module-dialog .type-option::before { content: none; }
-.module-dialog .type-option:hover { color: var(--ct); background: color-mix(in oklch, var(--c) 8%, transparent); }
-.module-dialog .type-option:has(input:checked) { color: var(--ct); font-weight: 650; border-color: var(--c); background: color-mix(in oklch, var(--c) 20%, transparent); }
+.info-value::placeholder { color: var(--text-3); }
+.info-value[readonly] { cursor: default; }
+.info-row.is-editing .info-value { background: var(--inset); border-color: var(--accent); }
+.edit-btn { display: grid; place-items: center; width: 36px; height: 36px; border: none; border-radius: var(--r); background: none; color: var(--text-3); cursor: pointer; transition: color var(--t) var(--ease-out), background-color var(--t) var(--ease-out); }
+.edit-btn:hover { color: var(--text); background: var(--surface-2); }
+.info-row.is-editing .edit-btn { color: var(--accent-text); }
+.edit-btn .icon { width: 17px; height: 17px; }
+/* Estado: control segmentado neutro (la pastilla marca el elegido) */
+.module-status { --count: 3; }
+.module-status[data-active="convalidada"] { --index: 1; }
+.module-status[data-active="desistida"] { --index: 2; }
+.module-status .segmented-btn { position: relative; display: grid; place-items: center; height: 34px; padding: 0 4px; font-size: min(0.8125rem, 3.7vw); cursor: pointer; }
+.module-status .segmented-btn input { position: absolute; opacity: 0; pointer-events: none; }
+.module-status .segmented-btn:has(input:checked) { color: var(--text); }
+.module-status .segmented-btn:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: -2px; }
+.status-field { margin-bottom: 10px; }
+/* Restablecer: enlace de texto discreto, fuera de la fila de guardar */
+.text-link { padding: 4px 0; border: none; background: none; font: inherit; font-size: 0.8125rem; color: var(--text-3); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line-strong); cursor: pointer; }
+.text-link:hover { color: var(--text-2); }
 /* Botón «i» junto a una etiqueta: despliega su ayuda debajo (sin tapar nada) */
 .info-btn {
   position: relative; display: inline-grid; place-items: center;

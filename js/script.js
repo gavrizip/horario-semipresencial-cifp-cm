@@ -3006,6 +3006,8 @@
     document.getElementById('moduleTeacher').placeholder = capitalize(mod.teacher);
     document.getElementById('moduleRoom').value = roomOf(code) || '';
     document.querySelector(`input[name="moduleStatus"][value="${statusOf(code) || 'active'}"]`).checked = true;
+    syncStatusSeg();
+    document.querySelectorAll('#moduleDialog .info-value').forEach(stopEditField);
     toggleInfo(document.querySelector('#moduleDialog .info-btn'), false);
     const dialog = document.getElementById('moduleDialog');
     dialog.classList.remove('is-closing');
@@ -3024,6 +3026,25 @@
     document.getElementById('moduleTeacher').value = capitalize(mod.teacher);
     document.getElementById('moduleRoom').value = mod.presencial === '-' ? '' : mod.presencial;
     document.querySelector('input[name="moduleStatus"][value="active"]').checked = true;
+    syncStatusSeg();
+  }
+
+  // La pastilla del control segmentado sigue al estado elegido
+  function syncStatusSeg() {
+    document.getElementById('moduleStatus').dataset.active = document.querySelector('input[name="moduleStatus"]:checked').value;
+  }
+
+  // Docente y aula se leen como texto; el lápiz los vuelve editables y al salir vuelven a leerse
+  function editField(id) {
+    const input = document.getElementById(id);
+    input.readOnly = false;
+    input.closest('.info-row').classList.add('is-editing');
+    input.focus();
+    input.select();
+  }
+  function stopEditField(input) {
+    input.readOnly = true;
+    input.closest('.info-row').classList.remove('is-editing');
   }
 
   function saveModuleDialog(e) {
