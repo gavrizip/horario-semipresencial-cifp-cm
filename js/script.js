@@ -575,6 +575,7 @@
     resolving = { courses, next };
     const map = loadCourseMap();
     document.getElementById('moodleDialog').dataset.mode = 'resolve';
+    document.getElementById('moodleDialog').removeAttribute('data-empty');
     document.getElementById('moodleResolveBtn').textContent = all ? 'Guardar' : 'Continuar';
     document.getElementById('moodleTitle').textContent = all ? 'Asignaturas del campus' : 'Cursos nuevos del campus';
     document.getElementById('moodleMeta').textContent = all
@@ -723,6 +724,7 @@
     // pasa a ser la acción principal (con tareas, lo principal es «Añadir tarea»)
     document.getElementById('moodleMeta').textContent = pending.length
       ? `${pending.length} ${pending.length === 1 ? 'tarea pendiente' : 'tareas pendientes'} de entrega` : '';
+    document.getElementById('moodleDialog').toggleAttribute('data-empty', !pending.length);
     const close = document.getElementById('moodleCloseBtn');
     close.classList.toggle('btn-primary', !pending.length);
     close.classList.toggle('btn-ghost', !!pending.length);
